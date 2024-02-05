@@ -3,17 +3,19 @@ import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 export class CreatePackageDto {
 	@IsNotEmpty()
 	@IsString()
-	descripcion: string;
+	description: string;
 
 	@IsNotEmpty()
 	@IsString()
-	direccionEntrega: string;
+	deliveryAddress: string;
 
 	@IsNotEmpty()
+	@IsString()
 	@IsEnum({ pendiente: 'pendiente', en_camino: 'en camino', entregado: 'entregado' })
-	estado: string;
+	state: string;
 
 	@IsNotEmpty()
+	@IsString()
 	@IsUUID()
-	repartidorAsignado: string;
+	deliveryMan: string;
 }

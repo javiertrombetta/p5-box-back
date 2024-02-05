@@ -6,17 +6,19 @@ import { CreatePackageDto } from './create-package.dto';
 export class UpdatePackageDto extends PartialType(CreatePackageDto) {
 	@IsOptional()
 	@IsString()
-	descripcion?: string;
+	description?: string;
 
 	@IsOptional()
 	@IsString()
-	direccionEntrega?: string;
+	deliveryAddress?: string;
 
 	@IsOptional()
+	@IsString()
 	@IsEnum({ pendiente: 'pendiente', en_camino: 'en camino', entregado: 'entregado' })
-	estado?: string;
+	state?: string;
 
 	@IsOptional()
+	@IsString()
 	@IsUUID()
-	repartidorAsignado?: string;
+	deliveryMan?: string;
 }
