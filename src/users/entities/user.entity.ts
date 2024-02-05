@@ -11,22 +11,22 @@ export class User {
 	_id: string;
 
 	@Prop({ required: true })
-	nombre: string;
+	fullName: string;
 
 	@Prop({ required: true, unique: true })
 	email: string;
 
 	@Prop({ required: true })
-	contrasena: string;
+	password: string;
 
 	@Prop({ required: true, enum: ['repartidor', 'administrador'] })
-	rol: string;
+	role: string;
 
 	@Prop({ type: [{ type: String, ref: 'Package' }] })
-	paquetesAsignados: string[];
+	packages: string[];
 
-	@Prop({ default: 'activo' })
-	estado: string;
+	@Prop({ default: 'active', enum: ['active', 'inactive'] })
+	state: string;
 
 	@Prop({
 		type: {
@@ -39,15 +39,15 @@ export class User {
 			index: '2dsphere',
 		},
 	})
-	geolocalizacion: {
+	geolocation: {
 		type: string;
 		coordinates: number[];
 	};
 
 	@Prop({ default: 0 })
-	puntos: number;
+	points: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-UserSchema.index({ geolocalizacion: '2dsphere' });
+UserSchema.index({ geolocation: '2dsphere' });
 UserSchema.plugin(mongooseUniqueValidator, { message: 'El {PATH} tiene que ser único.' });
