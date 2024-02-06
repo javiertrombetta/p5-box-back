@@ -3,10 +3,8 @@ import { Document } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import * as mongooseUniqueValidator from 'mongoose-unique-validator';
 
-export type UserDocument = User & Document;
-
 @Schema({ timestamps: true })
-export class User {
+export class User extends Document {
 	@Prop({ type: String, default: () => uuidv4() })
 	_id: string;
 
@@ -19,7 +17,7 @@ export class User {
 	@Prop({ required: true })
 	password: string;
 
-	@Prop({ required: true, enum: ['repartidor', 'administrador'] })
+	@Prop({ default: 'repartidor', enum: ['repartidor', 'administrador'] })
 	role: string;
 
 	@Prop({ type: [{ type: String, ref: 'Package' }] })
@@ -27,22 +25,6 @@ export class User {
 
 	@Prop({ default: 'active', enum: ['active', 'inactive'] })
 	state: string;
-
-	@Prop({
-		type: {
-			type: String,
-			enum: ['Point'],
-			default: 'Point',
-		},
-		coordinates: {
-			type: [Number],
-			index: '2dsphere',
-		},
-	})
-	geolocation: {
-		type: string;
-		coordinates: number[];
-	};
 
 	@Prop({ default: 0 })
 	points: number;

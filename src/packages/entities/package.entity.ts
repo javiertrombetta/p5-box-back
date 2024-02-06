@@ -3,10 +3,8 @@ import { Document } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import * as mongooseUniqueValidator from 'mongoose-unique-validator';
 
-export type PackageDocument = Package & Document;
-
 @Schema({ timestamps: true })
-export class Package {
+export class Package extends Document {
 	@Prop({ type: String, default: () => uuidv4() })
 	_id: string;
 
