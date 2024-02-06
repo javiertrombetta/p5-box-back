@@ -64,6 +64,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 ```bash
 $ npm install
 ```
+
 3. Tener Nest CLI instalado
 ```bash
 $ npm i -g @nestjs/cli
@@ -72,6 +73,11 @@ $ npm i -g @nestjs/cli
 4. Levantar la base de datos
 ```bash
 $ docker-compose up -d
+```
+
+5. Reconstruir la base de datos con datos aleatorios
+```bash
+http://localhost:3000/api/v1/seed
 ```
 
 <br>

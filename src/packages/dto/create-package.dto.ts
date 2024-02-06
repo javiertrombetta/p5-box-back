@@ -14,7 +14,6 @@ export class CreatePackageDto {
 	@IsEnum({ pendiente: 'pendiente', en_camino: 'en camino', entregado: 'entregado' })
 	state: string;
 
-	@IsNotEmpty()
 	@IsString()
 	@IsUUID()
 	deliveryMan: string;
