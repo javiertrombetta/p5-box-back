@@ -37,7 +37,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 5. Para lanzamientos, creá una rama `release/` desde `develop`.
 6. Una vez listo el lanzamiento, fusioná `release/` en `main` y `develop`.
 7. Etiquetá `main` con la versión del lanzamiento.
-8. Para arreglos urgentes, crea una rama `hotfix/` desde `main`.
+8. Para arreglos urgentes, creá una rama `hotfix/` desde `main`.
 9. Una vez solucionado el problema, fusioná `hotfix/` en `main` y `develop`.
 
 <br>
@@ -52,8 +52,17 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 <br>
 
 ### Stack de tecnologías utilizado
-* Nest
-* MongoDB
+
+- Node.js
+- NestJS
+- TypeScript
+- MongoDB
+- Docker
+- JSON Web Tokens
+- CORS
+- Bcrypt
+- Cookie-parser
+- Faker (desarrollador)
 
 <br>
 
@@ -61,23 +70,27 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 1. Clonar el repositorio. Leé primero [Pasos a seguir con Gitflow](#pasos-a-seguir-con-gitflow).
 2. Ejecutar
+
 ```bash
 $ npm install
 ```
 
 3. Tener Nest CLI instalado
+
 ```bash
 $ npm i -g @nestjs/cli
 ```
 
 4. Levantar la base de datos
+
 ```bash
 $ docker-compose up -d
 ```
 
-5. Reconstruir la base de datos con datos aleatorios
+5. Reconstruir la base de datos con datos aleatorios (Usando [Postman](https://www.postman.com/) o desde un navegador web)
+
 ```bash
-http://localhost:3000/api/v1/seed
+[GET] http://localhost:3000/api/v1/seed
 ```
 
 <br>
