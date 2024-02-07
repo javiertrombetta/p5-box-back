@@ -1,13 +1,13 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreatePackageDto {
-	@IsNotEmpty()
-	@IsString()
-	description: string;
+    @IsNotEmpty()//decoradores de validación
+    @IsString()
+    description: string;
 
-	@IsNotEmpty()
-	@IsString()
-	deliveryAddress: string;
+    @IsNotEmpty()
+    @IsString()
+    deliveryAddress: string;
 
 	@IsOptional()
 	@IsNotEmpty()
