@@ -1,10 +1,9 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches, MinLength, ValidateNested } from 'class-validator';
 
 export class CreateUserDto {
 	@IsNotEmpty()
 	@IsString()
-	@MinLength(1)
 	fullName: string;
 
 	@IsNotEmpty()
@@ -15,7 +14,6 @@ export class CreateUserDto {
 	@IsNotEmpty()
 	@IsString()
 	@MinLength(6)
-	@MaxLength(20)
 	@Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
 		message: 'La contraseña tiene que tener una letra mayúscula, una letra minúscula y un número.',
 	})
@@ -25,7 +23,7 @@ export class CreateUserDto {
 	@IsNotEmpty()
 	@IsString()
 	@IsEnum(['repartidor', 'administrador'])
-	role: string;
+	role?: string;
 
 	@IsOptional()
 	@IsArray()
@@ -40,5 +38,6 @@ export class CreateUserDto {
 
 	@IsOptional()
 	@IsNumber()
+	@IsPositive()
 	points?: number;
 }

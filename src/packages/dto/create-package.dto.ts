@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreatePackageDto {
 	@IsNotEmpty()
@@ -9,12 +9,15 @@ export class CreatePackageDto {
 	@IsString()
 	deliveryAddress: string;
 
+	@IsOptional()
 	@IsNotEmpty()
 	@IsString()
 	@IsEnum({ pendiente: 'pendiente', en_camino: 'en camino', entregado: 'entregado' })
-	state: string;
+	state?: string;
 
+	@IsOptional()
+	@IsNotEmpty()
 	@IsString()
 	@IsUUID()
-	deliveryMan: string;
+	deliveryMan?: string;
 }
