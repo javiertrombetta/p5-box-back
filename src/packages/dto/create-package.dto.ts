@@ -9,15 +9,15 @@ export class CreatePackageDto {
     @IsString()
     deliveryAddress: string;
 
-    @IsOptional()
-    @IsNotEmpty()
-    @IsString()
-    @IsEnum({ pendiente: 'pendiente', en_camino: 'en camino', entregado: 'entregado' })
-    state: string;
+	@IsOptional()
+	@IsNotEmpty()
+	@IsString()
+	@IsEnum({ pendiente: 'pendiente', en_camino: 'en camino', entregado: 'entregado' })
+	state?: string;
 
-    @IsOptional()
-    @IsNotEmpty()
-    @IsString()
-    @IsUUID()
-    deliveryMan: string;
+	@IsOptional()
+	@IsNotEmpty()
+	@IsString()
+	@IsUUID()
+	deliveryMan?: string;
 }
