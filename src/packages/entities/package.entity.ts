@@ -3,24 +3,22 @@ import { Document } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import * as mongooseUniqueValidator from 'mongoose-unique-validator';
 
-export type PackageDocument = Package & Document;
-
 @Schema({ timestamps: true })
-export class Package {
+export class Package extends Document {
 	@Prop({ type: String, default: () => uuidv4() })
 	_id: string;
 
 	@Prop({ required: true })
-	descripcion: string;
+	description: string;
 
 	@Prop({ required: true })
-	direccionEntrega: string;
+	deliveryAddress: string;
 
 	@Prop({ required: true, enum: ['pendiente', 'en camino', 'entregado'] })
-	estado: string;
+	state: string;
 
 	@Prop({ type: String, ref: 'User' })
-	repartidorAsignado: string;
+	deliveryMan: string;
 }
 
 export const PackageSchema = SchemaFactory.createForClass(Package);

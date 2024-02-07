@@ -9,7 +9,7 @@ import { PackagesModule } from './packages/packages.module';
 import { ReportsModule } from './reports/reports.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { CommonModule } from './common/common.module';
-
+import { LocationsModule } from './locations/locations.module';
 
 @Module({
 	imports: [
@@ -23,6 +23,7 @@ import { CommonModule } from './common/common.module';
 		ReportsModule,
 		RewardsModule,
 		CommonModule,
+		LocationsModule,
 	],
 	controllers: [],
 	providers: [],
