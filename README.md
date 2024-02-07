@@ -153,18 +153,17 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
     ```json
     {
-        "fullName": "Nombre Apellido",
+        "name": "Nombre",
+        "lastname": "Apellido",
         "email": "usuario@dominio.com",
-        "password": "CalleFalsa123"
+        "password": "Clave123"
     }
     ```
 
 - Respuesta esperada:
   
     ```json
-    {
-        "fullName": "Nombre Apellido",
-        "email": "usuario@dominio.com",
+    {   
         "message": "Usuario registrado con éxito."
     }
     ```
@@ -179,7 +178,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
     ```json
     {
         "email": "usuario@dominio.com",
-        "password": "CalleFalsa123"
+        "password": "Clave123"
     }
     ```
 
@@ -187,8 +186,6 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
   
     ```json
     {
-        "fullName": "Nombre Apellido",
-        "email": "usuario@dominio.com",
         "message": "Usuario logueado con éxito."
     }
     ```

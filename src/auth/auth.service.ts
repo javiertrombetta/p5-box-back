@@ -22,24 +22,13 @@ export class AuthService {
 		}
 
 		const hashedPassword = await bcrypt.hash(password, 12);
-		const newUser = new this.userModel({
+		await new this.userModel({
 			...createUserDto,
 			password: hashedPassword,
-		});
-
-		try {
-			await newUser.save();
-			return {
-				fullName: newUser.fullName,
-				email: newUser.email,
-				message: 'Usuario registrado con éxito.',
-			};
-		} catch (error) {
-			throw new HttpException('Error al registrar al usuario.', HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+		}).save();
 	}
 
-	async login(loginUserDto: LoginUserDto): Promise<{ fullName: string; email: string; cookie: string }> {
+	async login(loginUserDto: LoginUserDto): Promise<{ cookie: string }> {
 		const { email, password } = loginUserDto;
 		const user = await this.userModel.findOne({ email }).exec();
 
@@ -56,11 +45,7 @@ export class AuthService {
 		const token = this.jwtService.sign(payload);
 		const cookie = `Authentication=${token}; HttpOnly; Path=/; Max-Age=${60 * 60}`;
 
-		return {
-			fullName: user.fullName,
-			email: user.email,
-			cookie,
-		};
+		return { cookie };
 	}
 
 	async findById(id: string): Promise<User | null> {

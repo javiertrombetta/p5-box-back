@@ -26,7 +26,8 @@ export class SeedService {
 			const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
 			const userData = {
-				fullName: faker.person.fullName(),
+				name: faker.person.firstName(),
+				lastname: faker.person.lastName(),
 				email: faker.internet.email(),
 				password: hashedPassword,
 				role: userRole,

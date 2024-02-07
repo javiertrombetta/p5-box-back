@@ -5,7 +5,11 @@ import { CreateUserDto } from './';
 export class UpdateUserDto extends PartialType(CreateUserDto) {
 	@IsOptional()
 	@IsString()
-	fullName?: string;
+	name?: string;
+
+	@IsOptional()
+	@IsString()
+	lastname?: string;
 
 	@IsOptional()
 	@IsString()
