@@ -9,21 +9,17 @@ export class AuthController {
 
 	@Post('register')
 	async register(@Body() createUserDto: CreateUserDto, @Res() response: Response) {
-		const user = await this.authService.register(createUserDto);
+		await this.authService.register(createUserDto);
 		response.status(HttpStatus.CREATED).json({
-			fullName: user.fullName,
-			email: user.email,
 			message: 'Usuario registrado con éxito.',
 		});
 	}
 
 	@Post('login')
 	async login(@Body() loginUserDto: LoginUserDto, @Res() response: Response) {
-		const { fullName, email, cookie } = await this.authService.login(loginUserDto);
+		const { cookie } = await this.authService.login(loginUserDto);
 		response.setHeader('Set-Cookie', cookie);
 		response.status(HttpStatus.OK).json({
-			fullName,
-			email,
 			message: 'Usuario logueado con éxito.',
 		});
 	}
