@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from '../users/entities/user.entity';
+import { User } from '../auth/entities/user.entity';
 import { Package } from '../packages/entities/package.entity';
 import { faker } from '@faker-js/faker';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class SeedService {
@@ -20,10 +21,14 @@ export class SeedService {
 
 		for (let i = 0; i < 20; i++) {
 			const userRole = faker.helpers.arrayElement(['repartidor', 'administrador']);
+
+			const plainPassword = this.generatePassword();
+			const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
 			const userData = {
 				fullName: faker.person.fullName(),
 				email: faker.internet.email(),
-				password: this.generatePassword(),
+				password: hashedPassword,
 				role: userRole,
 				points: faker.number.int({ min: 0, max: 100 }),
 			};
@@ -53,7 +58,7 @@ export class SeedService {
 			await this.userModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
 		}
 
-		return 'Database seeded successfully!';
+		return { message: 'Base de datos reconstruida con datos de Faker.' };
 	}
 
 	generatePassword(): string {
