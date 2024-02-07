@@ -4,7 +4,11 @@ import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive,
 export class CreateUserDto {
 	@IsNotEmpty()
 	@IsString()
-	fullName: string;
+	name: string;
+
+	@IsNotEmpty()
+	@IsString()
+	lastname: string;
 
 	@IsNotEmpty()
 	@IsString()
