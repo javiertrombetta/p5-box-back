@@ -35,7 +35,7 @@ export class AuthService {
 				message: 'Usuario registrado con éxito.',
 			};
 		} catch (error) {
-			throw new HttpException('Error al registrar al usuario', HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new HttpException('Error al registrar al usuario.', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
