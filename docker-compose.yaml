@@ -7,6 +7,6 @@ services:
     ports:
       - 27017:27017
     environment:
-      MONGODB_DATABASE: box-api
+      MONGODB_DATABASE: box-db
     volumes:
       - ./mongo:/data/db

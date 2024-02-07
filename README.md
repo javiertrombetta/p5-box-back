@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="./public/assets/img/box.png" width="400" alt="Box" /></a>
+  <a href="https://github.com/javiertrombetta/p5-box-back" target="blank"><img src="./public/assets/img/box.png" width="400" alt="Box" /></a>
 </p>
 
 <br>
@@ -37,7 +37,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 5. Para lanzamientos, creá una rama `release/` desde `develop`.
 6. Una vez listo el lanzamiento, fusioná `release/` en `main` y `develop`.
 7. Etiquetá `main` con la versión del lanzamiento.
-8. Para arreglos urgentes, creá una rama `hotfix/` desde `main`.
+8. Para arreglos urgentes, crea una rama `hotfix/` desde `main`.
 9. Una vez solucionado el problema, fusioná `hotfix/` en `main` y `develop`.
 
 <br>
@@ -71,62 +71,127 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 1. Clonar el repositorio. Leé primero [Pasos a seguir con Gitflow](#pasos-a-seguir-con-gitflow).
 2. Ejecutar
 
-```bash
-$ npm install
-```
+   ```bash
+   $ npm install
+   ```
 
 3. Tener Nest CLI instalado
 
-```bash
-$ npm i -g @nestjs/cli
-```
+   ```bash
+   $ npm i -g @nestjs/cli
+   ```
 
 4. Levantar la base de datos
-
-```bash
-$ docker-compose up -d
-```
-
-5. Reconstruir la base de datos con datos aleatorios (Usando [Postman](https://www.postman.com/) o desde un navegador web)
-
-```bash
-[GET] http://localhost:3000/api/v1/seed
-```
+   ```bash
+   $ docker-compose up -d
+   ```
 
 <br>
 
 ## Ejecutando el proyecto
 
-```bash
-# Entorno de desarrollo
-$ npm run start
+#### En entorno de `desarrollo`
 
-# Recarga automática por cambios en desarrollo
-$ npm run start:dev
+1. Ejecutar desde una terminal:
 
-# Entorno de producción
-$ npm build
-$ npm run start:prod
-```
+   ```bash
+   # Recarga automática de cambios en desarrollo
+   $ npm run start:dev
+   ```
 
-<br>
+2. Reconstruir la base de datos con datos de [_Faker_](https://www.npmjs.com/package/@faker-js/faker) en desarrollo:
 
-## Ejecutando los tests
-
-```bash
-# Realizar tests unitarios
-$ npm run test
-
-# Realizar tests e2e (END-TO-END)
-$ npm run test:e2e
-
-# Realizar tests de covertura
-$ npm run test:cov
-```
+   - Usando un navegador web, ingresar a: [http://localhost:3000/api/v1/seed](http://localhost:3000/api/v1/seed)
+   - o desde [Postman](https://www.postman.com/):
+     ```bash
+     [GET] http://localhost:3000/api/v1/seed
+     ```
 
 <br>
 
-### Contribuir
+#### En entorno de `producción`
+
+- Ejecutar desde una terminal:
+
+  1. Reconstruir la carpeta de compilación del proyecto
+
+     ```bash
+     $ npm build
+     ```
+
+  2. Ejecutar el proyecto en entorno de proudcción
+     ```bash
+     $ npm run start:prod
+     ```
+
+<br>
+
+
+## Uso de la API con [Postman](https://www.postman.com/)
+
+
+### Endpoint `Seed`
+
+```bach
+[GET] http://localhost:3000/api/v1/seed
+```
+
+- Respuesta esperada:
+  
+    ```json
+    {        
+        "message": "Base de datos reconstruida con datos de Faker."
+    }
+    ```
+
+### Endpoint `Register`
+```bach
+[POST] http://localhost:3000/api/v1/auth/register
+```
+
+- Incluir el siguiente Body en formato JSON:
+
+    ```json
+    {
+        "name": "Nombre",
+        "lastname": "Apellido",
+        "email": "usuario@dominio.com",
+        "password": "Clave123"
+    }
+    ```
+
+- Respuesta esperada:
+  
+    ```json
+    {   
+        "message": "Usuario registrado con éxito."
+    }
+    ```
+
+### Endpoint `Login`
+```bach
+[POST] http://localhost:3000/api/v1/auth/login
+```
+
+- Incluir el siguiente Body en formato JSON:
+
+    ```json
+    {
+        "email": "usuario@dominio.com",
+        "password": "Clave123"
+    }
+    ```
+
+- Respuesta esperada:
+  
+    ```json
+    {
+        "message": "Usuario logueado con éxito."
+    }
+    ```
+<br>
+
+## Contribuir con el proyecto Box
 
 Para contribuir al proyecto:
 
@@ -144,7 +209,7 @@ Por cualquier consulta, colaboración, inquitud o sugerencia, podés escribirnos
 
 <br>
 
-## Seguinos :)
+## Seguinos ;)
 
 - Boris Manzano - [BorisManzano](https://github.com/BorisManzano)
 - Javier Colodro - [Javierdigital85](https://github.com/Javierdigital85)
