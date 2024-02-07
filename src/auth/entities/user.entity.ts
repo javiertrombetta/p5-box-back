@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import * as mongooseUniqueValidator from 'mongoose-unique-validator';
+import { validationMessages } from '../../common/constants/validation-messages.constants';
 
 @Schema({ timestamps: true })
 export class User extends Document {
@@ -34,4 +35,6 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-UserSchema.plugin(mongooseUniqueValidator, { message: 'El {PATH} tiene que ser único.' });
+UserSchema.plugin(mongooseUniqueValidator, {
+	message: validationMessages.user.mongoose.unique,
+});
