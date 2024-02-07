@@ -2,6 +2,7 @@ import { Body, Controller, Post, Res, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from './dto';
+import { validationMessages } from '../common/constants/validation-messages.constants';
 
 @Controller('auth')
 export class AuthController {
@@ -11,7 +12,7 @@ export class AuthController {
 	async register(@Body() createUserDto: CreateUserDto, @Res() response: Response) {
 		await this.authService.register(createUserDto);
 		response.status(HttpStatus.CREATED).json({
-			message: 'Usuario registrado con éxito.',
+			message: validationMessages.user.success.userRegistered,
 		});
 	}
 
@@ -20,7 +21,7 @@ export class AuthController {
 		const { cookie } = await this.authService.login(loginUserDto);
 		response.setHeader('Set-Cookie', cookie);
 		response.status(HttpStatus.OK).json({
-			message: 'Usuario logueado con éxito.',
+			message: validationMessages.user.success.userLoggedIn,
 		});
 	}
 }

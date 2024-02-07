@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import { CreateUserDto, LoginUserDto } from './dto';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { validationMessages } from '../common/constants/validation-messages.constants';
 
 @Injectable()
 export class AuthService {
@@ -14,14 +15,14 @@ export class AuthService {
 	) {}
 
 	async register(createUserDto: CreateUserDto) {
-		const { email, password } = createUserDto;
+		const { email } = createUserDto;
 		const existingUser = await this.userModel.findOne({ email });
 
 		if (existingUser) {
-			throw new HttpException('El correo ya está en uso.', HttpStatus.BAD_REQUEST);
+			throw new HttpException(validationMessages.user.error.emailInUse, HttpStatus.BAD_REQUEST);
 		}
 
-		const hashedPassword = await bcrypt.hash(password, 12);
+		const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
 		await new this.userModel({
 			...createUserDto,
 			password: hashedPassword,
@@ -33,12 +34,12 @@ export class AuthService {
 		const user = await this.userModel.findOne({ email }).exec();
 
 		if (!user) {
-			throw new HttpException('Usuario no encontrado.', HttpStatus.UNAUTHORIZED);
+			throw new HttpException(validationMessages.user.error.userNotFound, HttpStatus.UNAUTHORIZED);
 		}
 
 		const isPasswordMatching = await bcrypt.compare(password, user.password);
 		if (!isPasswordMatching) {
-			throw new HttpException('Credenciales incorrectas.', HttpStatus.UNAUTHORIZED);
+			throw new HttpException(validationMessages.user.error.incorrectCredentials, HttpStatus.UNAUTHORIZED);
 		}
 
 		const payload = { email: user.email, sub: user._id.toString() };
