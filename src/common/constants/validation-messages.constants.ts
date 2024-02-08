@@ -36,9 +36,12 @@ export const validationMessages = {
 		success: {
 			userRegistered: 'Usuario registrado con éxito.',
 			userLoggedIn: 'Usuario logueado con éxito.',
+			userUpdated: 'El rol del usuario ha sido actualizado a ${updateUserDto.role}.',
+			userDeleted: 'Usuario ${user.name} ${user.lastname} (${userId}) eliminado con éxito.',
+			userSelfDeleted: 'Tu cuenta ha sido eliminada con éxito.',
 		},
 		error: {
-			emailInUse: 'El correo ya está en uso.',
+			emailInUse: 'El correo electrónico ya está en uso.',
 			userNotFound: 'Usuario no encontrado.',
 			incorrectCredentials: 'Credenciales incorrectas.',
 		},
