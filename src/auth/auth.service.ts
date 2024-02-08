@@ -29,7 +29,7 @@ export class AuthService {
 		}).save();
 	}
 
-	async login(loginUserDto: LoginUserDto): Promise<{ cookie: string }> {
+	async login(loginUserDto: LoginUserDto): Promise<{ user: any; token: string }> {
 		const { email, password } = loginUserDto;
 		const user = await this.userModel.findOne({ email }).exec();
 
@@ -42,11 +42,35 @@ export class AuthService {
 			throw new HttpException(validationMessages.user.error.incorrectCredentials, HttpStatus.UNAUTHORIZED);
 		}
 
-		const payload = { email: user.email, sub: user._id.toString() };
+		const payload = { email: user.email, sub: user._id.toString(), role: user.role };
 		const token = this.jwtService.sign(payload);
-		const cookie = `Authentication=${token}; HttpOnly; Path=/; Max-Age=${60 * 60}`;
 
-		return { cookie };
+		const userObject = user.toObject();
+		delete userObject.password;
+
+		return { user: userObject, token };
+	}
+
+	async findAll(): Promise<User[]> {
+		return this.userModel.find().exec();
+	}
+
+	async updateUserRole(userId: string, newRole: string): Promise<User> {
+		const updatedUser = await this.userModel.findByIdAndUpdate(userId, { role: newRole }, { new: true }).exec();
+
+		if (!updatedUser) {
+			throw new HttpException(validationMessages.user.error.userNotFound, HttpStatus.NOT_FOUND);
+		}
+
+		return updatedUser;
+	}
+
+	async deleteUser(userId: string): Promise<void> {
+		const deletedUser = await this.userModel.findByIdAndDelete(userId).exec();
+
+		if (!deletedUser) {
+			throw new HttpException(validationMessages.user.error.userNotFound, HttpStatus.NOT_FOUND);
+		}
 	}
 
 	async findById(id: string): Promise<User | null> {

@@ -66,6 +66,7 @@
 		"nestjs-seeder": "^0.3.2",
 		"npm": "^10.4.0",
 		"prettier": "^3.0.0",
+		"semantic-release": "^23.0.2",
 		"source-map-support": "^0.5.21",
 		"standard-version": "^9.5.0",
 		"supertest": "^6.3.3",
