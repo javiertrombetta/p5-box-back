@@ -1,5 +1,5 @@
 export const validationMessages = {
-	user: {
+	auth: {
 		name: {
 			isNotEmpty: 'El nombre es obligatorio.',
 			isString: 'El nombre debe ser una cadena de texto.',
@@ -11,6 +11,7 @@ export const validationMessages = {
 		email: {
 			isNotEmpty: 'El correo electrónico es obligatorio.',
 			isEmail: 'El correo electrónico no es válido.',
+			inUse: 'El correo electrónico ya está en uso.',
 		},
 		password: {
 			isNotEmpty: 'La contraseña es obligatoria.',
@@ -19,31 +20,49 @@ export const validationMessages = {
 			pattern: 'La contraseña debe incluir una letra mayúscula, una minúscula y un número.',
 		},
 		role: {
-			isNotEmpty: 'El rol no puede estar vacío.',
-			isString: 'El rol debe ser una cadena de texto.',
-			isEnum: 'El rol no es válido.',
+			isNotEmpty: 'El campo rol no puede estar vacío.',
+			isArray: 'El campo rol debe contener un array de roles.',
+			isEnum: 'El campo rol es inválido.',
+			badRequest: 'Usuario no encontrado.',
+			forbidden: '${user.name} ${user.lastname} no tiene los permisos de: [${validRoles}].',
+			updated: 'El rol del usuario ${user.name} ${user.lastname} ha sido actualizado con éxito.',
 		},
 		packages: {
-			isArray: 'Los paquetes deben ser un arreglo.',
+			isArray: 'La lista de paquetes tiene que ser un arreglo.',
 		},
 		state: {
 			isEnum: 'El estado no es válido.',
+			isInactive: 'El usuario está inactivo.',
 		},
 		points: {
 			isNumber: 'Los puntos deben ser un número.',
 			isPositive: 'Los puntos deben ser un número positivo.',
 		},
-		success: {
-			userRegistered: 'Usuario registrado con éxito.',
-			userLoggedIn: 'Usuario logueado con éxito.',
+		account: {
+			registered: 'Usuario registrado con éxito.',
+			loggedIn: 'Usuario logueado con éxito.',
+			unauthorized: 'No estás autorizado a realizar esta acción.',
+			userNotFound: 'El usuario no fue encontrado.',
+			wrongCredentials: 'Las credenciales de acceso son incorrectas.',
+			alreadyLoggedIn: 'Ya se encuentra logueado con un usuario activo. Por favor, cierre la sesión y vuelva a intentarlo.',
+			notFound: 'Usuario no encontrado.',
+			deleted: 'El usuario ${user.name} ${user.lastname} (${userId}) fue eliminado con éxito.',
+			selfDeleted: 'Tu cuenta fue eliminada con éxito.',
 		},
-		error: {
-			emailInUse: 'El correo ya está en uso.',
-			userNotFound: 'Usuario no encontrado.',
-			incorrectCredentials: 'Credenciales incorrectas.',
+		token: {
+			notFound: 'No se encontró el token de autenticación.',
+			invalidOrExpired: 'El token es inválido o expiró.',
 		},
 		mongoose: {
 			unique: 'El valor para {PATH} ya está en uso y debe ser único.',
+		},
+		error: {
+			internal: 'Error interno en el servidor.',
+		},
+	},
+	seed: {
+		success: {
+			seedCompleted: 'Base de datos reconstruida con datos de Faker.',
 		},
 	},
 };

@@ -16,7 +16,7 @@ import { User, UserSchema } from './entities/user.entity';
 			imports: [ConfigModule],
 			useFactory: async (configService: ConfigService) => ({
 				secret: configService.get<string>('JWT_SECRET'),
-				signOptions: { expiresIn: '60s' },
+				signOptions: { expiresIn: '2h' },
 			}),
 			inject: [ConfigService],
 		}),
@@ -24,5 +24,6 @@ import { User, UserSchema } from './entities/user.entity';
 	],
 	providers: [AuthService, JwtStrategy],
 	controllers: [AuthController],
+	exports: [JwtStrategy, PassportModule, JwtModule],
 })
 export class AuthModule {}

@@ -1,9 +1,9 @@
-name: Main Release
+name: Develop Release
 
 on:
   push:
     branches:
-      - main
+      - develop
 
 jobs:
   release:
@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: 0  
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
@@ -21,8 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Semantic Release for Main
+      - name: Semantic Release for Develop
         run: npx semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
-
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

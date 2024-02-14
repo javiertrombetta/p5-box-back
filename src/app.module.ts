@@ -12,11 +12,11 @@ import { LocationsModule } from './locations/locations.module';
 
 @Module({
 	imports: [
-		ServeStaticModule.forRoot({
-			rootPath: join(__dirname, '..', 'public'),
-		}),
 		ConfigModule.forRoot({
 			isGlobal: true,
+		}),
+		ServeStaticModule.forRoot({
+			rootPath: join(__dirname, '..', 'public'),
 		}),
 		MongooseModule.forRootAsync({
 			imports: [ConfigModule],
