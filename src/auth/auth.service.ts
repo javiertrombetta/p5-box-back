@@ -10,7 +10,8 @@ import { validationMessages } from '../common/constants';
 @Injectable()
 export class AuthService {
 	constructor(
-		@InjectModel(User.name) private userModel: Model<User>,
+		@InjectModel(User.name)
+		 private userModel: Model<User>,
 		private jwtService: JwtService,
 	) {}
 
