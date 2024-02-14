@@ -1,31 +1,34 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { IsEmail, IsEnum, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, Matches, MinLength, IsArray } from 'class-validator';
 import { CreateUserDto } from './create-user.dto';
 import { validationMessages } from '../../common/constants/validation-messages.constants';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
 	@IsOptional()
-	@IsString({ message: validationMessages.user.name.isString })
+	@IsString({ message: validationMessages.auth.name.isString })
 	name?: string;
 
 	@IsOptional()
-	@IsString({ message: validationMessages.user.lastname.isString })
+	@IsString({ message: validationMessages.auth.lastname.isString })
 	lastname?: string;
 
 	@IsOptional()
-	@IsEmail({}, { message: validationMessages.user.email.isEmail })
+	@IsEmail({}, { message: validationMessages.auth.email.isEmail })
 	email?: string;
 
 	@IsOptional()
-	@IsString({ message: validationMessages.user.password.isString })
-	@MinLength(6, { message: validationMessages.user.password.minLength })
+	@IsString({ message: validationMessages.auth.password.isString })
+	@MinLength(6, { message: validationMessages.auth.password.minLength })
 	@Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-		message: validationMessages.user.password.pattern,
+		message: validationMessages.auth.password.pattern,
 	})
 	password?: string;
 
 	@IsOptional()
-	@IsString({ message: validationMessages.user.role.isString })
-	@IsEnum(['repartidor', 'administrador'], { message: validationMessages.user.role.isEnum })
-	role?: string;
+	@IsArray({ message: validationMessages.auth.role.isArray })
+	@IsEnum(['repartidor', 'administrador'], {
+		each: true,
+		message: validationMessages.auth.role.isEnum,
+	})
+	roles?: string[];
 }

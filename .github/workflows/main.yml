@@ -1,4 +1,4 @@
-name: CI
+name: Main Release
 
 on:
   push:
@@ -6,17 +6,23 @@ on:
       - main
 
 jobs:
-  versioning:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          
-      - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Semantic Release for Main
+        run: npx semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: major
-          RELEASE_BRANCHES: main
-          WITH_V: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
+
