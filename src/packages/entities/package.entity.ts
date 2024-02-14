@@ -14,7 +14,7 @@ export class Package extends Document {
 	@Prop({ required: true })
 	deliveryAddress: string;
 
-	@Prop({ required: true, enum: ['pendiente', 'en camino', 'entregado'] })
+	@Prop({ required: true, default:'pendiente', enum: ['pendiente','asignado','en camino','entregado','sin entregar'] })
 	state: string;
 
 	@Prop({ type: String, ref: 'User' })
