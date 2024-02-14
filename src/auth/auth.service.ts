@@ -5,51 +5,74 @@ import { Model } from 'mongoose';
 import { CreateUserDto, LoginUserDto } from './dto';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { validationMessages } from '../common/constants/validation-messages.constants';
+import { validationMessages } from '../common/constants';
 
 @Injectable()
 export class AuthService {
 	constructor(
-		@InjectModel(User.name) private userModel: Model<User>,
+		@InjectModel(User.name)
+		private userModel: Model<User>,
 		private jwtService: JwtService,
 	) {}
 
-	async register(createUserDto: CreateUserDto) {
-		const { email } = createUserDto;
+	async register(createUserDto: CreateUserDto): Promise<void> {
+		const email = createUserDto.email.toLowerCase().trim();
 		const existingUser = await this.userModel.findOne({ email });
 
 		if (existingUser) {
-			throw new HttpException(validationMessages.user.error.emailInUse, HttpStatus.BAD_REQUEST);
+			throw new HttpException(validationMessages.auth.email.inUse, HttpStatus.BAD_REQUEST);
 		}
 
-		const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
-		await new this.userModel({
+		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+		const user = new this.userModel({
 			...createUserDto,
+			email,
 			password: hashedPassword,
-		}).save();
+			roles: createUserDto.roles || ['repartidor'],
+		});
+
+		await user.save();
 	}
 
-	async login(loginUserDto: LoginUserDto): Promise<{ cookie: string }> {
-		const { email, password } = loginUserDto;
-		const user = await this.userModel.findOne({ email }).exec();
+	async login(loginUserDto: LoginUserDto): Promise<{ token: string }> {
+		const email = loginUserDto.email.toLowerCase().trim();
+		const user = await this.userModel.findOne({ email });
 
 		if (!user) {
-			throw new HttpException(validationMessages.user.error.userNotFound, HttpStatus.UNAUTHORIZED);
+			throw new HttpException(validationMessages.auth.account.userNotFound, HttpStatus.UNAUTHORIZED);
 		}
 
-		const isPasswordMatching = await bcrypt.compare(password, user.password);
+		const isPasswordMatching = await bcrypt.compare(loginUserDto.password, user.password);
 		if (!isPasswordMatching) {
-			throw new HttpException(validationMessages.user.error.incorrectCredentials, HttpStatus.UNAUTHORIZED);
+			throw new HttpException(validationMessages.auth.account.wrongCredentials, HttpStatus.UNAUTHORIZED);
 		}
 
-		const payload = { email: user.email, sub: user._id.toString() };
+		const payload = { id: user._id };
 		const token = this.jwtService.sign(payload);
-		const cookie = `Authentication=${token}; HttpOnly; Path=/; Max-Age=${60 * 60}`;
 
-		return { cookie };
+		return { token };
+	}
+
+	async findAll(): Promise<User[]> {
+		return this.userModel.find().exec();
 	}
 
 	async findById(id: string): Promise<User | null> {
 		return this.userModel.findById(id).exec();
+	}
+
+	async updateUserRole(userId: string, newRoles: string[]): Promise<User> {
+		const updatedUser = await this.userModel.findByIdAndUpdate(userId, { roles: newRoles }, { new: true }).exec();
+		if (!updatedUser) {
+			throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
+		}
+		return updatedUser;
+	}
+
+	async deleteUser(userId: string): Promise<void> {
+		const result = await this.userModel.findByIdAndDelete(userId).exec();
+		if (!result) {
+			throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
+		}
 	}
 }

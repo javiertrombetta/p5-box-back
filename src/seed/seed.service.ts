@@ -5,6 +5,7 @@ import { User } from '../auth/entities/user.entity';
 import { Package } from '../packages/entities/package.entity';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
+import { validationMessages } from '../common/constants';
 
 @Injectable()
 export class SeedService {
@@ -20,7 +21,7 @@ export class SeedService {
 		const repartidores = [];
 
 		for (let i = 0; i < 20; i++) {
-			const userRole = faker.helpers.arrayElement(['repartidor', 'administrador']);
+			const roles = [faker.helpers.arrayElement(['repartidor', 'administrador'])];
 
 			const plainPassword = this.generatePassword();
 			const hashedPassword = await bcrypt.hash(plainPassword, 10);
@@ -28,15 +29,15 @@ export class SeedService {
 			const userData = {
 				name: faker.person.firstName(),
 				lastname: faker.person.lastName(),
-				email: faker.internet.email(),
+				email: faker.internet.email().toLowerCase(),
 				password: hashedPassword,
-				role: userRole,
+				roles,
 				points: faker.number.int({ min: 0, max: 100 }),
 			};
 
 			const newUser = await new this.userModel(userData).save();
 
-			if (userRole === 'repartidor') {
+			if (roles.includes('repartidor')) {
 				repartidores.push(newUser);
 			}
 		}
@@ -59,7 +60,7 @@ export class SeedService {
 			await this.userModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
 		}
 
-		return { message: 'Base de datos reconstruida con datos de Faker.' };
+		return { message: validationMessages.seed.success.seedCompleted };
 	}
 
 	generatePassword(): string {

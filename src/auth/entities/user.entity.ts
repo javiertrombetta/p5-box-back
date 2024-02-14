@@ -15,19 +15,22 @@ export class User extends Document {
 	@Prop({ required: true })
 	lastname: string;
 
-	@Prop({ required: true, unique: true })
+	@Prop({ required: true, unique: true, lowercase: true })
 	email: string;
 
 	@Prop({ required: true })
 	password: string;
 
-	@Prop({ default: 'repartidor', enum: ['repartidor', 'administrador'] })
-	role: string;
+	@Prop({
+		type: [{ type: String, enum: ['repartidor', 'administrador'] }],
+		default: ['repartidor'],
+	})
+	roles: string[];
 
 	@Prop({ type: [{ type: String, ref: 'Package' }] })
 	packages: string[];
 
-	@Prop({ default: 'active', enum: ['active', 'inactive'] })
+	@Prop({ default: 'activo', enum: ['activo', 'inactivo'] })
 	state: string;
 
 	@Prop({ default: 0 })
@@ -35,6 +38,14 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.pre('save', function (next) {
+	if (this.email) {
+		this.email = this.email.toLowerCase().trim();
+	}
+	next();
+});
+
 UserSchema.plugin(mongooseUniqueValidator, {
-	message: validationMessages.user.mongoose.unique,
+	message: validationMessages.auth.mongoose.unique,
 });
