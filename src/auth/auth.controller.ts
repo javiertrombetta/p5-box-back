@@ -26,6 +26,10 @@ export class AuthController {
 	@Post('login')
 	async login(@Body() loginUserDto: LoginUserDto, @Req() request: Request, @Res() res: Response) {
 		try {
+			if (request.cookies['Authentication']) {
+				return res.status(HttpStatus.BAD_REQUEST).json({ message: validationMessages.auth.account.alreadyLoggedIn });
+			}
+
 			const { token } = await this.authService.login(loginUserDto);
 			res.cookie('Authentication', token, {
 				httpOnly: true,
@@ -73,6 +77,11 @@ export class AuthController {
 	async deleteOwnUser(@Req() req: Request, @Res() res: Response) {
 		try {
 			const user = req.user as User;
+			const userExists = await this.authService.findById(user._id);
+			if (!userExists) {
+				throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.FORBIDDEN);
+			}
+
 			await this.authService.deleteUser(user._id);
 			res.clearCookie('Authentication');
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.selfDeleted });
