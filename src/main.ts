@@ -1,5 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { UnauthorizedExceptionFilter } from './common/filters';
+
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
@@ -14,6 +16,7 @@ async function main() {
 		methods: configService.get('CORS_METHODS'),
 		credentials: configService.get('CORS_CREDENTIALS') === 'true',
 	});
+	app.useGlobalFilters(new UnauthorizedExceptionFilter());
 	app.setGlobalPrefix(configService.get('GLOBAL_PREFIX'));
 	app.useGlobalPipes(
 		new ValidationPipe({
