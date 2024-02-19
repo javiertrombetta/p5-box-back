@@ -41,7 +41,8 @@ export const validationMessages = {
 		account: {
 			registered: 'Usuario registrado con éxito.',
 			loggedIn: 'Usuario logueado con éxito.',
-			unauthorized: 'No estás autorizado a realizar esta acción.',
+			logout: 'Sesión cerrada correctamente.',
+			unauthorized: 'No estás autorizado a realizar esta acción. Por favor, ingresá al sistema con credenciales de usuario válidas.',
 			userNotFound: 'El usuario no fue encontrado.',
 			wrongCredentials: 'Las credenciales de acceso son incorrectas.',
 			alreadyLoggedIn: 'Ya se encuentra logueado con un usuario activo. Por favor, cierre la sesión y vuelva a intentarlo.',
@@ -58,6 +59,7 @@ export const validationMessages = {
 		},
 		error: {
 			internal: 'Error interno en el servidor.',
+			urlNotFound: 'La ruta solicitada no existe.',
 		},
 	},
 	seed: {

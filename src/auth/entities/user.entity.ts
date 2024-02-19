@@ -30,6 +30,9 @@ export class User extends Document {
 	@Prop({ type: [{ type: String, ref: 'Package' }] })
 	packages: string[];
 
+	@Prop({ required: false })
+	photoUrl: string;
+
 	@Prop({ default: 'activo', enum: ['activo', 'inactivo'] })
 	state: string;
 
@@ -38,13 +41,6 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
-UserSchema.pre('save', function (next) {
-	if (this.email) {
-		this.email = this.email.toLowerCase().trim();
-	}
-	next();
-});
 
 UserSchema.plugin(mongooseUniqueValidator, {
 	message: validationMessages.auth.mongoose.unique,

@@ -42,6 +42,16 @@ export class AuthController {
 		}
 	}
 
+	@Post('logout')
+	@Auth(ValidRoles.administrador, ValidRoles.repartidor)
+	logout(@Req() req: Request, @Res() res: Response) {
+		res.clearCookie('Authentication', {
+			httpOnly: true,
+			path: '/',
+		});
+		res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.logout });
+	}
+
 	@Get('me')
 	@Auth(ValidRoles.repartidor, ValidRoles.administrador)
 	getProfile(@GetUser() user: User, @Res() res: Response) {
