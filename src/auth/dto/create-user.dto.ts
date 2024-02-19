@@ -38,6 +38,10 @@ export class CreateUserDto {
 	packages?: string[];
 
 	@IsOptional()
+	@IsString({ message: validationMessages.auth.photoUrl.isString })
+	photoUrl?: string;
+
+	@IsOptional()
 	@IsString({ message: validationMessages.auth.state.isEnum })
 	@IsEnum({ active: 'active', inactive: 'inactive' }, { message: validationMessages.auth.state.isEnum })
 	state?: string;

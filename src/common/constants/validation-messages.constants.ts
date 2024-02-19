@@ -30,6 +30,9 @@ export const validationMessages = {
 		packages: {
 			isArray: 'La lista de paquetes tiene que ser un arreglo.',
 		},
+		photoUrl: {
+			isString: 'La foto de usuario debe ser una cadena de texto.',
+		},
 		state: {
 			isEnum: 'El estado no es válido.',
 			isInactive: 'El usuario está inactivo.',
