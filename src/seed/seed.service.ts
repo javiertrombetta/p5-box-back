@@ -26,12 +26,15 @@ export class SeedService {
 			const plainPassword = this.generatePassword();
 			const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
+			const photoUrl = faker.image.avatar();
+
 			const userData = {
 				name: faker.person.firstName(),
 				lastname: faker.person.lastName(),
 				email: faker.internet.email().toLowerCase(),
 				password: hashedPassword,
 				roles,
+				photoUrl,
 				points: faker.number.int({ min: 0, max: 100 }),
 			};
 
@@ -49,7 +52,7 @@ export class SeedService {
 				const packageData = {
 					description: faker.commerce.productDescription(),
 					deliveryAddress: faker.location.streetAddress(),
-					state: faker.helpers.arrayElement(['pendiente', 'en camino', 'entregado']),
+					state: faker.helpers.arrayElement(['pendiente', 'asignado', 'en camino', 'entregado', 'sin entregar']),
 					deliveryMan: repartidor._id,
 				};
 
