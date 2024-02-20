@@ -1,25 +1,38 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+
 
 export class CreatePackageDto {
-	@IsOptional()//lo agregue
-    @IsNotEmpty()//decoradores de validación
-    @IsString()
-    description: string;
 
-	@IsOptional()//lo agregue
-    @IsNotEmpty()
-    @IsString()
-    deliveryAddress: string;
+   @IsOptional()
+   @IsNotEmpty()
+   @IsString()
+   deliveryFullname: string;
 
-	@IsOptional()
-	@IsNotEmpty()
-	@IsString()
-	@IsEnum({ pendiente: 'pendiente', en_camino: 'en camino', entregado: 'entregado' })
-	state?: string;
+   @IsOptional()
+   @IsNotEmpty()
+   @IsString()
+   deliveryAddress: string;
 
-	@IsOptional()
-	@IsNotEmpty()
-	@IsString()
-	@IsUUID()
-	deliveryMan?: string;
+   @IsOptional()
+   @IsNotEmpty()
+   @IsNumber()
+   deliveryWeight: number;
+
+   @IsOptional()
+   @IsNotEmpty()
+   @IsDate()
+   daliveryDate: Date;
+
+   @IsOptional()
+   @IsNotEmpty()
+   @IsString()
+   @IsUUID()
+   deliveryMan?: string;
+
+   @IsOptional()
+   @IsNotEmpty()
+   @IsString()
+   @IsEnum({ disponible:"disponible",pendiente: 'pendiente', en_curso: 'en curso', entregado: 'entregado' })
+   state?: string;
+
 }
