@@ -64,6 +64,34 @@ export const validationMessages = {
 			internal: 'Error interno en el servidor.',
 			urlNotFound: 'La ruta solicitada no existe.',
 		},
+		forgotPassword: {
+			emailSent: 'Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña.',
+			userNotFound: 'No existe una cuenta con ese correo electrónico.',
+			error: 'Ocurrió un error al intentar realizar la operación de restablecimiento de contraseña.',
+		},
+		resetPassword: {
+			success: 'La contraseña ha sido restablecida con éxito.',
+			tokenInvalidOrExpired: 'El token de restablecimiento no es válido o ha expirado.',
+			error: 'Ocurrió un error al restablecer la contraseña.',
+		},
+	},
+	mail: {
+		from: '"Box" <cuenta@dominio.com>',
+		resetPasswordEmail: {
+			subject: 'Restablecimiento de contraseña',
+			body: `
+				<h1>Solicitud de restablecimiento de contraseña</h1>
+				<p>Para restablecer tu contraseña, por favor sigue el siguiente enlace:</p>
+				<a href="{{resetUrl}}">Restablecer contraseña</a>
+			`,
+		},
+		passwordChanged: {
+			subject: 'Tu contraseña ha sido cambiada',
+			body: `
+				<h1>Cambio de Contraseña</h1>
+				<p>Este es un correo de confirmación de que la contraseña para tu cuenta ha sido cambiada correctamente.</p>
+			`,
+		},
 	},
 	seed: {
 		success: {

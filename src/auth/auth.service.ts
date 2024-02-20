@@ -2,10 +2,13 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
+
+import { validationMessages } from '../common/constants';
 import { CreateUserDto, LoginUserDto } from './dto';
 import { User } from './entities/user.entity';
-import * as bcrypt from 'bcrypt';
-import { validationMessages } from '../common/constants';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +16,7 @@ export class AuthService {
 		@InjectModel(User.name)
 		private userModel: Model<User>,
 		private jwtService: JwtService,
+		private mailService: MailService,
 	) {}
 
 	async register(createUserDto: CreateUserDto): Promise<void> {
@@ -74,5 +78,47 @@ export class AuthService {
 		if (!result) {
 			throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
 		}
+	}
+
+	async forgotPassword(email: string): Promise<void> {
+		const user = await this.userModel.findOne({ email: email.toLowerCase().trim() });
+		if (!user) {
+			throw new HttpException(validationMessages.auth.forgotPassword.userNotFound, HttpStatus.BAD_REQUEST);
+		}
+
+		const resetToken = uuidv4();
+		const expirationTime = new Date();
+		expirationTime.setHours(expirationTime.getHours() + 1);
+
+		user.resetPasswordToken = resetToken;
+		user.resetPasswordExpires = expirationTime;
+
+		await user.save();
+
+		const resetUrl = `${process.env.FRONTEND_URL_DEV}/reset-password?token=${resetToken}`;
+
+		const mailContent = validationMessages.mail.resetPasswordEmail.body.replace('{{resetUrl}}', resetUrl);
+
+		await this.mailService.sendMail(user.email, validationMessages.mail.resetPasswordEmail.subject, mailContent);
+	}
+
+	async resetPassword(token: string, newPassword: string): Promise<void> {
+		const user = await this.userModel.findOne({
+			resetPasswordToken: token,
+			resetPasswordExpires: { $gt: Date.now() },
+		});
+
+		if (!user) {
+			throw new HttpException(validationMessages.auth.resetPassword.tokenInvalidOrExpired, HttpStatus.BAD_REQUEST);
+		}
+
+		const hashedPassword = await bcrypt.hash(newPassword, 10);
+		user.password = hashedPassword;
+		user.resetPasswordToken = undefined;
+		user.resetPasswordExpires = undefined;
+		await user.save();
+
+		const mailContent = validationMessages.mail.passwordChanged.body;
+		await this.mailService.sendMail(user.email, validationMessages.mail.passwordChanged.subject, mailContent);
 	}
 }
