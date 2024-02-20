@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { User, UserSchema } from './entities/user.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
 	imports: [
@@ -21,6 +22,7 @@ import { User, UserSchema } from './entities/user.entity';
 			inject: [ConfigService],
 		}),
 		MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+		MailModule,
 	],
 	providers: [AuthService, JwtStrategy],
 	controllers: [AuthController],
