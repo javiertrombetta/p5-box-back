@@ -6,6 +6,7 @@ import { Package } from '../packages/entities/package.entity';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
 import { validationMessages } from '../common/constants';
+import { startOfDay } from 'date-fns';
 
 @Injectable()
 export class SeedService {
@@ -22,10 +23,8 @@ export class SeedService {
 
 		for (let i = 0; i < 20; i++) {
 			const roles = [faker.helpers.arrayElement(['repartidor', 'administrador'])];
-
 			const plainPassword = this.generatePassword();
 			const hashedPassword = await bcrypt.hash(plainPassword, 10);
-
 			const photoUrl = faker.image.avatar();
 
 			const userData = {
@@ -50,9 +49,11 @@ export class SeedService {
 
 			for (let j = 0; j < Math.floor(Math.random() * 10) + 1; j++) {
 				const packageData = {
-					description: faker.commerce.productDescription(),
+					deliveryFullname: faker.person.fullName(),
 					deliveryAddress: faker.location.streetAddress(),
-					state: faker.helpers.arrayElement(['pendiente', 'asignado', 'en camino', 'entregado', 'sin entregar']),
+					deliveryWeight: faker.number.float({ min: 1, max: 100, multipleOf: 0.25 }),
+					daliveryDate: startOfDay(faker.date.soon()),
+					state: faker.helpers.arrayElement(['pendiente', 'disponible', 'en curso', 'entregado', 'sin entregar']),
 					deliveryMan: repartidor._id,
 				};
 

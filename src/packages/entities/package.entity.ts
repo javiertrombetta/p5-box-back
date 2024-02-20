@@ -17,7 +17,7 @@ export class Package extends Document {
 	@Prop({ required: true })
 	deliveryWeight: number;
 
-	@Prop({ required: true })
+	@Prop()
 	daliveryDate: Date;
 
 	@Prop({ type: String, ref: 'User' })
