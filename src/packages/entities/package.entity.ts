@@ -27,7 +27,6 @@ export class Package extends Document {
    @Prop({ required: true, default:'disponible', enum: ['pendiente','disponible','en curso','entregado','sin entregar']})
    state: string;
 
-
 }
 export const PackageSchema = SchemaFactory.createForClass(Package);
 PackageSchema.plugin(mongooseUniqueValidator, { message: 'El {PATH} tiene que ser único.' });
