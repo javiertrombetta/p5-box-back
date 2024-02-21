@@ -1,12 +1,9 @@
 import { HttpException, HttpStatus, Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
-
 import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-
 import { Package } from './entities/package.entity';
 import { User } from '../auth/entities';
 import { validationMessages } from '../common/constants';
-
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 
@@ -18,13 +15,22 @@ export class PackagesService {
 		@InjectModel(User.name) private readonly userModel: mongoose.Model<User>,
 	) {}
 
-	async findAll(): Promise<Package[]> {
-		return await this.packageModel.find({ state: 'entregado' }).exec();
+    async findById(id: string): Promise<Package> {
+		const paquete = await this.packageModel.findById(id);
+		if (!paquete) {
+			throw new NotAcceptableException('No hay Paquete');
+		}
+		return paquete;
 	}
 
-	async findAvailable(): Promise<Package[]> {
-		return await this.packageModel.find({ state: 'pendiente' }).exec();
-	}
+    async findAvailablePackage(deliveryManId: string): Promise<Package[]>{
+        return await this.packageModel
+        .find({
+            deliveryMan: deliveryManId,
+            state: validationMessages.packages.state.available
+        })
+        .exec();
+    }
 
 	async findDeliveredPackageByDeliveryMan(deliveryManId: string): Promise<Package[]> {
 		return await this.packageModel
@@ -67,14 +73,6 @@ export class PackagesService {
 			new: true,
 			runValidators: true,
 		});
-	}
-
-	async findById(id: string): Promise<Package> {
-		const paquete = await this.packageModel.findById(id);
-		if (!paquete) {
-			throw new NotAcceptableException('No hay Paquete');
-		}
-		return paquete;
 	}
 
 	async deleteById(id: string): Promise<Package> {
