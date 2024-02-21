@@ -14,8 +14,20 @@ export class PackagesService {
    ){}
 
    async findAll(): Promise<Package[]>{
-   return await this.packageModel.find().exec()
+   return await this.packageModel.find({state:'entregado'}).exec()
    }
+
+   async findAvailable(): Promise<Package[]>{
+    return await this.packageModel.find({state:'pendiente'}).exec()
+    }
+
+    async findById(id:string):Promise<Package>{
+        const paquete = await this.packageModel.findById(id)
+        if(!paquete){
+            throw new NotAcceptableException("No hay Paquete")
+        }
+        return paquete
+    }
 
    async create(createPackageDto: CreatePackageDto): Promise<Package>{
        const paquetes = new this.packageModel(createPackageDto);
@@ -58,13 +70,7 @@ export class PackagesService {
        })
    }
 
-   async findById(id:string):Promise<Package>{
-       const paquete = await this.packageModel.findById(id)
-       if(!paquete){
-           throw new NotAcceptableException("No hay Paquete")
-       }
-       return paquete
-   }
+
 
    async deleteById(id: string): Promise<Package>{
        return await this.packageModel.findByIdAndDelete(id)
