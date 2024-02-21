@@ -32,7 +32,7 @@ export class CreateUserDto {
 	roles?: string[];
 
 	@IsOptional()
-	@IsArray({ message: validationMessages.auth.packages.isArray })
+	@IsArray({ message: validationMessages.packages.userArray.isArray })
 	@ValidateNested({ each: true })
 	@Type(() => String)
 	packages?: string[];

@@ -10,6 +10,7 @@ import { RewardsModule } from './rewards/rewards.module';
 import { CommonModule } from './common/common.module';
 import { LocationsModule } from './locations/locations.module';
 import { MailModule } from './mail/mail.module';
+import { LogModule } from './log/log.module';
 
 @Module({
 	imports: [
@@ -33,6 +34,7 @@ import { MailModule } from './mail/mail.module';
 		CommonModule,
 		LocationsModule,
 		MailModule,
+		LogModule,
 	],
 })
 export class AppModule {}

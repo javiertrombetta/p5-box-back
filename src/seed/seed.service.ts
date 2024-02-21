@@ -1,23 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User } from '../auth/entities/user.entity';
-import { Package } from '../packages/entities/package.entity';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
-import { validationMessages } from '../common/constants';
 import { startOfDay } from 'date-fns';
+
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+
+import { User } from '../auth/entities';
+import { Package } from '../packages/entities';
+import { Log } from '../log/entities';
+
+import { validationMessages } from '../common/constants';
 
 @Injectable()
 export class SeedService {
 	constructor(
 		@InjectModel(User.name) private readonly userModel: Model<User>,
 		@InjectModel(Package.name) private readonly packageModel: Model<Package>,
+		@InjectModel(Log.name) private readonly logModel: Model<Log>,
 	) {}
 
 	async populateDB() {
 		await this.userModel.deleteMany({});
 		await this.packageModel.deleteMany({});
+		await this.logModel.deleteMany({});
 
 		const repartidores = [];
 
