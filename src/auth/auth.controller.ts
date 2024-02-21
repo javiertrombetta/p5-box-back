@@ -65,10 +65,16 @@ export class AuthController {
 	}
 
 	@Post('resetPassword')
-	async resetPassword(@Body() resetPasswordDto: ResetPasswordDto, @Res() res: Response) {
+	async resetPassword(@Body() resetPasswordDto: ResetPasswordDto, @Req() req: Request, @Res() res: Response) {
 		try {
 			const { token, newPassword } = resetPasswordDto;
 			await this.authService.resetPassword(token, newPassword);
+
+			res.clearCookie('Authentication', {
+				httpOnly: true,
+				path: '/',
+			});
+
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.resetPassword.success });
 		} catch (error) {
 			this.handleException(error, res);
