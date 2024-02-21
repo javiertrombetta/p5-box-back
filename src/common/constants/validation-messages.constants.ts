@@ -18,6 +18,7 @@ export const validationMessages = {
 			isString: 'La contraseña debe ser una cadena de texto.',
 			minLength: 'La contraseña debe tener al menos 6 caracteres.',
 			pattern: 'La contraseña debe incluir una letra mayúscula, una minúscula y un número.',
+			reset: 'RESET',
 		},
 		role: {
 			isNotEmpty: 'El campo rol no puede estar vacío.',
@@ -94,11 +95,13 @@ export const validationMessages = {
 		userArray: {
 			notFound: 'Paquete no encontrado o no asignado al repartidor.',
 			isArray: 'La lista de paquetes tiene que ser un arreglo.',
+			notEmpty: 'El listado de paquetes del usuario no está vacío.',
 		},
 		error: {
 			updateUserArr: 'No se pudo actualizar el paquete de la lista.',
 			notFound: {
-				userArray: 'Usuario no encontrado o lista de paquetes no válida',
+				userArray: 'Usuario no encontrado o lista de paquetes no válida.',
+				package: 'Paquete no encontrado.',
 			},
 			delivered: 'Error al obtener los paquetes entregados.',
 		},
@@ -115,15 +118,25 @@ export const validationMessages = {
 			seedCompleted: 'Base de datos reconstruida con datos de Faker.',
 		},
 	},
+	error: {
+		handler: {
+			unexpected: 'Ocurrió un error inesperado.',
+		},
+	},
 	log: {
 		action: {
-			create: 'Create',
-			update: 'Update',
-			delete: 'Delete',
-			login: 'Login',
-			logout: 'Logout',
-			forgotPassword: 'Forgot',
-			resetPassword: 'Reset',
+			user: {
+				register: 'CREATE_User',
+				updateRole: 'UPDATE_User_Role',
+				deleteUser: 'DELETE_User',
+				login: 'INFO_Login',
+				logout: 'INFO_Logout',
+				forgotPassword: 'INFO_Forgot_password',
+				resetPassword: 'UPDATE_Reset_Password',
+			},
+			packages: {
+				updateUserPackages: 'UPDATE_User_Packages',
+			},
 		},
 		entity: {
 			user: 'User',
