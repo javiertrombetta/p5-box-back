@@ -11,19 +11,26 @@ export class PackagesController {
    constructor(private readonly packagesService: PackagesService) {}
 
 
-//RUTA PARA OBTENER LISTADO DE PAQUETES DE TODOS LOS USUARIOS
-   @Get('all')
+
+//RUTA PARA OBTENER LISTADO DE PAQUETES ENTREGADOS
+   @Get('me/delivered')
    findAll() {
        return this.packagesService.findAll();
    }
-//GET packages/me/details
-//RUTA PARA VER UN PAQUETE
-   @Get('/me/:userid')
-   findById(@Param('userid') id: string) {
+//RUTA PARA VER LOS PAQUETES DISPONIBLES
+   @Get('me/available')
+   findAvailable(){
+      return this.packagesService.findAvailable()
+   }
+
+//RUTA PARA VER EL DETALLE DE UN PAQUETE
+   @Get('/me/:packagerId')
+   findById(@Param('packagerId') id: string) {
        return this.packagesService.findById(id);
    }
-   //GET (USER) /packages  - Obtener listado de paquetes del propio usuario / buscar el id de tu propio usuario
 
+
+      //GET (USER) /packages  - Obtener listado de paquetes del propio usuario / buscar el id de tu propio usuario
 
 //RUTA PARA CREAR UN PAQUETE DESDE EL ADMIN
 //checkear crear paquete y verificar si es delivery man que sea consistente con lo que existe, el id del reapartidor y que tenga state activo.
