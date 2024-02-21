@@ -31,4 +31,8 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 		message: validationMessages.auth.role.isEnum,
 	})
 	roles?: string[];
+
+	@IsOptional()
+	@IsString({ message: validationMessages.auth.photoUrl.isString })
+	photoUrl?: string;
 }

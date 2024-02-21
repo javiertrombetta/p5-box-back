@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User } from '../auth/entities/user.entity';
-import { Package } from '../packages/entities/package.entity';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
+import { startOfDay } from 'date-fns';
+
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+
+import { User } from '../auth/entities';
+import { Package } from '../packages/entities';
+import { Log } from '../log/entities';
+
 import { validationMessages } from '../common/constants';
 
 @Injectable()
@@ -12,19 +17,21 @@ export class SeedService {
 	constructor(
 		@InjectModel(User.name) private readonly userModel: Model<User>,
 		@InjectModel(Package.name) private readonly packageModel: Model<Package>,
+		@InjectModel(Log.name) private readonly logModel: Model<Log>,
 	) {}
 
 	async populateDB() {
 		await this.userModel.deleteMany({});
 		await this.packageModel.deleteMany({});
+		await this.logModel.deleteMany({});
 
 		const repartidores = [];
 
 		for (let i = 0; i < 20; i++) {
 			const roles = [faker.helpers.arrayElement(['repartidor', 'administrador'])];
-
 			const plainPassword = this.generatePassword();
 			const hashedPassword = await bcrypt.hash(plainPassword, 10);
+			const photoUrl = faker.image.avatar();
 
 			const userData = {
 				name: faker.person.firstName(),
@@ -32,6 +39,7 @@ export class SeedService {
 				email: faker.internet.email().toLowerCase(),
 				password: hashedPassword,
 				roles,
+				photoUrl,
 				points: faker.number.int({ min: 0, max: 100 }),
 			};
 
@@ -47,9 +55,11 @@ export class SeedService {
 
 			for (let j = 0; j < Math.floor(Math.random() * 10) + 1; j++) {
 				const packageData = {
-					description: faker.commerce.productDescription(),
+					deliveryFullname: faker.person.fullName(),
 					deliveryAddress: faker.location.streetAddress(),
-					state: faker.helpers.arrayElement(['pendiente', 'en camino', 'entregado']),
+					deliveryWeight: faker.number.float({ min: 1, max: 100, multipleOf: 0.25 }),
+					daliveryDate: startOfDay(faker.date.soon()),
+					state: faker.helpers.arrayElement(['pendiente', 'disponible', 'en curso', 'entregado', 'sin entregar']),
 					deliveryMan: repartidor._id,
 				};
 

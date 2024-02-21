@@ -1,1 +1,1 @@
-export { User as UserDocument, UserSchema } from './user.entity';
+export { User, UserSchema } from './user.entity';

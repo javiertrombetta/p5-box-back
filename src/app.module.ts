@@ -9,6 +9,8 @@ import { PackagesModule } from './packages/packages.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { CommonModule } from './common/common.module';
 import { LocationsModule } from './locations/locations.module';
+import { MailModule } from './mail/mail.module';
+import { LogModule } from './log/log.module';
 
 @Module({
 	imports: [
@@ -31,6 +33,8 @@ import { LocationsModule } from './locations/locations.module';
 		RewardsModule,
 		CommonModule,
 		LocationsModule,
+		MailModule,
+		LogModule,
 	],
 })
 export class AppModule {}
