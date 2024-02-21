@@ -1,64 +1,119 @@
-import { Injectable, NotAcceptableException } from '@nestjs/common';
-import { CreatePackageDto } from './dto/create-package.dto';
-import { UpdatePackageDto } from './dto/update-package.dto';
+import { Inject, Injectable, NotAcceptableException, NotFoundException, forwardRef } from '@nestjs/common';
+import { Response } from 'express';
+import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Package } from './entities/package.entity';
-import mongoose from 'mongoose';
-//aqui definimos los metodos
+import { validationMessages } from '../common/constants';
+import { CreatePackageDto, UpdatePackageDto } from './dto';
+import { AuthService } from 'src/auth/auth.service';
+import { ExceptionHandlerService } from '../common/helpers';
+
 @Injectable()
 export class PackagesService {
-	[x: string]: any;
 	constructor(
-		@InjectModel(Package.name)
-		private packageModel: mongoose.Model<Package>
-	){}
+		@InjectModel(Package.name) private packageModel: mongoose.Model<Package>,
+		@Inject(forwardRef(() => AuthService)) private authService: AuthService,
+	) {}
 
-	async findAll(): Promise<Package[]>{
-	return await this.packageModel.find().exec()
-	}
-
-	async create(createPackageDto: CreatePackageDto): Promise<Package>{
-		const paquetes = new this.packageModel(createPackageDto);
-		return await paquetes.save()
-	}
-
-	async findById(id:string):Promise<Package>{
-		const paquete = await this.packageModel.findById(id)
-		if(!paquete){
-			throw new NotAcceptableException("No hay Paquete")
+	async findById(id: string): Promise<Package> {
+		const paquete = await this.packageModel.findById(id);
+		if (!paquete) {
+			throw new NotAcceptableException('No hay Paquete');
 		}
-		return paquete
+		return paquete;
 	}
 
-	async updateById(id: string,updatePackageDto:UpdatePackageDto):Promise<Package>{
-		return await this.packageModel.findByIdAndUpdate(id,updatePackageDto,{
-			new: true,
-			runValidators: true
-		})
+	async findAvailablePackage(deliveryManId: string): Promise<Package[]> {
+		return await this.packageModel
+			.find({
+				deliveryMan: deliveryManId,
+				state: validationMessages.packages.state.available,
+			})
+			.exec();
+	}
+	async findAll(): Promise<Package[]> {
+		return this.packageModel.find({ state: validationMessages.packages.state.delivered }).exec();
 	}
 
-	async deleteById(id: string): Promise<Package>{
-		return await this.packageModel.findByIdAndDelete(id)
+	async findAvailable(): Promise<Package[]> {
+		return this.packageModel.find({ state: validationMessages.packages.state.available }).exec();
 	}
 
+	async findDeliveredPackageByDeliveryMan(deliveryManId: string): Promise<Package[]> {
+		return this.packageModel
+			.find({
+				deliveryMan: deliveryManId,
+				state: validationMessages.packages.state.delivered,
+			})
+			.exec();
+	}
 
-	// create(createPackageDto: CreatePackageDto) {
-	// 	return 'This action adds a new package';
-	// }
+	async create(createPackageDto: CreatePackageDto): Promise<Package> {
+		const newPackage = new this.packageModel(createPackageDto);
+		return newPackage.save();
+	}
 
-	// findAll() {
-	// 	return `This action returns all packages`;
-	// }
+	async assignPaqueteAUsuario(userId: string, packageId: string, performedById: string, res: Response): Promise<Package> {
+		try {
+			const packageToUpdate = await this.packageModel.findById(packageId);
+			if (!packageToUpdate) {
+				throw new NotFoundException(validationMessages.packages.error.notFound);
+			}
 
-	// findOne(id: number) {
-	// 	return `This action returns a #${id} package`;
-	// }
+			await this.authService.updateUserPackages(userId, packageId, performedById);
 
-	// update(id: number, updatePackageDto: UpdatePackageDto) {
-	// 	return `This action updates a #${id} package`;
-	// }
+			packageToUpdate.deliveryMan = userId;
+			packageToUpdate.state = validationMessages.packages.state.pending;
+			return packageToUpdate.save();
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
 
-	// remove(id: number) {
-	// 	return `This action removes a #${id} package`;
-	// }
+	async updateById(id: string, updatePackageDto: UpdatePackageDto): Promise<Package> {
+		return this.packageModel.findByIdAndUpdate(id, updatePackageDto, { new: true }).exec();
+	}
+
+	async deleteById(id: string): Promise<Package> {
+		return this.packageModel.findByIdAndDelete(id).exec();
+	}
+
+	async findPackagesByDeliveryMan(deliveryManId: string): Promise<Package[]> {
+		return this.packageModel.find({ deliveryMan: deliveryManId }).exec();
+	}
+
+	async findPackageByDeliveryManAndId(deliveryManId: string, packageId: string): Promise<Package | null> {
+		return this.packageModel.findOne({ _id: packageId, deliveryMan: deliveryManId }).exec();
+	}
+
+	async updatePackageOnDelete(packageId: string, res: Response): Promise<void> {
+		try {
+			const packageToUpdate = await this.packageModel.findById(packageId);
+			if (!packageToUpdate) {
+				throw new NotFoundException(validationMessages.packages.error.notFound);
+			}
+
+			packageToUpdate.deliveryMan = null;
+			packageToUpdate.state = validationMessages.packages.state.available;
+			await packageToUpdate.save();
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
+
+	async changeStateAndReorder(userId: string, uuidPackage: string, performedById: string, res: Response): Promise<Package> {
+		try {
+			const packageToUpdate = await this.packageModel.findById(uuidPackage);
+			if (!packageToUpdate) {
+				throw new NotFoundException(validationMessages.packages.error.notFound);
+			}
+
+			await this.authService.reorderUserPackages(userId, uuidPackage, performedById);
+
+			packageToUpdate.state = validationMessages.packages.state.onTheWay;
+			return packageToUpdate.save();
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
 }
