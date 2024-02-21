@@ -204,19 +204,13 @@ export class AuthController {
 
 	@Put('me/packages/:uuidPackage')
 	@Auth(ValidRoles.repartidor)
-	async changePackageStateAndReorder(@Param('uuidPackage') uuidPackage: string, @GetUser() user) {
-		const fullUserDetails = await this.authService.findById(user.id);
-
-		if (!fullUserDetails.packages.includes(uuidPackage)) {
-			throw new HttpException(validationMessages.packages.userArray.notFound, HttpStatus.NOT_FOUND);
+	async changePackageStateAndReorder(@Param('uuidPackage') uuidPackage: string, @GetUser() user, @Res() res: Response) {
+		try {
+			const pkg = await this.packagesService.changeStateAndReorder(user.id, uuidPackage, user.id.toString(), res);
+			res.status(HttpStatus.OK).json(pkg);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
 		}
-
-		const pkg = await this.packagesService.changeStateAndReorder(user.id, uuidPackage);
-		if (!pkg) {
-			throw new HttpException(validationMessages.packages.error.updateUserArr, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
-		return pkg;
 	}
 
 	// DELETE
@@ -231,7 +225,7 @@ export class AuthController {
 				throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.FORBIDDEN);
 			}
 
-			await this.authService.deleteUser(user._id, user._id.toString());
+			await this.authService.deleteUser(user._id, user._id.toString(), res);
 			res.clearCookie('Authentication');
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.selfDeleted });
 		} catch (error) {
@@ -250,7 +244,7 @@ export class AuthController {
 			}
 
 			if (authenticatedUser._id === userId) {
-				await this.authService.deleteUser(userId, userId.toString());
+				await this.authService.deleteUser(userId, userId.toString(), res);
 				res.clearCookie('Authentication');
 				return res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.selfDeleted });
 			}
@@ -260,7 +254,7 @@ export class AuthController {
 				throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
 			}
 
-			await this.authService.deleteUser(userId, userId.toString());
+			await this.authService.deleteUser(userId, userId.toString(), res);
 
 			res.status(HttpStatus.OK).json({
 				message: validationMessages.auth.account.deleted.replace('${user.name}', userToDelete.name).replace('${user.lastname}', userToDelete.lastname),

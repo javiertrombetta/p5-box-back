@@ -1,24 +1,15 @@
 // src/packages/packages.module.ts
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-
-import { User, UserSchema } from '../auth/entities/user.entity';
 
 import { PackagesController } from './packages.controller';
 import { PackagesService } from './packages.service';
 import { Package, PackageSchema } from './entities/package.entity';
 import { PassportModule } from '@nestjs/passport';
-// import { AuthModule } from '../auth/auth.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-	imports: [
-		PassportModule.register({ defaultStrategy: 'jwt' }),
-		MongooseModule.forFeature([
-			{ name: Package.name, schema: PackageSchema },
-			{ name: User.name, schema: UserSchema },
-		]),
-		// AuthModule,
-	],
+	imports: [PassportModule.register({ defaultStrategy: 'jwt' }), MongooseModule.forFeature([{ name: Package.name, schema: PackageSchema }]), forwardRef(() => AuthModule)],
 	controllers: [PackagesController],
 	providers: [PackagesService],
 	exports: [PackagesService],
