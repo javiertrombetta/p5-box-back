@@ -89,11 +89,30 @@ export class AuthService {
 		return this.userModel.findById(id).exec();
 	}
 
-	async updateUserRole(userId: string, newRoles: string[]): Promise<User> {
+	async updateUserRole(userId: string, newRoles: string[], performedById: string): Promise<User> {
+		const originalUser = await this.userModel.findById(userId);
+
+		if (!originalUser) {
+			throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
+		}
+
 		const updatedUser = await this.userModel.findByIdAndUpdate(userId, { roles: newRoles }, { new: true }).exec();
+
 		if (!updatedUser) {
 			throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
 		}
+
+		await this.logService.create({
+			action: validationMessages.log.action.update,
+			entity: validationMessages.log.entity.user,
+			entityId: updatedUser._id.toString(),
+			changes: {
+				oldRoles: originalUser.roles,
+				newRoles: updatedUser.roles,
+			},
+			performedBy: performedById,
+		});
+
 		return updatedUser;
 	}
 

@@ -19,7 +19,11 @@ export class PackagesService {
 	) {}
 
 	async findAll(): Promise<Package[]> {
-		return await this.packageModel.find().exec();
+		return await this.packageModel.find({ state: 'entregado' }).exec();
+	}
+
+	async findAvailable(): Promise<Package[]> {
+		return await this.packageModel.find({ state: 'pendiente' }).exec();
 	}
 
 	async create(createPackageDto: CreatePackageDto): Promise<Package> {
@@ -32,10 +36,6 @@ export class PackagesService {
 
 		if (!packageToUpdate) {
 			throw new NotFoundException('Package not found');
-		}
-
-		if (packageToUpdate.state !== 'disponible') {
-			throw new NotAcceptableException('Package no esta disponible');
 		}
 
 		const user = await this.userService.findById(userId);
