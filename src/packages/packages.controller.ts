@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param, Delete, ValidationPipe, Put } from '@nestjs/common';
 
-import { Package } from './entities/package.entity';
+// import { Package } from './entities/package.entity';
 import { PackagesService } from './packages.service';
 
 import { CreatePackageDto } from './dto/create-package.dto';
@@ -24,8 +24,11 @@ export class PackagesController {
 	}
 	//GET (USER) /packages  - Obtener listado de paquetes del propio usuario / buscar el id de tu propio usuario
 
-	//RUTA PARA CREAR UN PAQUETE DESDE EL ADMIN
-	//checkear crear paquete y verificar si es delivery man que sea consistente con lo que existe, el id del reapartidor y que tenga state activo.
+	//RUTA PARA VER LOS PAQUETES DISPONIBLES
+	@Get('me/available')
+	findAvailable() {
+		return this.packagesService.findAvailable();
+	}
 
 	//POST packages/new
 	@Post('new')
@@ -33,19 +36,10 @@ export class PackagesController {
 		return this.packagesService.create(createPackageDto);
 	}
 
-	//POST packages/me/assign
-	//cambiarlo a pendiente porque estan en disponibles
-	//2do verificar que el array este vacio,sino esta vacio
-	//insertarlo al array del usuario a estos paquetes
-	// @Post('me/assing')
-	// assingPackage(@Body(ValidationPipe) createPackageDto:CreatePackageDto){
-	//  return this.packagesService.create(createPackageDto)
-	// }
-	//escuchar,obtener y devolver un mensaje
-	@Post('me/assign')
-	async assignPaqueteAUsuario(@Body('userId') userId: string, @Body('packageId') packageId: string): Promise<Package> {
-		return await this.packagesService.assignPaqueteAUsuario(userId, packageId);
-	}
+	//GET (USER) /packages  - Obtener listado de paquetes del propio usuario / buscar el id de tu propio usuario
+
+	//RUTA PARA CREAR UN PAQUETE DESDE EL ADMIN
+	//checkear crear paquete y verificar si es delivery man que sea consistente con lo que existe, el id del reapartidor y que tenga state activo.
 
 	//POST packages/me/finish
 	//ESTE ES UN PUT NO UN POST

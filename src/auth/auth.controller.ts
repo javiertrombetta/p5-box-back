@@ -187,9 +187,9 @@ export class AuthController {
 
 	@Put('users/:userId/role')
 	@Auth(ValidRoles.administrador)
-	async updateUserRole(@Param('userId') userId: string, @Body() updateUserDto: UpdateUserDto, @Res() res: Response) {
+	async updateUserRole(@Param('userId') userId: string, @Body() updateUserDto: UpdateUserDto, @GetUser('id') performedById: string, @Res() res: Response) {
 		try {
-			const updatedUser = await this.authService.updateUserRole(userId, updateUserDto.roles);
+			const updatedUser = await this.authService.updateUserRole(userId, updateUserDto.roles, performedById);
 			if (!updatedUser) {
 				throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
 			}
