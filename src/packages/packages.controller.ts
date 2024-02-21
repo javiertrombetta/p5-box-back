@@ -38,9 +38,9 @@ export class PackagesController {
 
 	@Get('me/delivered')
 	@Auth(ValidRoles.repartidor)
-	async getDeliveredPackages(@GetUser() userId: string, @Res() res: Response) {
+	async getDeliveredPackages(@GetUser() user, @Res() res: Response) {
 		try {
-			const packages = await this.packagesService.findDeliveredPackageByDeliveryMan(userId);
+			const packages = await this.packagesService.findDeliveredPackageByDeliveryMan(user.id);
 			res.status(HttpStatus.OK).json(packages);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
