@@ -7,10 +7,12 @@ import { User, UserSchema } from '../auth/entities/user.entity';
 import { PackagesController } from './packages.controller';
 import { PackagesService } from './packages.service';
 import { Package, PackageSchema } from './entities/package.entity';
+import { PassportModule } from '@nestjs/passport';
 // import { AuthModule } from '../auth/auth.module';
 
 @Module({
 	imports: [
+		PassportModule.register({ defaultStrategy: 'jwt' }),
 		MongooseModule.forFeature([
 			{ name: Package.name, schema: PackageSchema },
 			{ name: User.name, schema: UserSchema },
