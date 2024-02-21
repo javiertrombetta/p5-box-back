@@ -5,34 +5,30 @@ import { GetUser, Auth } from '../auth/decorators';
 import { ValidRoles } from '../auth/interfaces';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
-// import { validationMessages } from '../common/constants';
 import { ExceptionHandlerService } from '../common/helpers';
 
 @Controller('packages')
 export class PackagesController {
-	[x: string]: any;
 	constructor(private readonly packagesService: PackagesService) {}
 
-
-	@Get('users/me/:userid')
+	@Get('users/:userid')
 	findById(@Param('userid') id: string) {
 		return this.packagesService.findById(id);
 	}
 
-   @Get('me/available')
-   @Auth(ValidRoles.repartidor)
-   async getAvailablePackages(@GetUser() user, @Res() res: Response){
-      try {
-         const packages = await this.packagesService.
-         findAvailablePackage(user.id)
-         res.status(HttpStatus.OK).json(packages)
-      } catch (error) {
-         ExceptionHandlerService.handleException(error, res)
-      }
-   }
- 
+	@Get('me/available')
+	@Auth(ValidRoles.repartidor)
+	async getAvailablePackages(@GetUser() user, @Res() res: Response) {
+		try {
+			const packages = await this.packagesService.findAvailablePackage(user.id);
+			res.status(HttpStatus.OK).json(packages);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
+
 	@Get('me/delivered')
-	// @Auth(ValidRoles.repartidor)
+	@Auth(ValidRoles.repartidor)
 	async getDeliveredPackages(@GetUser() user, @Res() res: Response) {
 		try {
 			const packages = await this.packagesService.findDeliveredPackageByDeliveryMan(user.id);
@@ -47,7 +43,7 @@ export class PackagesController {
 		return this.packagesService.create(createPackageDto);
 	}
 
-	@Put('/me/finish')
+	@Put('me/finish')
 	update(@Param('packageId') id: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto) {
 		return this.packagesService.updateById(id, updatePackageDto);
 	}
@@ -59,7 +55,7 @@ export class PackagesController {
 
 	@Put(':packageId/state')
 	updateState(@Param('packageId') id: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto) {
-		return this.packagesService.update(+id, updatePackageDto);
+		return this.packagesService.updateById(id, updatePackageDto);
 	}
 
 	@Delete(':packageId')

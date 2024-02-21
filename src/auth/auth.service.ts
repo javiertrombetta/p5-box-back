@@ -1,4 +1,5 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, forwardRef } from '@nestjs/common';
+import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
@@ -16,11 +17,10 @@ import { ValidRoles } from './interfaces';
 @Injectable()
 export class AuthService {
 	constructor(
-		@InjectModel(User.name)
-		private userModel: mongoose.Model<User>,
+		@InjectModel(User.name) private userModel: mongoose.Model<User>,
 		private jwtService: JwtService,
 		private mailService: MailService,
-		private packagesService: PackagesService,
+		@Inject(forwardRef(() => PackagesService)) private packagesService: PackagesService,
 		private logService: LogService,
 	) {}
 
@@ -46,7 +46,7 @@ export class AuthService {
 		delete changesForLog.password;
 
 		await this.logService.create({
-			action: validationMessages.log.action.create,
+			action: validationMessages.log.action.user.register,
 			entity: validationMessages.log.entity.user,
 			entityId: user._id.toString(),
 			changes: changesForLog,
@@ -71,7 +71,7 @@ export class AuthService {
 		const token = this.jwtService.sign(payload);
 
 		await this.logService.create({
-			action: validationMessages.log.action.login,
+			action: validationMessages.log.action.user.login,
 			entity: validationMessages.log.entity.user,
 			entityId: user._id.toString(),
 			changes: {},
@@ -103,7 +103,7 @@ export class AuthService {
 		}
 
 		await this.logService.create({
-			action: validationMessages.log.action.update,
+			action: validationMessages.log.action.user.updateRole,
 			entity: validationMessages.log.entity.user,
 			entityId: updatedUser._id.toString(),
 			changes: {
@@ -116,7 +116,7 @@ export class AuthService {
 		return updatedUser;
 	}
 
-	async deleteUser(userId: string, performedById: string): Promise<void> {
+	async deleteUser(userId: string, performedById: string, res: Response): Promise<void> {
 		const user = await this.userModel.findById(userId).exec();
 		if (!user) {
 			throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
@@ -124,13 +124,13 @@ export class AuthService {
 
 		const packages = await this.packagesService.findPackagesByDeliveryMan(userId);
 		for (const pkg of packages) {
-			await this.packagesService.updatePackageOnDelete(pkg._id);
+			await this.packagesService.updatePackageOnDelete(pkg._id, res);
 		}
 
 		await this.userModel.findByIdAndDelete(userId).exec();
 
 		await this.logService.create({
-			action: validationMessages.log.action.delete,
+			action: validationMessages.log.action.user.deleteUser,
 			entity: validationMessages.log.entity.user,
 			entityId: userId,
 			changes: {},
@@ -160,7 +160,7 @@ export class AuthService {
 		await this.mailService.sendMail(user.email, validationMessages.mail.resetPasswordEmail.subject, mailContent);
 
 		await this.logService.create({
-			action: validationMessages.log.action.forgotPassword,
+			action: validationMessages.log.action.user.forgotPassword,
 			entity: validationMessages.log.entity.user,
 			entityId: user._id.toString(),
 			changes: { resetPasswordToken: user.resetPasswordToken },
@@ -188,11 +188,53 @@ export class AuthService {
 		await this.mailService.sendMail(user.email, validationMessages.mail.passwordChanged.subject, mailContent);
 
 		await this.logService.create({
-			action: validationMessages.log.action.resetPassword,
+			action: validationMessages.log.action.user.resetPassword,
 			entity: validationMessages.log.entity.user,
 			entityId: user._id.toString(),
-			changes: { password: 'RESET' },
+			changes: { password: validationMessages.auth.password.reset },
 			performedBy: performedById || user._id.toString(),
+		});
+	}
+
+	async updateUserPackages(userId: string, packageId: string, performedById: string): Promise<void> {
+		const user = await this.findById(userId);
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
+		}
+
+		if (!Array.isArray(user.packages)) {
+			user.packages = [];
+		}
+
+		user.packages.push(packageId);
+		await user.save();
+
+		await this.logService.create({
+			action: validationMessages.log.action.packages.updateUserPackages,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: { addedPackage: packageId },
+			performedBy: performedById,
+		});
+	}
+
+	async reorderUserPackages(userId: string, packageIdToReorder: string, performedById: string): Promise<void> {
+		const user = await this.findById(userId);
+		if (!user || !user.packages) {
+			throw new HttpException(validationMessages.packages.error.notFound.userArray, HttpStatus.NOT_FOUND);
+		}
+		const filteredPackages = user.packages.filter(packageId => packageId !== packageIdToReorder);
+		const reorderedPackages = [packageIdToReorder, ...filteredPackages];
+
+		user.packages = reorderedPackages;
+		await user.save();
+
+		await this.logService.create({
+			action: validationMessages.log.action.packages.updateUserPackages,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: { reorderedPackages: reorderedPackages },
+			performedBy: performedById,
 		});
 	}
 }

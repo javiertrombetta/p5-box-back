@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -28,7 +28,7 @@ import { LogModule } from '../log/log.module';
 		}),
 		MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
 		MailModule,
-		PackagesModule,
+		forwardRef(() => PackagesModule),
 		LogModule,
 	],
 	providers: [AuthService, JwtStrategy],
