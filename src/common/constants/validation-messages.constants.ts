@@ -27,9 +27,6 @@ export const validationMessages = {
 			forbidden: '${user.name} ${user.lastname} no tiene los permisos de: [${validRoles}].',
 			updated: 'El rol del usuario ${user.name} ${user.lastname} ha sido actualizado con éxito.',
 		},
-		packages: {
-			isArray: 'La lista de paquetes tiene que ser un arreglo.',
-		},
 		photoUrl: {
 			isString: 'La foto de usuario debe ser una cadena de texto.',
 		},
@@ -93,9 +90,43 @@ export const validationMessages = {
 			`,
 		},
 	},
+	packages: {
+		userArray: {
+			notFound: 'Paquete no encontrado o no asignado al repartidor.',
+			isArray: 'La lista de paquetes tiene que ser un arreglo.',
+		},
+		error: {
+			updateUserArr: 'No se pudo actualizar el paquete de la lista.',
+			notFound: {
+				userArray: 'Usuario no encontrado o lista de paquetes no válida',
+			},
+		},
+		state: {
+			available: 'disponible',
+			pending: 'pendiente',
+			onTheWay: 'en curso',
+			delivered: 'entregado',
+			notDelivered: 'sin entregar',
+		},
+	},
 	seed: {
 		success: {
 			seedCompleted: 'Base de datos reconstruida con datos de Faker.',
+		},
+	},
+	log: {
+		action: {
+			create: 'Create',
+			update: 'Update',
+			delete: 'Delete',
+			login: 'Login',
+			logout: 'Logout',
+			forgotPassword: 'Forgot',
+			resetPassword: 'Reset',
+		},
+		entity: {
+			user: 'User',
+			package: 'Package',
 		},
 	},
 };

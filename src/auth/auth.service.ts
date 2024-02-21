@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import * as mongoose from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,17 +9,22 @@ import { validationMessages } from '../common/constants';
 import { CreateUserDto, LoginUserDto } from './dto';
 import { User } from './entities/user.entity';
 import { MailService } from '../mail/mail.service';
+import { PackagesService } from '../packages/packages.service';
+import { LogService } from '../log/log.service';
+import { ValidRoles } from './interfaces';
 
 @Injectable()
 export class AuthService {
 	constructor(
 		@InjectModel(User.name)
-		private userModel: Model<User>,
+		private userModel: mongoose.Model<User>,
 		private jwtService: JwtService,
 		private mailService: MailService,
+		private packagesService: PackagesService,
+		private logService: LogService,
 	) {}
 
-	async register(createUserDto: CreateUserDto): Promise<void> {
+	async register(createUserDto: CreateUserDto, performedById?: string): Promise<void> {
 		const email = createUserDto.email.toLowerCase().trim();
 		const existingUser = await this.userModel.findOne({ email });
 
@@ -32,13 +37,24 @@ export class AuthService {
 			...createUserDto,
 			email,
 			password: hashedPassword,
-			roles: createUserDto.roles || ['repartidor'],
+			roles: createUserDto.roles || [ValidRoles.repartidor],
 		});
 
 		await user.save();
+
+		const changesForLog = { ...createUserDto };
+		delete changesForLog.password;
+
+		await this.logService.create({
+			action: validationMessages.log.action.create,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: changesForLog,
+			performedBy: performedById || user._id.toString(),
+		});
 	}
 
-	async login(loginUserDto: LoginUserDto): Promise<{ token: string }> {
+	async login(loginUserDto: LoginUserDto, performedById?: string): Promise<{ token: string }> {
 		const email = loginUserDto.email.toLowerCase().trim();
 		const user = await this.userModel.findOne({ email });
 
@@ -53,6 +69,14 @@ export class AuthService {
 
 		const payload = { id: user._id };
 		const token = this.jwtService.sign(payload);
+
+		await this.logService.create({
+			action: validationMessages.log.action.login,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: {},
+			performedBy: performedById || user._id.toString(),
+		});
 
 		return { token };
 	}
@@ -73,14 +97,29 @@ export class AuthService {
 		return updatedUser;
 	}
 
-	async deleteUser(userId: string): Promise<void> {
-		const result = await this.userModel.findByIdAndDelete(userId).exec();
-		if (!result) {
+	async deleteUser(userId: string, performedById: string): Promise<void> {
+		const user = await this.userModel.findById(userId).exec();
+		if (!user) {
 			throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
 		}
+
+		const packages = await this.packagesService.findPackagesByDeliveryMan(userId);
+		for (const pkg of packages) {
+			await this.packagesService.updatePackageOnDelete(pkg._id);
+		}
+
+		await this.userModel.findByIdAndDelete(userId).exec();
+
+		await this.logService.create({
+			action: validationMessages.log.action.delete,
+			entity: validationMessages.log.entity.user,
+			entityId: userId,
+			changes: {},
+			performedBy: performedById,
+		});
 	}
 
-	async forgotPassword(email: string): Promise<void> {
+	async forgotPassword(email: string, performedById?: string): Promise<void> {
 		const user = await this.userModel.findOne({ email: email.toLowerCase().trim() });
 		if (!user) {
 			throw new HttpException(validationMessages.auth.forgotPassword.userNotFound, HttpStatus.BAD_REQUEST);
@@ -100,9 +139,17 @@ export class AuthService {
 		const mailContent = validationMessages.mail.resetPasswordEmail.body.replace('{{resetUrl}}', resetUrl);
 
 		await this.mailService.sendMail(user.email, validationMessages.mail.resetPasswordEmail.subject, mailContent);
+
+		await this.logService.create({
+			action: validationMessages.log.action.forgotPassword,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: { resetPasswordToken: user.resetPasswordToken },
+			performedBy: performedById || user._id.toString(),
+		});
 	}
 
-	async resetPassword(token: string, newPassword: string): Promise<void> {
+	async resetPassword(token: string, newPassword: string, performedById?: string): Promise<void> {
 		const user = await this.userModel.findOne({
 			resetPasswordToken: token,
 			resetPasswordExpires: { $gt: Date.now() },
@@ -120,5 +167,13 @@ export class AuthService {
 
 		const mailContent = validationMessages.mail.passwordChanged.body;
 		await this.mailService.sendMail(user.email, validationMessages.mail.passwordChanged.subject, mailContent);
+
+		await this.logService.create({
+			action: validationMessages.log.action.resetPassword,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: { password: 'RESET' },
+			performedBy: performedById || user._id.toString(),
+		});
 	}
 }

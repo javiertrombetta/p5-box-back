@@ -1,15 +1,23 @@
 import { Body, Controller, Post, Get, Put, Delete, Param, Req, Res, HttpStatus, HttpException } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { AuthService } from './auth.service';
-import { GetUser, Auth } from './decorators';
-import { CreateUserDto, LoginUserDto, ResetPasswordDto, UpdateUserDto } from './dto';
+
 import { User } from './entities/user.entity';
-import { validationMessages } from '../common/constants';
+import { AuthService } from './auth.service';
+import { PackagesService } from '../packages/packages.service';
+
+import { GetUser, Auth } from './decorators';
 import { ValidRoles } from './interfaces';
+import { CreateUserDto, LoginUserDto, ResetPasswordDto, UpdateUserDto } from './dto';
+
+import { validationMessages } from '../common/constants';
+import { ExceptionHandlerService } from '../common/helpers';
 
 @Controller('auth')
 export class AuthController {
-	constructor(private readonly authService: AuthService) {}
+	constructor(
+		private readonly authService: AuthService,
+		private readonly packagesService: PackagesService,
+	) {}
 
 	// POST
 
@@ -21,7 +29,7 @@ export class AuthController {
 				message: validationMessages.auth.account.registered,
 			});
 		} catch (error) {
-			this.handleException(error, res);
+			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
@@ -40,7 +48,7 @@ export class AuthController {
 			});
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.loggedIn });
 		} catch (error) {
-			this.handleException(error, res);
+			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
@@ -60,7 +68,7 @@ export class AuthController {
 			await this.authService.forgotPassword(email);
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.forgotPassword.emailSent });
 		} catch (error) {
-			this.handleException(error, res);
+			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
@@ -77,7 +85,7 @@ export class AuthController {
 
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.resetPassword.success });
 		} catch (error) {
-			this.handleException(error, res);
+			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
@@ -87,6 +95,42 @@ export class AuthController {
 	@Auth(ValidRoles.repartidor, ValidRoles.administrador)
 	getProfile(@GetUser() user: User, @Res() res: Response) {
 		res.status(HttpStatus.OK).json(user);
+	}
+
+	@Get('me/packages')
+	@Auth(ValidRoles.repartidor)
+	async getMyPackages(@GetUser('id') userId: string, @Res() res: Response) {
+		try {
+			const packages = await this.packagesService.findPackagesByDeliveryMan(userId);
+			res.status(HttpStatus.OK).json(packages);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
+
+	@Get('me/packages/:uuidPackage')
+	@Auth(ValidRoles.repartidor)
+	async getPackageDetails(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
+		try {
+			const packageDetails = await this.packagesService.findPackageByDeliveryManAndId(userId, uuidPackage);
+			if (!packageDetails) {
+				throw new HttpException(validationMessages.packages.userArray.notFound, HttpStatus.NOT_FOUND);
+			}
+			res.json(packageDetails);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
+
+	@Get('users')
+	@Auth(ValidRoles.administrador)
+	async getAllUsers(@Res() res: Response) {
+		try {
+			const users = await this.authService.findAll();
+			res.status(HttpStatus.OK).json(users);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 
 	@Get('users/:userId')
@@ -119,18 +163,23 @@ export class AuthController {
 
 			res.status(HttpStatus.OK).json(response);
 		} catch (error) {
-			this.handleException(error, res);
+			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
-	@Get('users')
+	@Get('/users/:uuidUser/packages')
 	@Auth(ValidRoles.administrador)
-	async getAllUsers(@Res() res: Response) {
+	async getUserPackages(@Param('uuidUser') uuidUser: string, @Res() res: Response) {
 		try {
-			const users = await this.authService.findAll();
-			res.status(HttpStatus.OK).json(users);
+			const userExists = await this.authService.findById(uuidUser);
+			if (!userExists) {
+				throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
+			}
+
+			const packages = await this.packagesService.findPackagesByDeliveryMan(uuidUser);
+			res.status(HttpStatus.OK).json(packages);
 		} catch (error) {
-			this.handleException(error, res);
+			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
@@ -138,15 +187,36 @@ export class AuthController {
 
 	@Put('users/:userId/role')
 	@Auth(ValidRoles.administrador)
-	async updateUserRole(@Param('userId') userId: string, @Body() updateUserDto: UpdateUserDto, @Res() response: Response) {
-		const updatedUser = await this.authService.updateUserRole(userId, updateUserDto.roles);
-		if (!updatedUser) {
-			throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
+	async updateUserRole(@Param('userId') userId: string, @Body() updateUserDto: UpdateUserDto, @Res() res: Response) {
+		try {
+			const updatedUser = await this.authService.updateUserRole(userId, updateUserDto.roles);
+			if (!updatedUser) {
+				throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
+			}
+
+			res.status(HttpStatus.OK).json({
+				message: validationMessages.auth.role.updated.replace('${user.name}', updatedUser.name).replace('${user.lastname}', updatedUser.lastname),
+			});
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
+
+	@Put('me/packages/:uuidPackage')
+	@Auth(ValidRoles.repartidor)
+	async changePackageStateAndReorder(@Param('uuidPackage') uuidPackage: string, @GetUser() user) {
+		const fullUserDetails = await this.authService.findById(user.id);
+
+		if (!fullUserDetails.packages.includes(uuidPackage)) {
+			throw new HttpException(validationMessages.packages.userArray.notFound, HttpStatus.NOT_FOUND);
 		}
 
-		response.status(HttpStatus.OK).json({
-			message: validationMessages.auth.role.updated.replace('${user.name}', updatedUser.name).replace('${user.lastname}', updatedUser.lastname),
-		});
+		const pkg = await this.packagesService.changeStateAndReorder(user.id, uuidPackage);
+		if (!pkg) {
+			throw new HttpException(validationMessages.packages.error.updateUserArr, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return pkg;
 	}
 
 	// DELETE
@@ -161,11 +231,11 @@ export class AuthController {
 				throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.FORBIDDEN);
 			}
 
-			await this.authService.deleteUser(userExists._id);
+			await this.authService.deleteUser(user._id, user._id.toString());
 			res.clearCookie('Authentication');
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.selfDeleted });
 		} catch (error) {
-			this.handleException(error, res);
+			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
@@ -180,7 +250,7 @@ export class AuthController {
 			}
 
 			if (authenticatedUser._id === userId) {
-				await this.authService.deleteUser(userId);
+				await this.authService.deleteUser(userId, userId.toString());
 				res.clearCookie('Authentication');
 				return res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.selfDeleted });
 			}
@@ -190,22 +260,13 @@ export class AuthController {
 				throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.NOT_FOUND);
 			}
 
-			await this.authService.deleteUser(userId);
+			await this.authService.deleteUser(userId, userId.toString());
 
 			res.status(HttpStatus.OK).json({
 				message: validationMessages.auth.account.deleted.replace('${user.name}', userToDelete.name).replace('${user.lastname}', userToDelete.lastname),
 			});
 		} catch (error) {
-			this.handleException(error, res);
-		}
-	}
-
-	private handleException(error: any, res: Response) {
-		console.error(error);
-		if (error instanceof HttpException) {
-			res.status(error.getStatus()).json({ message: error.getResponse() });
-		} else {
-			res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: validationMessages.auth.error.internal });
+			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 }

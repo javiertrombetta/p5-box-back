@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import * as mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import * as mongooseUniqueValidator from 'mongoose-unique-validator';
 
 @Schema({ timestamps: true })
-export class Package extends Document {
+export class Package extends mongoose.Document {
 	@Prop({ type: String, default: () => uuidv4() })
 	_id: string;
 

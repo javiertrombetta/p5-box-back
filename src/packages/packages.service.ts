@@ -1,93 +1,123 @@
-import { Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
+
+import mongoose from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+
+import { Package } from './entities/package.entity';
+import { User } from '../auth/entities';
+import { validationMessages } from '../common/constants';
+
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
-import { InjectModel } from '@nestjs/mongoose';
-import { Package } from './entities/package.entity';
-import mongoose from 'mongoose';
-//aqui definimos los metodos
+
 @Injectable()
 export class PackagesService {
-   [x: string]: any;
-   constructor(
-       @InjectModel(Package.name)
-       private packageModel: mongoose.Model<Package>
-   ){}
+	[x: string]: any;
+	constructor(
+		@InjectModel(Package.name) private packageModel: mongoose.Model<Package>,
+		@InjectModel(User.name) private readonly userModel: mongoose.Model<User>,
+	) {}
 
-   async findAll(): Promise<Package[]>{
-   return await this.packageModel.find().exec()
-   }
+	async findAll(): Promise<Package[]> {
+		return await this.packageModel.find().exec();
+	}
 
-   async create(createPackageDto: CreatePackageDto): Promise<Package>{
-       const paquetes = new this.packageModel(createPackageDto);
-       return await paquetes.save()
-   }
+	async create(createPackageDto: CreatePackageDto): Promise<Package> {
+		const paquetes = new this.packageModel(createPackageDto);
+		return await paquetes.save();
+	}
 
-   async assignPaqueteAUsuario(userId: string, packageId: string): Promise<Package> {
-       const packageToUpdate = await this.packageModel.findById(packageId);
- //Verifica si el paquete existe en la base de datos 
-       if (!packageToUpdate) {
-           throw new NotFoundException('Package not found');
-       }
-       // Verificar si el paquete está disponible
-       if (packageToUpdate.state !== 'disponible') {
-           throw new NotAcceptableException('Package no esta disponible');
-       }
-       // Verificar si el array de paquetes del usuario está vacío
-       const user = await this.userService.findById(userId);
-       if (!user || !user.packages || user.packages.length === 0) {
-           throw new NotAcceptableException('El arreglo de usuario no esta vacio');
-       }
-       // Cambiar el estado del paquete a "pendiente"
-       packageToUpdate.state = 'pendiente';
+	async assignPaqueteAUsuario(userId: string, packageId: string): Promise<Package> {
+		const packageToUpdate = await this.packageModel.findById(packageId);
 
-       // Asignar el id del usuario al campo deliveryMan del paquete
-	   
-       packageToUpdate.deliveryMan = userId;
-       // Insertar el ID del paquete en el array de paquetes del usuario
-       user.packages.push(packageId);
-       await user.save();
-  
-       // Guardar los cambios en la base de datos
-       return await packageToUpdate.save();
-   }
-  
-   async updateById(id: string,updatePackageDto:UpdatePackageDto):Promise<Package>{
-       return await this.packageModel.findByIdAndUpdate(id,updatePackageDto,{
-           new: true,
-           runValidators: true
-       })
-   }
+		if (!packageToUpdate) {
+			throw new NotFoundException('Package not found');
+		}
 
-   async findById(id:string):Promise<Package>{
-       const paquete = await this.packageModel.findById(id)
-       if(!paquete){
-           throw new NotAcceptableException("No hay Paquete")
-       }
-       return paquete
-   }
+		if (packageToUpdate.state !== 'disponible') {
+			throw new NotAcceptableException('Package no esta disponible');
+		}
 
-   async deleteById(id: string): Promise<Package>{
-       return await this.packageModel.findByIdAndDelete(id)
-   }
+		const user = await this.userService.findById(userId);
+		if (!user || !user.packages || user.packages.length === 0) {
+			throw new NotAcceptableException('El arreglo de usuario no esta vacio');
+		}
 
+		packageToUpdate.state = 'pendiente';
 
-	// create(createPackageDto: CreatePackageDto) {
-	// 	return 'This action adds a new package';
-	// }
+		packageToUpdate.deliveryMan = userId;
 
-	// findAll() {
-	// 	return `This action returns all packages`;
-	// }
+		user.packages.push(packageId);
+		await user.save();
 
-	// findOne(id: number) {
-	// 	return `This action returns a #${id} package`;
-	// }
+		return await packageToUpdate.save();
+	}
 
-	// update(id: number, updatePackageDto: UpdatePackageDto) {
-	// 	return `This action updates a #${id} package`;
-	// }
+	async updateById(id: string, updatePackageDto: UpdatePackageDto): Promise<Package> {
+		return await this.packageModel.findByIdAndUpdate(id, updatePackageDto, {
+			new: true,
+			runValidators: true,
+		});
+	}
 
-	// remove(id: number) {
-	// 	return `This action removes a #${id} package`;
-	// }
+	async findById(id: string): Promise<Package> {
+		const paquete = await this.packageModel.findById(id);
+		if (!paquete) {
+			throw new NotAcceptableException('No hay Paquete');
+		}
+		return paquete;
+	}
+
+	async deleteById(id: string): Promise<Package> {
+		return await this.packageModel.findByIdAndDelete(id);
+	}
+
+	async findPackagesByDeliveryMan(deliveryManId: string): Promise<Package[]> {
+		return this.packageModel.find({ deliveryMan: deliveryManId }).exec();
+	}
+
+	async findPackageByDeliveryManAndId(deliveryManId: string, packageId: string): Promise<Package | null> {
+		return this.packageModel
+			.findOne({
+				_id: packageId,
+				deliveryMan: deliveryManId,
+			})
+			.exec();
+	}
+
+	async updatePackageOnDelete(packageId: string): Promise<void> {
+		const pkg = await this.packageModel.findById(packageId);
+		if (!pkg) {
+			throw new HttpException(validationMessages.packages.userArray.notFound, HttpStatus.NOT_FOUND);
+		}
+		pkg.state = validationMessages.packages.state.available;
+		pkg.deliveryMan = null;
+		await pkg.save();
+	}
+
+	async changeStateAndReorder(userId: string, uuidPackage: string): Promise<Package> {
+		const pkg = await this.packageModel.findById(uuidPackage);
+		if (!pkg) {
+			throw new HttpException(validationMessages.packages.userArray.notFound, HttpStatus.NOT_FOUND);
+		}
+
+		pkg.state = validationMessages.packages.state.onTheWay;
+		await pkg.save();
+
+		const user = await this.userModel.findById(userId);
+		if (!user || !Array.isArray(user.packages)) {
+			throw new HttpException(validationMessages.packages.error.notFound.userArray, HttpStatus.NOT_FOUND);
+		}
+
+		const updatedPackagesOrder = [uuidPackage, ...user.packages.filter(pkgId => pkgId !== uuidPackage)];
+		user.packages = updatedPackagesOrder;
+		await user.save();
+
+		const otherPackageIds = user.packages.filter(pkgId => pkgId !== uuidPackage);
+		if (otherPackageIds.length > 0) {
+			await this.packageModel.updateMany({ _id: { $in: otherPackageIds } }, { $set: { state: validationMessages.packages.state.pending } });
+		}
+
+		return pkg;
+	}
 }
