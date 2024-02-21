@@ -100,6 +100,7 @@ export const validationMessages = {
 			notFound: {
 				userArray: 'Usuario no encontrado o lista de paquetes no válida',
 			},
+			delivered: 'Error al obtener los paquetes entregados.',
 		},
 		state: {
 			available: 'disponible',

@@ -26,6 +26,15 @@ export class PackagesService {
 		return await this.packageModel.find({ state: 'pendiente' }).exec();
 	}
 
+	async findDeliveredPackageByDeliveryMan(deliveryManId: string): Promise<Package[]> {
+		return await this.packageModel
+			.find({
+				deliveryMan: deliveryManId,
+				state: validationMessages.packages.state.delivered,
+			})
+			.exec();
+	}
+
 	async create(createPackageDto: CreatePackageDto): Promise<Package> {
 		const paquetes = new this.packageModel(createPackageDto);
 		return await paquetes.save();

@@ -1,10 +1,16 @@
-import { Controller, Get, Post, Body, Param, Delete, ValidationPipe, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, ValidationPipe, Put, Res, HttpStatus } from '@nestjs/common';
+import { Response } from 'express';
 
-// import { Package } from './entities/package.entity';
 import { PackagesService } from './packages.service';
+
+import { GetUser, Auth } from '../auth/decorators';
+import { ValidRoles } from '../auth/interfaces';
 
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
+
+// import { validationMessages } from '../common/constants';
+import { ExceptionHandlerService } from '../common/helpers';
 
 @Controller('packages')
 export class PackagesController {
@@ -18,7 +24,7 @@ export class PackagesController {
 	}
 	//GET packages/me/details
 	//RUTA PARA VER UN PAQUETE
-	@Get('/me/:userid')
+	@Get('users/:userid')
 	findById(@Param('userid') id: string) {
 		return this.packagesService.findById(id);
 	}
@@ -28,6 +34,17 @@ export class PackagesController {
 	@Get('me/available')
 	findAvailable() {
 		return this.packagesService.findAvailable();
+	}
+
+	@Get('me/delivered')
+	@Auth(ValidRoles.repartidor)
+	async getDeliveredPackages(@GetUser() userId: string, @Res() res: Response) {
+		try {
+			const packages = await this.packagesService.findDeliveredPackageByDeliveryMan(userId);
+			res.status(HttpStatus.OK).json(packages);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 
 	//POST packages/new
