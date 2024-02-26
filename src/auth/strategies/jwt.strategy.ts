@@ -8,7 +8,7 @@ import { Request } from 'express';
 
 import { User } from '../entities/user.entity';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
-import { validationMessages } from 'src/common/constants';
+import { validationMessages } from '../../common/constants';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
