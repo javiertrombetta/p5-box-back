@@ -29,7 +29,7 @@ export class AuthService {
 		const existingUser = await this.userModel.findOne({ email });
 
 		if (existingUser) {
-			throw new HttpException(validationMessages.auth.email.inUse, HttpStatus.BAD_REQUEST);
+			throw new HttpException(validationMessages.auth.email.inUse, HttpStatus.CONFLICT);
 		}
 
 		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);

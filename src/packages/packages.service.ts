@@ -5,7 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Package } from './entities/package.entity';
 import { validationMessages } from '../common/constants';
 import { CreatePackageDto, UpdatePackageDto } from './dto';
-import { AuthService } from 'src/auth/auth.service';
+import { AuthService } from '../auth/auth.service';
 import { ExceptionHandlerService } from '../common/helpers';
 
 @Injectable()
