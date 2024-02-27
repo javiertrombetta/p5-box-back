@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { UnauthorizedExceptionFilter, NotFoundExceptionFilter } from './common/filters';
 
 import { ValidationPipe } from '@nestjs/common';
@@ -30,6 +31,11 @@ async function main() {
 			},
 		}),
 	);
+
+	const config = new DocumentBuilder().setTitle('Box RestAPI Backend').setDescription('Equipo 4.').setVersion('1.0').build();
+
+	const document = SwaggerModule.createDocument(app, config);
+	SwaggerModule.setup('api', app, document);
 
 	await app.listen(configService.get('PORT') || 3000);
 }

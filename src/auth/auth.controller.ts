@@ -7,11 +7,13 @@ import { PackagesService } from '../packages/packages.service';
 
 import { GetUser, Auth } from './decorators';
 import { ValidRoles } from './interfaces';
-import { CreateUserDto, LoginUserDto, ResetPasswordDto, UpdateUserDto } from './dto';
+import { CreateUserDto, LoginUserDto, ResetPasswordDto, UpdateUserDto, ForgotPasswordDto } from './dto';
 
 import { validationMessages } from '../common/constants';
 import { ExceptionHandlerService } from '../common/helpers';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
 	constructor(
@@ -63,8 +65,9 @@ export class AuthController {
 	}
 
 	@Post('forgotPassword')
-	async forgotPassword(@Body('email') email: string, @Res() res: Response) {
+	async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto, @Res() res: Response) {
 		try {
+			const { email } = forgotPasswordDto;
 			await this.authService.forgotPassword(email);
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.forgotPassword.emailSent });
 		} catch (error) {

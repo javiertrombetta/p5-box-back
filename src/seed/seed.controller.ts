@@ -1,7 +1,9 @@
 import { Controller, Get, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { SeedService } from './seed.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Seed')
 @Controller('seed')
 export class SeedController {
 	constructor(private readonly seedService: SeedService) {}
