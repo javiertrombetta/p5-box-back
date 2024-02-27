@@ -6,7 +6,9 @@ import { ValidRoles } from '../auth/interfaces';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import { ExceptionHandlerService } from '../common/helpers';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Packages')
 @Controller('packages')
 export class PackagesController {
 	constructor(private readonly packagesService: PackagesService) {}
