@@ -1,18 +1,22 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches, MinLength, ValidateNested } from 'class-validator';
 import { validationMessages } from '../../common/constants/validation-messages.constants';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
 	@IsNotEmpty({ message: validationMessages.auth.name.isNotEmpty })
 	@IsString({ message: validationMessages.auth.name.isString })
+	@ApiProperty()
 	name: string;
 
 	@IsNotEmpty({ message: validationMessages.auth.lastname.isNotEmpty })
 	@IsString({ message: validationMessages.auth.lastname.isString })
+	@ApiProperty()
 	lastname: string;
 
 	@IsNotEmpty({ message: validationMessages.auth.email.isNotEmpty })
 	@IsEmail({}, { message: validationMessages.auth.email.isEmail })
+	@ApiProperty()
 	email: string;
 
 	@IsNotEmpty({ message: validationMessages.auth.password.isNotEmpty })
@@ -21,6 +25,7 @@ export class CreateUserDto {
 	@Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
 		message: validationMessages.auth.password.pattern,
 	})
+	@ApiProperty()
 	password: string;
 
 	@IsOptional()
@@ -39,6 +44,7 @@ export class CreateUserDto {
 
 	@IsOptional()
 	@IsString({ message: validationMessages.auth.photoUrl.isString })
+	@ApiProperty()
 	photoUrl?: string;
 
 	@IsOptional()
