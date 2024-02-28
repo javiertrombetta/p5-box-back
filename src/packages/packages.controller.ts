@@ -7,7 +7,7 @@ import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import { ExceptionHandlerService } from '../common/helpers';
 import { ApiTags } from '@nestjs/swagger';
-import { validationMessages } from 'src/common/constants';
+import { validationMessages } from '../common/constants';
 
 @ApiTags('Packages')
 @Controller('packages')
