@@ -36,6 +36,8 @@ export const validationMessages = {
 				isEnum: 'El estado no es válido.',
 				isInactive: 'El usuario está inactivo.',
 				updated: 'User state updated successfully.',
+				isActiveState: 'activo',
+				isInactiveSate: 'inactivo',
 			},
 			points: {
 				isNumber: 'Los puntos deben ser un número.',
@@ -132,35 +134,53 @@ export const validationMessages = {
 		internal: 'Error interno en el servidor.',
 		urlNotFound: 'La ruta solicitada no existe.',
 	},
+	maps: {
+		success: {
+			statusOk: 'OK',
+		},
+		error: {
+			statusError: 'Error en la API de Google Maps: ',
+			locationError: 'Error al recibir la ubicación de Google Maps',
+		},
+	},
 	log: {
 		action: {
 			user: {
 				array: {
-					clear: 'UPDATE_clear_UserArray',
-					loadPackages: 'UPDATE_addManyPkgs_UserArray',
-					addUserPackage: 'UPDATE_addPkg_UserArray',
-					changeOrder: 'UPDATE_changeOrder_UserArray',
+					clear: 'UPDATE_user_clear_array',
+					loadPackages: 'UPDATE_user_addManyPkgs_array',
+					addUserPackage: 'UPDATE_user_addPkg_array',
+					changeOrder: 'UPDATE_user_changeOrder_array',
 				},
 				role: {
-					changeRole: 'UPDATE_change_Role',
+					addedBothRoles: 'UPDATE_user_change_roleToBoth',
+					addedRepartidorRole: 'UPDATE_user_change_roleToDelivery',
+					addedAdministradorRole: 'UPDATE_user_change_roleToAdministrator',
 				},
 				state: {
-					changeState: 'UPDATE_change_State',
+					activate: 'UPDATE_user_change_stateToActivate',
+					deactivate: 'UPDATE_user_change_stateToDeactivate',
 				},
-				register: 'CREATE_NewUser',
-				deleteUser: 'DELETE_User',
-				login: 'INFO_Login',
-				logout: 'INFO_Logout',
-				forgotPassword: 'INFO_ForgotPassword',
-				resetPassword: 'UPDATE_change_ResetPassword',
+				register: 'CREATE_user',
+				deleteUser: 'DELETE_user',
+				login: 'INFO_user_login',
+				logout: 'INFO_user_logout',
+				forgotPassword: 'INFO_user_forgotPassword',
+				resetPassword: 'UPDATE_user_change_resetPassword',
 			},
 			packages: {
-				newPackage: 'CREATE_NewPkg',
-				updateOnCancel: 'UDPATE_change_OnCancel',
-				assignPkgToUser: 'UPDATE_assign_ToUser',
-				updateDataPkg: 'UPDATE_change_Data',
-				delivered: 'UPDATE_change_Status',
-				deleted: 'DELETE_Pkg',
+				state: {
+					toAvailable: 'UDPATE_pkg_change_stateToAvailable',
+					delivered: 'UPDATE_pkg_change_statusToDelivered',
+				},
+				deliveryDate: {
+					nextDate: 'UDPATE_pkg_change_nextDate',
+				},
+				newPackage: 'CREATE_pkg',
+				updateOnCancel: 'UDPATE_pkg_change_onCancel',
+				assignPkgToUser: 'UPDATE_pkg_assign_toUser',
+				updateDataPkg: 'UPDATE_pkg_change_data',
+				deleted: 'DELETE_pkg',
 			},
 		},
 		entity: {

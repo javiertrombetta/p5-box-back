@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
@@ -11,9 +12,12 @@ import { CommonModule } from './common/common.module';
 import { LocationsModule } from './locations/locations.module';
 import { MailModule } from './mail/mail.module';
 import { LogModule } from './log/log.module';
+import { ReportsModule } from './reports/reports.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
 	imports: [
+		ScheduleModule.forRoot(),
 		ConfigModule.forRoot({
 			isGlobal: true,
 		}),
@@ -35,6 +39,8 @@ import { LogModule } from './log/log.module';
 		LocationsModule,
 		MailModule,
 		LogModule,
+		ReportsModule,
+		TasksModule,
 	],
 })
 export class AppModule {}
