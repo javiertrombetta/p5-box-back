@@ -5,7 +5,7 @@ import { Model } from 'mongoose';
 
 import { Log } from './entities';
 import { CreateLogDto } from './dto/create-log.dto';
-import { validationMessages } from 'src/common/constants';
+import { validationMessages } from '../common/constants';
 
 @Injectable()
 export class LogService {
