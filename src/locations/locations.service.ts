@@ -1,26 +1,32 @@
-import { Injectable } from '@nestjs/common';
-import { CreateLocationDto } from './dto/create-location.dto';
-import { UpdateLocationDto } from './dto/update-location.dto';
+import { Injectable, NotAcceptableException } from '@nestjs/common';
+import { Response } from 'express';
+import { PackagesService } from '../packages/packages.service';
+import axios from 'axios';
+import { ExceptionHandlerService } from '../common/helpers';
+import { validationMessages } from '../common/constants';
 
 @Injectable()
 export class LocationsService {
-	create(createLocationDto: CreateLocationDto) {
-		return 'This action adds a new location';
-	}
+	constructor(private packagesService: PackagesService) {}
 
-	findAll() {
-		return `This action returns all locations`;
-	}
+	async getPackageLocation(packageId: string, res: Response): Promise<any> {
+		const pkg = await this.packagesService.findById(packageId);
 
-	findOne(id: number) {
-		return `This action returns a #${id} location`;
-	}
+		if (!pkg) throw new NotAcceptableException(validationMessages.packages.error.packageNotFound);
 
-	update(id: number, updateLocationDto: UpdateLocationDto) {
-		return `This action updates a #${id} location`;
-	}
+		const address = pkg.deliveryAddress;
+		const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
 
-	remove(id: number) {
-		return `This action removes a #${id} location`;
+		try {
+			const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`);
+			if (response.data.status === validationMessages.maps.success.statusOk && response.data.results[0]) {
+				const location = response.data.results[0].geometry.location;
+				return location;
+			} else {
+				throw new Error(validationMessages.maps.error.statusError + response.data.status);
+			}
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 }

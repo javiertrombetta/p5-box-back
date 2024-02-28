@@ -87,21 +87,6 @@ export class PackagesService {
 		return updatedPackage;
 	}
 
-	// async deleteById(pkgId: string, userId: string): Promise<void> {
-	// 	const packageToDelete = await this.packageModel.findById(pkgId);
-	// 	if (!packageToDelete) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-
-	// 	await this.packageModel.findByIdAndDelete(pkgId).exec();
-
-	// 	await this.logService.create({
-	// 		action: validationMessages.log.action.packages.deleted,
-	// 		entity: validationMessages.log.entity.package,
-	// 		entityId: pkgId,
-	// 		changes: { removedFromUser: userId, deleted: true },
-	// 		performedBy: userId,
-	// 	});
-	// }
-
 	async removePackage(uuidPackage: string, performedById: string): Promise<void> {
 		const pkg = await this.findById(uuidPackage);
 		if (!pkg) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
@@ -131,23 +116,6 @@ export class PackagesService {
 			return orderedPackages;
 		}
 	}
-
-	// async findPackagesByDeliveryMan(deliveryManId: string): Promise<Package[]> {
-	// 	const user = await this.authService.findById(deliveryManId);
-	// 	if (!user) {
-	// 		throw new Error(validationMessages.packages.userArray.userNotFound);
-	// 	}
-	// 	const packageIds = user.packages;
-
-	// 	const packages = await this.packageModel.find({ _id: { $in: packageIds } });
-
-	// 	const orderedPackages = packageIds.map(id => packages.find(pkg => pkg._id.toString() === id));
-	// 	return orderedPackages;
-	// }
-
-	// async findPackageByDeliveryManAndId(deliveryManId: string, packageId: string): Promise<Package | null> {
-	// 	return this.packageModel.findOne({ _id: packageId, deliveryMan: deliveryManId }).exec();
-	// }
 
 	async updatePackageOnDelete(packageId: string, res: Response): Promise<void> {
 		try {
@@ -188,7 +156,7 @@ export class PackagesService {
 			}
 
 			packageToUpdate.state = validationMessages.packages.state.available;
-			packageToUpdate.daliveryDate = new Date();
+			packageToUpdate.deliveryDate = new Date();
 			packageToUpdate.deliveryMan = null;
 			await packageToUpdate.save();
 
@@ -198,7 +166,7 @@ export class PackagesService {
 				action: validationMessages.log.action.packages.updateOnCancel,
 				entity: validationMessages.log.entity.package,
 				entityId: packageId,
-				changes: { state: packageToUpdate.state, daliveryDate: packageToUpdate.daliveryDate, deliveryMan: packageToUpdate.deliveryMan },
+				changes: { state: packageToUpdate.state, deliveryDate: packageToUpdate.deliveryDate, deliveryMan: packageToUpdate.deliveryMan },
 				performedBy: userId,
 			});
 		} catch (error) {
@@ -235,11 +203,11 @@ export class PackagesService {
 
 		packageToUpdate.state = validationMessages.packages.state.delivered;
 		packageToUpdate.deliveryMan = null;
-		packageToUpdate.daliveryDate = new Date();
+		packageToUpdate.deliveryDate = new Date();
 		await packageToUpdate.save();
 
 		await this.logService.create({
-			action: validationMessages.log.action.packages.delivered,
+			action: validationMessages.log.action.packages.state.delivered,
 			entity: validationMessages.log.entity.package,
 			entityId: packageId,
 			changes: {
@@ -249,5 +217,59 @@ export class PackagesService {
 			},
 			performedBy: userId,
 		});
+	}
+
+	async findPackagesByCriteria(year: string, month: string, day: string, uuidUser?: string, includeAllStates: boolean = false): Promise<Package[]> {
+		const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+		const nextDay = new Date(date);
+		nextDay.setDate(date.getDate() + 1);
+
+		const query: any = {
+			deliveryDate: { $gte: date, $lt: nextDay },
+		};
+
+		if (uuidUser) {
+			query.deliveryMan = uuidUser;
+		}
+		if (!includeAllStates) {
+			query.state = validationMessages.packages.state.delivered;
+		}
+
+		return this.packageModel.find(query).exec();
+	}
+
+	async findAllPackagesWithDeliveryMan(): Promise<Package[]> {
+		return this.packageModel.find({ deliveryMan: { $ne: null } }).exec();
+	}
+
+	async updatePackageState(packageId: string, newState: string): Promise<Package> {
+		return this.packageModel.findByIdAndUpdate(packageId, { state: newState }, { new: true }).exec();
+	}
+
+	async clearPackageDeliveryMan(packageId: string): Promise<Package> {
+		return this.packageModel.findByIdAndUpdate(packageId, { deliveryMan: null }, { new: true }).exec();
+	}
+
+	async updatePackageDeliveryDate(packageId: string, newDate: Date): Promise<Package> {
+		return this.packageModel.findByIdAndUpdate(packageId, { deliveryDate: newDate }, { new: true }).exec();
+	}
+
+	async updateDeliveryDateForNonDeliveredPackages(newDate: Date): Promise<void> {
+		const nonDeliveredPackages = await this.packageModel.find({ state: { $ne: validationMessages.packages.state.delivered } });
+
+		for (const pkg of nonDeliveredPackages) {
+			await this.packageModel.updateOne({ _id: pkg._id }, { $set: { deliveryDate: newDate } });
+
+			await this.logService.create({
+				action: validationMessages.log.action.packages.deliveryDate.nextDate,
+				entity: validationMessages.log.entity.package,
+				entityId: pkg._id,
+				changes: {
+					previousDate: pkg.deliveryDate,
+					newDate: newDate,
+				},
+				performedBy: 'CRON',
+			});
+		}
 	}
 }

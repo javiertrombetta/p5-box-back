@@ -125,20 +125,6 @@ export class AuthController {
 		}
 	}
 
-	// @Get('me/packages/:uuidPackage')
-	// @Auth(ValidRoles.repartidor)
-	// async getPackageDetails(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
-	// 	try {
-	// 		const packageDetails = await this.packagesService.findPackages(userId.toString(), uuidPackage.toString());
-	// 		if (!packageDetails) {
-	// 			throw new HttpException(validationMessages.packages.userArray.packageNotFound, HttpStatus.NOT_FOUND);
-	// 		}
-	// 		res.json(packageDetails);
-	// 	} catch (error) {
-	// 		ExceptionHandlerService.handleException(error, res);
-	// 	}
-	// }
-
 	@Get('users')
 	@Auth(ValidRoles.administrador)
 	async getAllUsers(@Res() res: Response) {
@@ -340,18 +326,4 @@ export class AuthController {
 			ExceptionHandlerService.handleException(error, res);
 		}
 	}
-
-	// @Delete('/users/:uuidUser/packages/:uuidPackage')
-	// @Auth(ValidRoles.administrador)
-	// async removePackageFromUserAndDelete(@Param('uuidUser') uuidUser: string, @Param('uuidPackage') uuidPackage: string, @Res() res: Response) {
-	// 	try {
-	// 		await this.authService.removePackageFromUser(uuidUser, uuidPackage);
-
-	// 		await this.packagesService.deleteById(uuidPackage, uuidUser);
-
-	// 		res.status(HttpStatus.OK).json({ message: validationMessages.packages.success.deleted });
-	// 	} catch (error) {
-	// 		ExceptionHandlerService.handleException(error, res);
-	// 	}
-	// }
 }
