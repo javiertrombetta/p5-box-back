@@ -3,6 +3,7 @@ import * as mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import * as mongooseUniqueValidator from 'mongoose-unique-validator';
 import { validationMessages } from '../../common/constants/validation-messages.constants';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Schema({ timestamps: true })
 export class User extends mongoose.Document {
@@ -34,6 +35,7 @@ export class User extends mongoose.Document {
 	roles: string[];
 
 	@Prop({ type: [{ type: String, ref: 'Package' }] })
+	@ApiProperty()
 	packages: string[];
 
 	@Prop({ required: false })

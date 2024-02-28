@@ -35,7 +35,6 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 		each: true,
 		message: validationMessages.auth.user.role.isEnum,
 	})
-	@ApiProperty()
 	roles?: string[];
 
 	@IsOptional()
