@@ -126,70 +126,324 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 <br>
 
+## Ejemplos de uso de la API con [Postman](https://www.postman.com/)
 
-## Uso de la API con [Postman](https://www.postman.com/)
+### Rutas de Seed
 
-
-### Endpoint `Seed`
+#### `Cargar la base de datos usando Faker` [Solo en desarrollo]
 
 ```bach
 [GET] http://localhost:3000/api/v1/seed
 ```
 
-- Respuesta esperada:
-  
-    ```json
-    {        
-        "message": "Base de datos reconstruida con datos de Faker."
-    }
-    ```
+<br>
 
-### Endpoint `Register`
+### Rutas de Usuario
+
+#### `Registrar un nuevo usuario` [Usuario no autenticado]
+
 ```bach
 [POST] http://localhost:3000/api/v1/auth/register
 ```
 
-- Incluir el siguiente Body en formato JSON:
+- Body (JSON):
 
-    ```json
-    {
-        "name": "Nombre",
-        "lastname": "Apellido",
-        "email": "usuario@dominio.com",
-        "password": "Clave123"
-    }
-    ```
+  ```json
+  {
+  	"name": "Nombre",
+  	"lastname": "Apellido",
+  	"email": "usuario@dominio.com",
+  	"password": "Clave123"
+  }
+  ```
 
-- Respuesta esperada:
-  
-    ```json
-    {   
-        "message": "Usuario registrado con éxito."
-    }
-    ```
+#### `Inicio de sesión` [Usuario no autenticado]
 
-### Endpoint `Login`
 ```bach
 [POST] http://localhost:3000/api/v1/auth/login
 ```
 
-- Incluir el siguiente Body en formato JSON:
+- Body (JSON):
 
-    ```json
-    {
-        "email": "usuario@dominio.com",
-        "password": "Clave123"
-    }
-    ```
+  ```json
+  {
+  	"email": "usuario@dominio.com",
+  	"password": "Clave123"
+  }
+  ```
 
-- Respuesta esperada:
-  
-    ```json
-    {
-        "message": "Usuario logueado con éxito."
-    }
-    ```
+#### `Cerrar sesión` [Usuario autenticado]
+
+```bach
+[POST] http://localhost:3000/api/v1/auth/logout
+```
+
+- No requiere body.
+
+#### `Recuperar contraseña` [Usuario no autenticado]
+
+```bach
+[POST] http://localhost:3000/api/v1/auth/forgot-password
+```
+
+- Body (JSON):
+
+  ```json
+  {
+  	"email": "usuario@dominio.com"
+  }
+  ```
+
+#### `Verificar token de restablecimiento de contraseña` [Usuario no autenticado]
+
+```bach
+[GET] http://localhost:3000/api/v1/auth/verify-token?token=TOKEN_AQUÍ
+```
+
+#### `Restablecimiento de contraseña` [Usuario no autenticado]
+
+```bach
+[POST] http://localhost:3000/api/v1/auth/reset-password
+```
+
+- Body (JSON):
+
+  ```json
+  {
+  	"token": "TOKEN_AQUÍ",
+  	"newPassword": "nueva123"
+  }
+  ```
+
+#### `Información del usuario autenticado` [Usuario autenticado]
+
+```bach
+[GET] http://localhost:3000/api/v1/auth/me
+```
+
+#### `Paquetes del usuario autenticado` [Usuario autenticado con rol repartidor]
+
+```bach
+[GET] http://localhost:3000/api/v1/auth/me/packages
+```
+
+#### `Obtener todos los usuarios` [Usuario autenticado con rol administrador]
+
+```bach
+[GET] http://localhost:3000/api/v1/auth/users
+```
+
+#### `Obtener datos de un usuario específico` [Usuario autenticado con rol administrador]
+
+```bach
+[GET] http://localhost:3000/api/v1/auth/users/:userId
+```
+
+#### `Actualizar rol de un usuario` [Usuario autenticado con rol administrador]
+
+```bach
+[PUT] http://localhost:3000/api/v1/auth/users/:userId/role
+```
+
+- Body (JSON):
+
+  ```json
+  {
+  	"roles": ["administrador"]
+  }
+  ```
+
+#### `Cambiar estado de un paquete y reordenar` [Usuario autenticado con rol repartidor]
+
+```bach
+[PUT] http://localhost:3000/api/v1/auth/me/packages/:uuidPackage
+```
+
+- No requiere body.
+
+#### `Actualizar paquetes del usuario autenticado` [Usuario autenticado con rol repartidor]
+
+```bach
+[PUT] http://localhost:3000/api/v1/auth/me/packages
+```
+
+- Body (JSON):
+
+  ```json
+  {
+      "packages": ["ID_PAQUETE_1", "ID_PAQUETE_2", ...]
+  }
+  ```
+
+#### `Cancelar un paquete` [Usuario autenticado con rol repartidor]
+
+```bach
+[PUT] http://localhost:3000/api/v1/auth/me/packages/:uuidPackage/cancel
+```
+
+- No requiere body.
+
+#### `Marcar paquete como entregado` [Usuario autenticado con rol repartidor]
+
+```bach
+[PUT] http://localhost:3000/api/v1/auth/me/packages/:uuidPackage/finish
+```
+
+- No requiere body.
+
+#### `Cambiar estado del usuario` [Usuario autenticado con rol administrador]
+
+```bach
+[PUT] http://localhost:3000/api/v1/auth/me/packages
+```
+
+- Body (JSON):
+
+  ```json
+  {
+  	"state": "activo"
+  }
+  ```
+
+#### `Eliminar usuario autenticado` [Usuario autenticado]
+
+```bach
+[DELETE] http://localhost:3000/api/v1/auth/me/delete
+```
+
+- No requiere body.
+
+#### `Eliminar un usuario específico` [Usuario autenticado con rol administrador]
+
+```bach
+[DELETE] http://localhost:3000/api/v1/auth/users/:userId
+```
+
+- No requiere body.
+
 <br>
+
+### Rutas de Paquetes
+
+#### `Obtener paquetes disponibles` [Usuario autenticado con rol repartidor]
+
+```bach
+[GET] http://localhost:3000/api/v1/packages/available
+```
+
+#### `Obtener paquetes entregados` [Usuario autenticado con rol repartidor]
+
+```bach
+[GET] http://localhost:3000/api/v1/packages/delivered
+```
+
+#### `Obtener detalles de un paquete específico` [Usuario autenticado con rol repartidor]
+
+```bach
+[GET] http://localhost:3000/api/v1/packages/at/:uuidPackage/details
+```
+
+#### `Crear un nuevo paquete` [Usuario autenticado con rol administrador]
+
+```bach
+[POST] http://localhost:3000/api/v1/packages/new
+```
+
+- Body (JSON):
+
+  ```json
+  {
+  	"deliveryFullname": "Carlos López",
+  	"deliveryAddress": "Calle Flasa 123",
+  	"deliveryWeight": 3
+  }
+  ```
+
+#### `Actualizar el estado de un paquete` [Usuario autenticado con rol administrador]
+
+```bach
+[PUT] http://localhost:3000/api/v1/packages/at/:packageId/state
+```
+
+- Body (JSON):
+
+  ```json
+  {
+  	"state": "en curso"
+  }
+  ```
+
+#### `Asignar un paquete a un repartidor` [Usuario autenticado con rol repartidor]
+
+```bach
+[PUT] http://localhost:3000/api/v1/packages/at/:packageId/assign
+```
+
+- Body (JSON):
+
+  ```json
+  {
+  	"deliveryMan": "ID_REPARTIDOR"
+  }
+  ```
+
+#### `Eliminar un paquete` [Usuario autenticado con rol administrador]
+
+```bach
+[DELETE] http://localhost:3000/api/v1/packages/at/:uuidPackage/remove
+```
+
+- No requiere body.
+
+<br>
+
+### Rutas de Ubicación (Google Maps)
+
+#### `Obtener Ubicación de un Paquete` [Usuario autenticado con rol repartidor]
+
+```bach
+[GET] http://localhost:3000/api/v1/locations/package/:packageId
+
+```
+
+<br>
+
+### Rutas de Reportes
+
+#### `Reporte de repartidores disponibles por fecha` [Usuario autenticado con rol administrador]
+
+```bach
+[GET] http://localhost:3000/api/v1/reports/deliveryman/all/state/available/:year/:month/:day
+
+```
+
+#### `Reporte de detalles de estado de repartidores por fecha` [Usuario autenticado con rol administrador]
+
+```bach
+[GET] http://localhost:3000/api/v1/reports/deliveryman/all/state/details/:year/:month/:day
+
+```
+
+#### `Reporte de paquetes entregados por fecha` [Usuario autenticado con rol administrador]
+
+```bach
+[GET] http://localhost:3000/api/v1/reports/on/all/delivered/:year/:month/:day
+
+```
+
+#### `Reporte de paquetes entregados por repartidor y fecha` [Usuario autenticado con rol administrador]
+
+```bach
+[GET] http://localhost:3000/api/v1/reports/deliveryman/on/:uuidUser/delivered/:year/:month/:day
+
+```
+
+#### `Reporte de todos los paquetes por fecha` [Usuario autenticado con rol administrador]
+
+```bach
+[GET] http://localhost:3000/api/v1/reports/packages/all/:year/:month/:day
+
+```
 
 ## Contribuir con el proyecto Box
 

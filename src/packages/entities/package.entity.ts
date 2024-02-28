@@ -18,7 +18,7 @@ export class Package extends mongoose.Document {
 	deliveryWeight: number;
 
 	@Prop()
-	daliveryDate: Date;
+	deliveryDate: Date;
 
 	@Prop({ type: String, ref: 'User' })
 	deliveryMan: string;
