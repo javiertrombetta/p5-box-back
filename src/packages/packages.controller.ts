@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, ValidationPipe, Put, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, ValidationPipe, Put, Res, HttpStatus, HttpException } from '@nestjs/common';
 import { Response } from 'express';
 import { PackagesService } from './packages.service';
 import { GetUser, Auth } from '../auth/decorators';
@@ -7,29 +7,25 @@ import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import { ExceptionHandlerService } from '../common/helpers';
 import { ApiTags } from '@nestjs/swagger';
+import { validationMessages } from 'src/common/constants';
 
 @ApiTags('Packages')
 @Controller('packages')
 export class PackagesController {
 	constructor(private readonly packagesService: PackagesService) {}
 
-	@Get('users/:userid')
-	findById(@Param('userid') id: string) {
-		return this.packagesService.findById(id);
-	}
-
-	@Get('me/available')
+	@Get('available')
 	@Auth(ValidRoles.repartidor)
-	async getAvailablePackages(@GetUser() user, @Res() res: Response) {
+	async getAvailablePackages(@Res() res: Response) {
 		try {
-			const packages = await this.packagesService.findAvailablePackage(user.id);
+			const packages = await this.packagesService.findAvailablePackage();
 			res.status(HttpStatus.OK).json(packages);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
-	@Get('me/delivered')
+	@Get('delivered')
 	@Auth(ValidRoles.repartidor)
 	async getDeliveredPackages(@GetUser() user, @Res() res: Response) {
 		try {
@@ -40,28 +36,57 @@ export class PackagesController {
 		}
 	}
 
+	// @Get('at/:userid')
+	// findById(@Param('userid') id: string) {
+	// 	return this.packagesService.findById(id);
+	// }
+
+	@Get('at/:uuidPackage/details')
+	@Auth(ValidRoles.repartidor)
+	async getPackageDetails(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
+		try {
+			const packageDetails = await this.packagesService.findPackages(userId, uuidPackage);
+			if (!packageDetails) {
+				throw new HttpException(validationMessages.packages.userArray.packageNotFound, HttpStatus.NOT_FOUND);
+			}
+			res.json(packageDetails);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
+
 	@Post('new')
-	createPackage(@Body(ValidationPipe) createPackageDto: CreatePackageDto) {
-		return this.packagesService.create(createPackageDto);
+	@Auth(ValidRoles.administrador)
+	createPackage(@Body(ValidationPipe) createPackageDto: CreatePackageDto, @GetUser() user) {
+		return this.packagesService.create(createPackageDto, user.id);
 	}
 
-	@Put('me/finish')
-	update(@Param('packageId') id: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto) {
-		return this.packagesService.updateById(id, updatePackageDto);
+	@Put('finish')
+	@Auth(ValidRoles.repartidor)
+	update(@Param('packageId') pkgId: string, @GetUser() user, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto) {
+		return this.packagesService.updateById(pkgId, updatePackageDto, user.id);
 	}
 
-	@Put(':packageId/assign')
-	assignPackage(@Param('packageId') id: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto) {
-		return this.packagesService.updateById(id, updatePackageDto);
+	@Put('at/:packageId/assign')
+	@Auth(ValidRoles.repartidor)
+	assignPackage(@Param('packageId') pkgId: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @GetUser() user) {
+		return this.packagesService.updateById(pkgId, updatePackageDto, user.id);
 	}
 
-	@Put(':packageId/state')
-	updateState(@Param('packageId') id: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto) {
-		return this.packagesService.updateById(id, updatePackageDto);
+	@Put('at/:packageId/state')
+	@Auth(ValidRoles.administrador)
+	updateState(@Param('packageId') pkgId: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @GetUser() user) {
+		return this.packagesService.updateById(pkgId, updatePackageDto, user.id);
 	}
 
-	@Delete(':packageId')
-	remove(@Param('packageId') id: string) {
-		return this.packagesService.deleteById(id);
+	@Delete('at/:uuidPackage/remove')
+	@Auth(ValidRoles.administrador)
+	async removePackage(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
+		try {
+			await this.packagesService.removePackage(uuidPackage, userId);
+			res.status(HttpStatus.OK).json({ message: validationMessages.packages.success.deleted });
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 }
