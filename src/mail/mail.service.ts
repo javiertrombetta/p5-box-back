@@ -23,7 +23,7 @@ export class MailService {
 	async sendMail(to: string, subject: string, content: string): Promise<void> {
 		try {
 			const info = await this.transporter.sendMail({
-				from: validationMessages.mail.from,
+				from: validationMessages.mails.from,
 				to: to,
 				subject: subject,
 				html: content,

@@ -39,7 +39,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		}
 
 		if (user.state === 'inactivo') {
-			throw new UnauthorizedException(validationMessages.auth.state.isInactive);
+			throw new UnauthorizedException(validationMessages.auth.user.state.isInactive);
 		}
 
 		return user;

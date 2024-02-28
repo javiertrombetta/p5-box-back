@@ -4,35 +4,32 @@ import { validationMessages } from '../../common/constants/validation-messages.c
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
-	@IsNotEmpty({ message: validationMessages.auth.name.isNotEmpty })
-	@IsString({ message: validationMessages.auth.name.isString })
-	@ApiProperty()
+	@IsNotEmpty({ message: validationMessages.auth.user.name.isNotEmpty })
+	@IsString({ message: validationMessages.auth.user.name.isString })
 	name: string;
 
-	@IsNotEmpty({ message: validationMessages.auth.lastname.isNotEmpty })
-	@IsString({ message: validationMessages.auth.lastname.isString })
-	@ApiProperty()
+	@IsNotEmpty({ message: validationMessages.auth.user.lastname.isNotEmpty })
+	@IsString({ message: validationMessages.auth.user.lastname.isString })
 	lastname: string;
 
-	@IsNotEmpty({ message: validationMessages.auth.email.isNotEmpty })
-	@IsEmail({}, { message: validationMessages.auth.email.isEmail })
-	@ApiProperty()
+	@IsNotEmpty({ message: validationMessages.auth.user.email.isNotEmpty })
+	@IsEmail({}, { message: validationMessages.auth.user.email.isEmail })
 	email: string;
 
-	@IsNotEmpty({ message: validationMessages.auth.password.isNotEmpty })
-	@IsString({ message: validationMessages.auth.password.isString })
-	@MinLength(6, { message: validationMessages.auth.password.minLength })
+	@IsNotEmpty({ message: validationMessages.auth.user.password.isNotEmpty })
+	@IsString({ message: validationMessages.auth.user.password.isString })
+	@MinLength(6, { message: validationMessages.auth.user.password.minLength })
 	@Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-		message: validationMessages.auth.password.pattern,
+		message: validationMessages.auth.user.password.pattern,
 	})
 	@ApiProperty()
 	password: string;
 
 	@IsOptional()
-	@IsArray({ message: validationMessages.auth.role.isArray })
+	@IsArray({ message: validationMessages.auth.user.role.isArray })
 	@IsEnum(['repartidor', 'administrador'], {
 		each: true,
-		message: validationMessages.auth.role.isEnum,
+		message: validationMessages.auth.user.role.isEnum,
 	})
 	roles?: string[];
 
@@ -43,17 +40,16 @@ export class CreateUserDto {
 	packages?: string[];
 
 	@IsOptional()
-	@IsString({ message: validationMessages.auth.photoUrl.isString })
-	@ApiProperty()
+	@IsString({ message: validationMessages.auth.user.photoUrl.isString })
 	photoUrl?: string;
 
 	@IsOptional()
-	@IsString({ message: validationMessages.auth.state.isEnum })
-	@IsEnum({ active: 'active', inactive: 'inactive' }, { message: validationMessages.auth.state.isEnum })
+	@IsString({ message: validationMessages.auth.user.state.isEnum })
+	@IsEnum({ active: 'active', inactive: 'inactive' }, { message: validationMessages.auth.user.state.isEnum })
 	state?: string;
 
 	@IsOptional()
-	@IsNumber({}, { message: validationMessages.auth.points.isNumber })
-	@IsPositive({ message: validationMessages.auth.points.isPositive })
+	@IsNumber({}, { message: validationMessages.auth.user.points.isNumber })
+	@IsPositive({ message: validationMessages.auth.user.points.isPositive })
 	points?: number;
 }

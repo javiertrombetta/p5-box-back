@@ -3,13 +3,11 @@ import { validationMessages } from '../../common/constants/validation-messages.c
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginUserDto {
-	@IsNotEmpty({ message: validationMessages.auth.email.isNotEmpty })
-	@IsEmail({}, { message: validationMessages.auth.email.isEmail })
-	@ApiProperty()
+	@IsNotEmpty({ message: validationMessages.auth.user.email.isNotEmpty })
+	@IsEmail({}, { message: validationMessages.auth.user.email.isEmail })
 	email: string;
 
-	@IsNotEmpty({ message: validationMessages.auth.password.isNotEmpty })
-	@IsString({ message: validationMessages.auth.password.isString })
-	@ApiProperty()
+	@IsNotEmpty({ message: validationMessages.auth.user.password.isNotEmpty })
+	@IsString({ message: validationMessages.auth.user.password.isString })
 	password: string;
 }

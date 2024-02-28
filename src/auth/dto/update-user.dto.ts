@@ -5,34 +5,34 @@ import { validationMessages } from '../../common/constants/validation-messages.c
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
 	@IsOptional()
-	@IsString({ message: validationMessages.auth.name.isString })
+	@IsString({ message: validationMessages.auth.user.name.isString })
 	name?: string;
 
 	@IsOptional()
-	@IsString({ message: validationMessages.auth.lastname.isString })
+	@IsString({ message: validationMessages.auth.user.lastname.isString })
 	lastname?: string;
 
 	@IsOptional()
-	@IsEmail({}, { message: validationMessages.auth.email.isEmail })
+	@IsEmail({}, { message: validationMessages.auth.user.email.isEmail })
 	email?: string;
 
 	@IsOptional()
-	@IsString({ message: validationMessages.auth.password.isString })
-	@MinLength(6, { message: validationMessages.auth.password.minLength })
+	@IsString({ message: validationMessages.auth.user.password.isString })
+	@MinLength(6, { message: validationMessages.auth.user.password.minLength })
 	@Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-		message: validationMessages.auth.password.pattern,
+		message: validationMessages.auth.user.password.pattern,
 	})
 	password?: string;
 
 	@IsOptional()
-	@IsArray({ message: validationMessages.auth.role.isArray })
+	@IsArray({ message: validationMessages.auth.user.role.isArray })
 	@IsEnum(['repartidor', 'administrador'], {
 		each: true,
-		message: validationMessages.auth.role.isEnum,
+		message: validationMessages.auth.user.role.isEnum,
 	})
 	roles?: string[];
 
 	@IsOptional()
-	@IsString({ message: validationMessages.auth.photoUrl.isString })
+	@IsString({ message: validationMessages.auth.user.photoUrl.isString })
 	photoUrl?: string;
 }
