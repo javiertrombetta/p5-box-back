@@ -7,7 +7,7 @@ import { PackagesService } from '../packages/packages.service';
 
 import { GetUser, Auth } from './decorators';
 import { ValidRoles } from './interfaces';
-import { CreateUserDto, LoginUserDto, ResetPasswordDto, UpdateUserDto, ForgotPasswordDto } from './dto';
+import { CreateUserDto, LoginUserDto, ResetPasswordDto, UpdateUserDto, ForgotPasswordDto, StartDayDto } from './dto';
 
 import { validationMessages } from '../common/constants';
 import { ExceptionHandlerService } from '../common/helpers';
@@ -218,9 +218,10 @@ export class AuthController {
 
 	@Put('me/packages')
 	@Auth(ValidRoles.repartidor)
-	async updateMyPackages(@GetUser('id') userId: string, @Body('packages') packageIds: string[], @Res() res: Response) {
+	async updateMyPackages(@GetUser('id') userId: string, @Body() startDayDto: StartDayDto, @Res() res: Response) {
 		try {
-			if (packageIds.length > 10) {
+			const { packages } = startDayDto;
+			if (packages.length > 10) {
 				throw new HttpException(validationMessages.packages.userArray.dailyDeliveryLimit, HttpStatus.BAD_REQUEST);
 			}
 
@@ -231,7 +232,7 @@ export class AuthController {
 				await this.packagesService.updatePackageOnCancel(packageId, userId, res);
 			}
 
-			for (const packageId of packageIds) {
+			for (const packageId of packages) {
 				await this.packagesService.assignPackageToUser(userId, packageId, res);
 			}
 

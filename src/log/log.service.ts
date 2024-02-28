@@ -20,6 +20,14 @@ export class LogService {
 		return this.logModel.find().exec();
 	}
 
+	async getUsersWithStateLogs(): Promise<string[]> {
+		const usersWithLogs = await this.logModel.distinct('entityId', {
+			action: { $in: [validationMessages.log.action.user.state.activate, validationMessages.log.action.user.state.deactivate] },
+			entity: validationMessages.log.entity.user,
+		});
+		return usersWithLogs;
+	}
+
 	async getLastStateOfUsers(startDate: Date, endDate: Date): Promise<{ activeUsers: number; inactiveUsers: number }> {
 		const aggregationPipeline = [
 			{
@@ -51,9 +59,9 @@ export class LogService {
 		let inactiveUsers = 0;
 
 		results.forEach(result => {
-			if (result._id === 'userActivated') {
+			if (result._id === validationMessages.log.action.user.state.activate) {
 				activeUsers = result.count;
-			} else if (result._id === 'userDeactivated') {
+			} else if (result._id === validationMessages.log.action.user.state.deactivate) {
 				inactiveUsers = result.count;
 			}
 		});
