@@ -6,14 +6,17 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateUserDto {
 	@IsNotEmpty({ message: validationMessages.auth.user.name.isNotEmpty })
 	@IsString({ message: validationMessages.auth.user.name.isString })
+	@ApiProperty()
 	name: string;
 
 	@IsNotEmpty({ message: validationMessages.auth.user.lastname.isNotEmpty })
 	@IsString({ message: validationMessages.auth.user.lastname.isString })
+	@ApiProperty()
 	lastname: string;
 
 	@IsNotEmpty({ message: validationMessages.auth.user.email.isNotEmpty })
 	@IsEmail({}, { message: validationMessages.auth.user.email.isEmail })
+	@ApiProperty()
 	email: string;
 
 	@IsNotEmpty({ message: validationMessages.auth.user.password.isNotEmpty })
@@ -41,6 +44,7 @@ export class CreateUserDto {
 
 	@IsOptional()
 	@IsString({ message: validationMessages.auth.user.photoUrl.isString })
+	@ApiProperty()
 	photoUrl?: string;
 
 	@IsOptional()
