@@ -14,13 +14,14 @@ describe('User controllers E2E Test', () => {
 			imports: [AppModule],
 		}).compile();
 
-		(usersData = {
-			name: 'Test',
-			lastname: 'Ing',
-			email: 'test444444444@gmail.com',
-			password: 'Plataforma5',
-			photoUrl: 'Photo',
-		}),
+		(usersData = [
+			{
+				name: 'Test',
+				lastname: 'Ing',
+				email: 'test4444444@gmail.com',
+				password: 'Plataforma5',
+				photoUrl: 'Photo',
+			},
 			{
 				name: 'Test',
 				lastname: 'Ing',
@@ -36,9 +37,14 @@ describe('User controllers E2E Test', () => {
 				photoUrl: 'Photo',
 			},
 			{
-				email: 'test444444444@gmail.com',
+				email: 'test4444444@gmail.com',
 				password: 'Plataforma5',
 			},
+			{
+				email: 'no_registrado@gmail.com',
+				password: 'Plataforma5',
+			},
+		]),
 			(app = moduleFixture.createNestApplication());
 		await app.init();
 	});
@@ -67,24 +73,34 @@ describe('User controllers E2E Test', () => {
 		});
 
 		it('should fail to create a new user with duplicate email', async () => {
-			const response1 = await request(app.getHttpServer()).post('/auth/register').send(usersData[2]);
+			const response1 = await request(app.getHttpServer()).post('/auth/register').send(usersData[1]);
 
 			expect(response1.status).toBe(HttpStatus.CREATED);
 			// const firstUserId = response1.body.id;
-			const response2 = await request(app.getHttpServer()).post('/auth/register').send(usersData[2]);
+			const response2 = await request(app.getHttpServer()).post('/auth/register').send(usersData[1]);
 
 			expect(response2.status).toBe(HttpStatus.CONFLICT);
 		});
 	});
 
 	describe('Post /auth/login', () => {
+		let cookie = '';
+
 		it('should login the user successfully', async () => {
-			const response = await axios.post('http://localhost:3000/api/v1/auth/login', {
-				email: 'test4444444444@gmail.com',
-				password: 'Plataforma5',
-			});
+			const response = await axios.post('http://localhost:3000/api/v1/auth/login', usersData[3]);
 			expect(response.status).toBe(HttpStatus.OK);
 			expect(response.data.message).toEqual('Usuario logueado con éxito.');
+		});
+
+		it('no deberia poder loguearse si no esta registrado', async () => {
+			try {
+				const response = await axios.post('http://localhost:3000/api/v1/auth/login', usersData[4]);
+				expect(response.status).not.toBe(HttpStatus.OK);
+				expect(response.data.message).toEqual('El usuario no fue encontrado.');
+			} catch (error) {
+				expect(error.response.status).toBe(HttpStatus.UNAUTHORIZED);
+				expect(error.response.data.message).toEqual('El usuario no fue encontrado.');
+			}
 		});
 	});
 });
