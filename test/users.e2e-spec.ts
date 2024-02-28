@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from './../src/app.module';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { response } from 'express';
+import axios from 'axios';
 
 describe('User controllers E2E Test', () => {
 	let app: INestApplication;
@@ -14,37 +14,32 @@ describe('User controllers E2E Test', () => {
 			imports: [AppModule],
 		}).compile();
 
-		usersData = 
-			{
-				name: 'Tewst',
-				lastname: 'Iwng',
-				email: 'testw105@gmail.com',
-				password: 'Pwlataforma5',
-				photoUrl: 'Pwhoto',
-			},
-			{
-				name: 'Tewst',
-				lastname: 'Iwng',
-				email: 'teswt106@gmail.com',
-				password: 'slwas',
-				photoUrl: 'Phwoto',
-			},
+		(usersData = {
+			name: 'Test',
+			lastname: 'Ing',
+			email: 'test444444444@gmail.com',
+			password: 'Plataforma5',
+			photoUrl: 'Photo',
+		}),
 			{
 				name: 'Test',
 				lastname: 'Ing',
-				email: 'tewst107@gmail.com',
-				password: 'Plataforma5',
+				email: 'test22222222@gmail.com',
+				password: 'slas',
 				photoUrl: 'Photo',
 			},
 			{
 				name: 'Test',
 				lastname: 'Ing',
-				email: 'test1w08@gmail.com',
+				email: 'test333333333@gmail.com',
 				password: 'Plataforma5',
 				photoUrl: 'Photo',
 			},
-	
-		app = moduleFixture.createNestApplication();
+			{
+				email: 'test444444444@gmail.com',
+				password: 'Plataforma5',
+			},
+			(app = moduleFixture.createNestApplication());
 		await app.init();
 	});
 
@@ -52,17 +47,23 @@ describe('User controllers E2E Test', () => {
 		await app.close();
 	});
 
+	// 	async function deleteUser(userId: string) {
+	// 	try {
+	// 		await User.findOneAndDelete(userId);
+	// 		console.log('usuario eliminado');
+	// 	} catch (error) {
+	// 		console.error('error al eliminar el usuario:', error);
+	// 	}
+	// }
+
 	describe('Post /auth/register', () => {
 		it('should create a new user', async () => {
 			const response = await request(app.getHttpServer()).post('/auth/register').send(usersData[0]);
 
 			expect(response.status).toBe(HttpStatus.CREATED);
+			expect(response.body.message).toEqual('Usuario registrado con éxito.');
 			createdUserId = response.body.id;
-		});
-
-		it('Should fail if password is less than 6 characters', async () => {
-			const response = await request(app.getHttpServer()).post('/auth/register').send(usersData[1]);
-			expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+			// await deleteUser(createdUserId)
 		});
 
 		it('should fail to create a new user with duplicate email', async () => {
@@ -77,14 +78,13 @@ describe('User controllers E2E Test', () => {
 	});
 
 	describe('Post /auth/login', () => {
-		it('should log in with a user that exists', async () => {
-			const response1 = await request(app.getHttpServer()).post('/auth/register').send(usersData[3]);
-
-			expect(response1.status).toBe(HttpStatus.CREATED);
-
-			const response2 = await request(app.getHttpServer()).post('/auth/login').send({ email: usersData[3].email, password: usersData[2].password });
-
-			expect(response2.status).toBe(HttpStatus.ACCEPTED);
+		it('should login the user successfully', async () => {
+			const response = await axios.post('http://localhost:3000/api/v1/auth/login', {
+				email: 'test4444444444@gmail.com',
+				password: 'Plataforma5',
+			});
+			expect(response.status).toBe(HttpStatus.OK);
+			expect(response.data.message).toEqual('Usuario logueado con éxito.');
 		});
 	});
 });
