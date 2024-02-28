@@ -1,4 +1,5 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import { validationMessages } from '../constants';
 
 @Catch(Error)
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -8,7 +9,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 		const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
-		const message = exception instanceof Error ? exception.message : 'Internal server error';
+		const message = exception instanceof Error ? exception.message : validationMessages.serverError.internal;
 
 		response.status(status).json({
 			statusCode: status,

@@ -13,7 +13,7 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
 			statusCode: HttpStatus.UNAUTHORIZED,
 			timestamp: new Date().toISOString(),
 			path: request.url,
-			message: validationMessages.auth.account.unauthorized,
+			message: validationMessages.auth.account.error.unauthorized,
 		});
 	}
 }

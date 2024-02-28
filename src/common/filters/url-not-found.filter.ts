@@ -11,7 +11,7 @@ export class NotFoundExceptionFilter implements ExceptionFilter {
 
 		response.status(status).json({
 			statusCode: status,
-			message: validationMessages.auth.error.urlNotFound,
+			message: validationMessages.serverError.urlNotFound,
 		});
 	}
 }
