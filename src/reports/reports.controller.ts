@@ -2,7 +2,9 @@ import { Controller, Get, Param } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { Auth } from '../auth/decorators';
 import { ValidRoles } from '../auth/interfaces';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Reports')
 @Controller('reports')
 export class ReportsController {
 	constructor(private readonly reportsService: ReportsService) {}
