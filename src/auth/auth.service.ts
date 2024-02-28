@@ -351,4 +351,8 @@ export class AuthService {
 			performedBy: 'CRON',
 		});
 	}
+
+	async countUsers(): Promise<number> {
+		return this.userModel.countDocuments().exec();
+	}
 }
