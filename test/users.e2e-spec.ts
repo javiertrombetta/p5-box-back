@@ -14,36 +14,36 @@ describe('User controllers E2E Test', () => {
 			imports: [AppModule],
 		}).compile();
 
-		usersData = [
+		usersData = 
+			{
+				name: 'Tewst',
+				lastname: 'Iwng',
+				email: 'testw105@gmail.com',
+				password: 'Pwlataforma5',
+				photoUrl: 'Pwhoto',
+			},
+			{
+				name: 'Tewst',
+				lastname: 'Iwng',
+				email: 'teswt106@gmail.com',
+				password: 'slwas',
+				photoUrl: 'Phwoto',
+			},
 			{
 				name: 'Test',
 				lastname: 'Ing',
-				email: 'test105@gmail.com',
+				email: 'tewst107@gmail.com',
 				password: 'Plataforma5',
 				photoUrl: 'Photo',
 			},
 			{
 				name: 'Test',
 				lastname: 'Ing',
-				email: 'test106@gmail.com',
-				password: 'slas',
-				photoUrl: 'Photo',
-			},
-			{
-				name: 'Test',
-				lastname: 'Ing',
-				email: 'test107@gmail.com',
+				email: 'test1w08@gmail.com',
 				password: 'Plataforma5',
 				photoUrl: 'Photo',
 			},
-			{
-				name: 'Test',
-				lastname: 'Ing',
-				email: 'test108@gmail.com',
-				password: 'Plataforma5',
-				photoUrl: 'Photo',
-			},
-		];
+	
 		app = moduleFixture.createNestApplication();
 		await app.init();
 	});
@@ -77,7 +77,7 @@ describe('User controllers E2E Test', () => {
 	});
 
 	describe('Post /auth/login', () => {
-		xit('should log in with a user that exists', async () => {
+		it('should log in with a user that exists', async () => {
 			const response1 = await request(app.getHttpServer()).post('/auth/register').send(usersData[3]);
 
 			expect(response1.status).toBe(HttpStatus.CREATED);
