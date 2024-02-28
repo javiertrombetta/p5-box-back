@@ -36,11 +36,6 @@ export class PackagesController {
 		}
 	}
 
-	// @Get('at/:userid')
-	// findById(@Param('userid') id: string) {
-	// 	return this.packagesService.findById(id);
-	// }
-
 	@Get('at/:uuidPackage/details')
 	@Auth(ValidRoles.repartidor)
 	async getPackageDetails(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {

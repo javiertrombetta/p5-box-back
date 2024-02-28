@@ -4,7 +4,7 @@ import { LocationsService } from './locations.service';
 import { Auth } from '../auth/decorators';
 import { ValidRoles } from '../auth/interfaces';
 
-@Controller('location')
+@Controller('locations')
 export class LocationsController {
 	constructor(private locationService: LocationsService) {}
 
