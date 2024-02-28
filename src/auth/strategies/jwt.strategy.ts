@@ -8,7 +8,7 @@ import { Request } from 'express';
 
 import { User } from '../entities/user.entity';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
-import { validationMessages } from 'src/common/constants';
+import { validationMessages } from '../../common/constants';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -39,7 +39,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		}
 
 		if (user.state === 'inactivo') {
-			throw new UnauthorizedException(validationMessages.auth.state.isInactive);
+			throw new UnauthorizedException(validationMessages.auth.user.state.isInactive);
 		}
 
 		return user;

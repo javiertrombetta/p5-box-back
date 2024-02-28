@@ -2,7 +2,9 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { RewardsService } from './rewards.service';
 import { CreateRewardDto } from './dto/create-reward.dto';
 import { UpdateRewardDto } from './dto/update-reward.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Rewards')
 @Controller('rewards')
 export class RewardsController {
 	constructor(private readonly rewardsService: RewardsService) {}

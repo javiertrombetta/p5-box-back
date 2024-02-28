@@ -19,12 +19,12 @@ export class UserRoleGuard implements CanActivate {
 		const req = context.switchToHttp().getRequest();
 		const user = req.user as User;
 
-		if (!user) throw new HttpException(validationMessages.auth.account.notFound, HttpStatus.BAD_REQUEST);
+		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.BAD_REQUEST);
 
 		const userHasValidRole = validRoles.some(role => user.roles.includes(role));
 
 		if (!userHasValidRole) {
-			const forbiddenMessage = validationMessages.auth.role.forbidden
+			const forbiddenMessage = validationMessages.auth.user.role.forbidden
 				.replace('${user.name}', user.name)
 				.replace('${user.lastname}', user.lastname)
 				.replace('${validRoles}', validRoles.join(', '));
