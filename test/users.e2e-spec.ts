@@ -6,7 +6,7 @@ import axios from 'axios';
 
 describe('User controllers E2E Test', () => {
 	let app: INestApplication;
-	let createdUserId: any;
+	// let createdUserId: any;
 	let usersData: any;
 
 	beforeEach(async () => {
@@ -62,7 +62,7 @@ describe('User controllers E2E Test', () => {
 
 			expect(response.status).toBe(HttpStatus.CREATED);
 			expect(response.body.message).toEqual('Usuario registrado con éxito.');
-			createdUserId = response.body.id;
+			// createdUserId = response.body.id;
 			// await deleteUser(createdUserId)
 		});
 
@@ -70,7 +70,7 @@ describe('User controllers E2E Test', () => {
 			const response1 = await request(app.getHttpServer()).post('/auth/register').send(usersData[2]);
 
 			expect(response1.status).toBe(HttpStatus.CREATED);
-			const firstUserId = response1.body.id;
+			// const firstUserId = response1.body.id;
 			const response2 = await request(app.getHttpServer()).post('/auth/register').send(usersData[2]);
 
 			expect(response2.status).toBe(HttpStatus.CONFLICT);

@@ -1,36 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Param, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { LocationsService } from './locations.service';
-import { CreateLocationDto } from './dto/create-location.dto';
-import { UpdateLocationDto } from './dto/update-location.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { Auth } from '../auth/decorators';
+import { ValidRoles } from '../auth/interfaces';
 
-@ApiTags('Locations')
-@Controller('locations')
+@Controller('location')
 export class LocationsController {
-	constructor(private readonly locationsService: LocationsService) {}
+	constructor(private locationService: LocationsService) {}
 
-	@Post()
-	create(@Body() createLocationDto: CreateLocationDto) {
-		return this.locationsService.create(createLocationDto);
-	}
-
-	@Get()
-	findAll() {
-		return this.locationsService.findAll();
-	}
-
-	@Get(':id')
-	findOne(@Param('id') id: string) {
-		return this.locationsService.findOne(+id);
-	}
-
-	@Patch(':id')
-	update(@Param('id') id: string, @Body() updateLocationDto: UpdateLocationDto) {
-		return this.locationsService.update(+id, updateLocationDto);
-	}
-
-	@Delete(':id')
-	remove(@Param('id') id: string) {
-		return this.locationsService.remove(+id);
+	@Get('/package/:packageId')
+	@Auth(ValidRoles.repartidor)
+	getPackageLocation(@Param('packageId') packageId: string, @Res() res: Response) {
+		return this.locationService.getPackageLocation(packageId, res);
 	}
 }
