@@ -41,9 +41,8 @@ export class PackagesController {
 	async getPackageDetails(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
 		try {
 			const packageDetails = await this.packagesService.findPackages(userId, uuidPackage);
-			if (!packageDetails) {
-				throw new HttpException(validationMessages.packages.userArray.packageNotFound, HttpStatus.NOT_FOUND);
-			}
+			if (!packageDetails) throw new HttpException(validationMessages.packages.userArray.packageNotFound, HttpStatus.NOT_FOUND);
+
 			res.json(packageDetails);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
