@@ -19,9 +19,8 @@ export class PackagesService {
 
 	async findById(id: string): Promise<Package> {
 		const paquete = await this.packageModel.findById(id);
-		if (!paquete) {
-			throw new NotAcceptableException(validationMessages.packages.error.packageNotFound);
-		}
+		if (!paquete) throw new NotAcceptableException(validationMessages.packages.error.packageNotFound);
+
 		return paquete;
 	}
 
@@ -70,9 +69,7 @@ export class PackagesService {
 
 	async updateById(pkgId: string, updatePackageDto: UpdatePackageDto, userId: string): Promise<Package> {
 		const packageToUpdate = await this.packageModel.findById(pkgId);
-		if (!packageToUpdate) {
-			throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-		}
+		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
 		const updatedPackage = await this.packageModel.findByIdAndUpdate(pkgId, updatePackageDto, { new: true }).exec();
 
@@ -120,9 +117,7 @@ export class PackagesService {
 	async updatePackageOnDelete(packageId: string, res: Response): Promise<void> {
 		try {
 			const packageToUpdate = await this.packageModel.findById(packageId);
-			if (!packageToUpdate) {
-				throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-			}
+			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
 			packageToUpdate.deliveryMan = null;
 			packageToUpdate.state = validationMessages.packages.state.available;
@@ -132,17 +127,31 @@ export class PackagesService {
 		}
 	}
 
+	async updatePackagesStateToPending(packageIds: string[]): Promise<void> {
+		await this.packageModel.updateMany({ _id: { $in: packageIds } }, { $set: { state: validationMessages.packages.state.pending } });
+	}
+
 	async changeStateAndReorder(userId: string, uuidPackage: string, performedById: string, res: Response): Promise<Package> {
 		try {
+			const packageAssigned = await this.authService.isPackageAssignedToUser(userId, uuidPackage);
+			if (!packageAssigned) throw new NotFoundException(validationMessages.packages.userArray.packageNotFound);
+
+			const user = await this.authService.findById(userId);
+			if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
+
+			const otherPackages = user.packages.filter(packageId => packageId !== uuidPackage);
+
+			await this.updatePackagesStateToPending(otherPackages);
+
 			const packageToUpdate = await this.packageModel.findById(uuidPackage);
-			if (!packageToUpdate) {
-				throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-			}
+			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
+
+			packageToUpdate.state = validationMessages.packages.state.onTheWay;
+			await packageToUpdate.save();
 
 			await this.authService.reorderUserPackages(userId, uuidPackage, performedById);
 
-			packageToUpdate.state = validationMessages.packages.state.onTheWay;
-			return packageToUpdate.save();
+			return packageToUpdate;
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
@@ -151,9 +160,7 @@ export class PackagesService {
 	async updatePackageOnCancel(packageId: string, userId: string, res: Response): Promise<void> {
 		try {
 			const packageToUpdate = await this.packageModel.findById(packageId).exec();
-			if (!packageToUpdate) {
-				throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-			}
+			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
 			packageToUpdate.state = validationMessages.packages.state.available;
 			packageToUpdate.deliveryDate = new Date();
@@ -228,12 +235,9 @@ export class PackagesService {
 			deliveryDate: { $gte: date, $lt: nextDay },
 		};
 
-		if (uuidUser) {
-			query.deliveryMan = uuidUser;
-		}
-		if (!includeAllStates) {
-			query.state = validationMessages.packages.state.delivered;
-		}
+		if (uuidUser) query.deliveryMan = uuidUser;
+
+		if (!includeAllStates) query.state = validationMessages.packages.state.delivered;
 
 		return this.packageModel.find(query).exec();
 	}

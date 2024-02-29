@@ -29,31 +29,31 @@ export class CreateUserDto {
 	password: string;
 
 	@IsOptional()
-	@IsArray({ message: validationMessages.auth.user.role.isArray })
-	@IsEnum(['repartidor', 'administrador'], {
-		each: true,
-		message: validationMessages.auth.user.role.isEnum,
-	})
-	roles?: string[];
-
-	@IsOptional()
-	@IsArray({ message: validationMessages.packages.userArray.isArray })
-	@ValidateNested({ each: true })
-	@Type(() => String)
-	packages?: string[];
-
-	@IsOptional()
 	@IsString({ message: validationMessages.auth.user.photoUrl.isString })
 	@ApiProperty()
 	photoUrl?: string;
 
-	@IsOptional()
-	@IsString({ message: validationMessages.auth.user.state.isEnum })
-	@IsEnum({ active: 'active', inactive: 'inactive' }, { message: validationMessages.auth.user.state.isEnum })
-	state?: string;
+	// @IsOptional()
+	// @IsArray({ message: validationMessages.auth.user.role.isArray })
+	// @IsEnum(['repartidor', 'administrador'], {
+	// 	each: true,
+	// 	message: validationMessages.auth.user.role.isEnum,
+	// })
+	// roles?: string[];
 
-	@IsOptional()
-	@IsNumber({}, { message: validationMessages.auth.user.points.isNumber })
-	@IsPositive({ message: validationMessages.auth.user.points.isPositive })
-	points?: number;
+	// @IsOptional()
+	// @IsArray({ message: validationMessages.packages.userArray.isArray })
+	// @ValidateNested({ each: true })
+	// @Type(() => String)
+	// packages?: string[];
+
+	// @IsOptional()
+	// @IsString({ message: validationMessages.auth.user.state.isEnum })
+	// @IsEnum({ active: 'active', inactive: 'inactive' }, { message: validationMessages.auth.user.state.isEnum })
+	// state?: string;
+
+	// @IsOptional()
+	// @IsNumber({}, { message: validationMessages.auth.user.points.isNumber })
+	// @IsPositive({ message: validationMessages.auth.user.points.isPositive })
+	// points?: number;
 }

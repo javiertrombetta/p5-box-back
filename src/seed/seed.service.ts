@@ -45,9 +45,7 @@ export class SeedService {
 
 			const newUser = await new this.userModel(userData).save();
 
-			if (roles.includes('repartidor')) {
-				repartidores.push(newUser);
-			}
+			if (roles.includes('repartidor')) repartidores.push(newUser);
 		}
 
 		for (const repartidor of repartidores) {

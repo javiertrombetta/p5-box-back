@@ -28,16 +28,14 @@ export class AuthService {
 		const email = createUserDto.email.toLowerCase().trim();
 		const existingUser = await this.userModel.findOne({ email });
 
-		if (existingUser) {
-			throw new HttpException(validationMessages.auth.user.email.inUse, HttpStatus.CONFLICT);
-		}
+		if (existingUser) throw new HttpException(validationMessages.auth.user.email.inUse, HttpStatus.CONFLICT);
 
 		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 		const user = new this.userModel({
 			...createUserDto,
 			email,
 			password: hashedPassword,
-			roles: createUserDto.roles || [ValidRoles.repartidor],
+			roles: [ValidRoles.repartidor],
 		});
 
 		await user.save();
@@ -58,14 +56,11 @@ export class AuthService {
 		const email = loginUserDto.email.toLowerCase().trim();
 		const user = await this.userModel.findOne({ email });
 
-		if (!user) {
-			throw new HttpException(validationMessages.auth.account.error.userNotFound, HttpStatus.UNAUTHORIZED);
-		}
+		if (!user) throw new HttpException(validationMessages.auth.account.error.userNotFound, HttpStatus.UNAUTHORIZED);
 
 		const isPasswordMatching = await bcrypt.compare(loginUserDto.password, user.password);
-		if (!isPasswordMatching) {
-			throw new HttpException(validationMessages.auth.account.error.wrongCredentials, HttpStatus.UNAUTHORIZED);
-		}
+
+		if (!isPasswordMatching) throw new HttpException(validationMessages.auth.account.error.wrongCredentials, HttpStatus.UNAUTHORIZED);
 
 		const payload = { id: user._id };
 		const token = this.jwtService.sign(payload);
@@ -89,27 +84,34 @@ export class AuthService {
 		return this.userModel.findById(id).exec();
 	}
 
-	async updateUserRole(userId: string, newRoles: string[], performedById: string): Promise<User> {
+	async isPackageAssignedToUser(userId: string, packageId: string): Promise<boolean> {
+		const user = await this.userModel.findById(userId).exec();
+		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+
+		return user.packages.includes(packageId);
+	}
+
+	async updateUserRole(userId: string, newRoles: string[], performedById: string, res: Response): Promise<User> {
 		const originalUser = await this.userModel.findById(userId);
 
-		if (!originalUser) {
-			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+		if (!originalUser) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+
+		if (userId === performedById && originalUser.roles.includes(ValidRoles.administrador) && !newRoles.includes(ValidRoles.administrador)) {
+			throw new HttpException(validationMessages.auth.user.role.connotRemoveSelfRole, HttpStatus.FORBIDDEN);
 		}
 
 		const updatedUser = await this.userModel.findByIdAndUpdate(userId, { roles: newRoles }, { new: true }).exec();
 
-		if (!updatedUser) {
-			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+		if (!updatedUser) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+
+		if (newRoles.includes(ValidRoles.administrador)) {
+			await this.clearUserPackagesAndResetPackages(userId, res);
 		}
 
-		let action;
-		if (newRoles.includes(ValidRoles.repartidor) && newRoles.includes(ValidRoles.administrador)) {
-			action = validationMessages.log.action.user.role.addedBothRoles;
-		} else if (newRoles.includes(ValidRoles.repartidor)) {
-			action = validationMessages.log.action.user.role.addedRepartidorRole;
-		} else if (newRoles.includes(ValidRoles.administrador)) {
-			action = validationMessages.log.action.user.role.addedAdministradorRole;
-		}
+		let action: string;
+		if (newRoles.includes(ValidRoles.repartidor) && newRoles.includes(ValidRoles.administrador)) action = validationMessages.log.action.user.role.addedBothRoles;
+		else if (newRoles.includes(ValidRoles.repartidor)) action = validationMessages.log.action.user.role.addedRepartidorRole;
+		else if (newRoles.includes(ValidRoles.administrador)) action = validationMessages.log.action.user.role.addedAdministradorRole;
 
 		await this.logService.create({
 			action: action,
@@ -125,15 +127,25 @@ export class AuthService {
 		return updatedUser;
 	}
 
+	async clearUserPackagesAndResetPackages(userId: string, res: Response): Promise<void> {
+		const user = await this.userModel.findById(userId);
+		if (!user || !user.packages.length) return;
+
+		for (const packageId of user.packages) {
+			await this.packagesService.updatePackageOnCancel(packageId, userId, res);
+		}
+
+		user.packages = [];
+		await user.save();
+	}
+
 	async deleteUser(userId: string, performedById: string, res: Response): Promise<void> {
 		const user = await this.userModel.findById(userId).exec();
 		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
 		const packages = await this.packagesService.findPackages(userId);
 		if (Array.isArray(packages)) {
-			for (const pkg of packages) {
-				await this.packagesService.updatePackageOnDelete(pkg._id, res);
-			}
+			for (const pkg of packages) await this.packagesService.updatePackageOnDelete(pkg._id, res);
 		}
 
 		await this.userModel.findByIdAndDelete(userId).exec();
@@ -193,9 +205,7 @@ export class AuthService {
 			resetPasswordExpires: { $gt: Date.now() },
 		});
 
-		if (!user) {
-			throw new HttpException(validationMessages.auth.resetPassword.tokenInvalidOrExpired, HttpStatus.BAD_REQUEST);
-		}
+		if (!user) throw new HttpException(validationMessages.auth.resetPassword.tokenInvalidOrExpired, HttpStatus.BAD_REQUEST);
 
 		const hashedPassword = await bcrypt.hash(newPassword, 10);
 		user.password = hashedPassword;
@@ -217,13 +227,9 @@ export class AuthService {
 
 	async updateUserPackages(userId: string, packageId: string, performedById: string): Promise<void> {
 		const user = await this.findById(userId);
-		if (!user) {
-			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
-		}
+		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
-		if (!Array.isArray(user.packages)) {
-			user.packages = [];
-		}
+		if (!Array.isArray(user.packages)) user.packages = [];
 
 		user.packages.push(packageId);
 		await user.save();
@@ -239,9 +245,8 @@ export class AuthService {
 
 	async reorderUserPackages(userId: string, packageIdToReorder: string, performedById: string): Promise<void> {
 		const user = await this.findById(userId);
-		if (!user || !user.packages) {
-			throw new HttpException(validationMessages.packages.userArray.userNotFound, HttpStatus.NOT_FOUND);
-		}
+		if (!user || !user.packages) throw new HttpException(validationMessages.packages.userArray.userNotFound, HttpStatus.NOT_FOUND);
+
 		const filteredPackages = user.packages.filter(packageId => packageId !== packageIdToReorder);
 		const reorderedPackages = [packageIdToReorder, ...filteredPackages];
 
@@ -259,9 +264,7 @@ export class AuthService {
 
 	async removePackageFromUser(userId: string, packageId: string): Promise<void> {
 		const user = await this.userModel.findById(userId).exec();
-		if (!user) {
-			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
-		}
+		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
 		const updatedPackages = user.packages.filter(pkgId => pkgId !== packageId);
 		user.packages = updatedPackages;
@@ -282,9 +285,7 @@ export class AuthService {
 
 	async loadUserPackage(userId: string, packageId: string): Promise<void> {
 		const user = await this.userModel.findById(userId).exec();
-		if (!user) {
-			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
-		}
+		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
 		user.packages = [...user.packages, packageId];
 		await user.save();
@@ -300,16 +301,13 @@ export class AuthService {
 
 	async changeState(userId: string, newState: string): Promise<void> {
 		const user = await this.userModel.findById(userId);
-		if (!user) {
-			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
-		}
+		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
 		let action;
-		if (newState === validationMessages.auth.user.state.isActiveState && user.state !== validationMessages.auth.user.state.isActiveState) {
+		if (newState === validationMessages.auth.user.state.isActiveState && user.state !== validationMessages.auth.user.state.isActiveState)
 			action = validationMessages.log.action.user.state.activate;
-		} else if (newState === validationMessages.auth.user.state.isInactiveSate && user.state !== validationMessages.auth.user.state.isInactiveSate) {
+		else if (newState === validationMessages.auth.user.state.isInactiveSate && user.state !== validationMessages.auth.user.state.isInactiveSate)
 			action = validationMessages.log.action.user.state.deactivate;
-		}
 
 		user.state = newState;
 		await user.save();

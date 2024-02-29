@@ -28,6 +28,7 @@ export const validationMessages = {
 				badRequest: 'Usuario no encontrado.',
 				forbidden: '${user.name} ${user.lastname} no tiene los permisos de: [${validRoles}].',
 				updated: 'El rol del usuario ${user.name} ${user.lastname} ha sido actualizado con éxito.',
+				connotRemoveSelfRole: 'Un administrador no puede remover su propio rol de administrador.',
 			},
 			photoUrl: {
 				isString: 'La foto de usuario debe ser una cadena de texto.',
