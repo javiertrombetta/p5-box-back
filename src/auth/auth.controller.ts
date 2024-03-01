@@ -170,6 +170,19 @@ export class AuthController {
 		}
 	}
 
+	@Get('/users/state/:state')
+	@Auth(ValidRoles.administrador)
+	async getUsersByState(@Param('state') state: string, @Res() res: Response) {
+		try {
+			if (!validationMessages.auth.user.state.validStates.includes(state)) throw new HttpException(validationMessages.auth.user.state.invalidStateError, HttpStatus.BAD_REQUEST);
+
+			const users = await this.authService.findUsersByState(state);
+			res.status(HttpStatus.OK).json(users);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
+
 	@Get('/users/:uuidUser/packages')
 	@Auth(ValidRoles.administrador)
 	async getUserPackages(@Param('uuidUser') uuidUser: string, @Res() res: Response) {
@@ -222,6 +235,12 @@ export class AuthController {
 			const user = await this.authService.findById(userId);
 			if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
+			const notFoundPackages = await this.packagesService.verifyPackageExistence(packages);
+			if (notFoundPackages.length > 0) {
+				const message = validationMessages.packages.userArray.packagesNotFound.replace('${packages}', notFoundPackages.join(', '));
+				throw new HttpException(message, HttpStatus.NOT_FOUND);
+			}
+
 			for (const packageId of user.packages) await this.packagesService.updatePackageOnCancel(packageId, userId, res);
 
 			for (const packageId of packages) await this.packagesService.assignPackageToUser(userId, packageId, res);
@@ -254,12 +273,13 @@ export class AuthController {
 		}
 	}
 
-	@Put(':uuidUser/state')
+	@Put('/users/:uuidUser/state')
 	@Auth(ValidRoles.administrador)
-	async changeUserState(@Param('uuidUser') uuidUser: string, @Body('state') newState: string, @Res() res: Response) {
+	async changeUserState(@Param('uuidUser') uuidUser: string, @GetUser('id') performedById: string, @Res() res: Response) {
 		try {
-			await this.authService.changeState(uuidUser, newState);
-			res.status(HttpStatus.OK).json({ message: validationMessages.auth.user.state.updated });
+			const newState = await this.authService.changeState(uuidUser, performedById);
+			const readableState = newState === validationMessages.auth.user.state.isActiveState ? 'activo' : 'inactivo';
+			res.status(HttpStatus.OK).json({ message: `El estado del usuario ha sido cambiado correctamente a ${readableState}.` });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
@@ -303,7 +323,10 @@ export class AuthController {
 			await this.authService.deleteUser(userId, userId.toString(), res);
 
 			res.status(HttpStatus.OK).json({
-				message: validationMessages.auth.account.success.deleted.replace('${user.name}', userToDelete.name).replace('${user.lastname}', userToDelete.lastname),
+				message: validationMessages.auth.account.success.deleted
+					.replace('${user.name}', userToDelete.name)
+					.replace('${user.lastname}', userToDelete.lastname)
+					.replace('${userId}', userToDelete._id),
 			});
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);

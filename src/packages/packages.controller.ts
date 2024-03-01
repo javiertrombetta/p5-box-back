@@ -25,7 +25,7 @@ export class PackagesController {
 		}
 	}
 
-	@Get('delivered')
+	@Get('/me/delivered')
 	@Auth(ValidRoles.repartidor)
 	async getDeliveredPackages(@GetUser() user, @Res() res: Response) {
 		try {
@@ -51,8 +51,8 @@ export class PackagesController {
 
 	@Post('new')
 	@Auth(ValidRoles.administrador)
-	createPackage(@Body(ValidationPipe) createPackageDto: CreatePackageDto, @GetUser() user) {
-		return this.packagesService.create(createPackageDto, user.id);
+	async createPackage(@Body() createPackageDto: CreatePackageDto, @GetUser('id') userId: string) {
+		return this.packagesService.create(createPackageDto, userId);
 	}
 
 	@Put('finish')

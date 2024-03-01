@@ -2,43 +2,46 @@ export const validationMessages = {
 	auth: {
 		user: {
 			name: {
-				isNotEmpty: 'El nombre es obligatorio.',
-				isString: 'El nombre debe ser una cadena de texto.',
+				isNotEmpty: 'El campo nombre es obligatorio.',
+				isString: 'El nombre tiene que ser una cadena de texto.',
 			},
 			lastname: {
-				isNotEmpty: 'El apellido es obligatorio.',
-				isString: 'El apellido debe ser una cadena de texto.',
+				isNotEmpty: 'El campo apellido es obligatorio.',
+				isString: 'El apellido tiene que ser una cadena de texto.',
 			},
 			email: {
-				isNotEmpty: 'El correo electrónico es obligatorio.',
+				isNotEmpty: 'El campo correo electrónico es obligatorio.',
 				isEmail: 'El correo electrónico no es válido.',
 				inUse: 'El correo electrónico ya está en uso.',
 			},
 			password: {
-				isNotEmpty: 'La contraseña es obligatoria.',
-				isString: 'La contraseña debe ser una cadena de texto.',
-				minLength: 'La contraseña debe tener al menos 6 caracteres.',
-				pattern: 'La contraseña debe incluir una letra mayúscula, una minúscula y un número.',
+				isNotEmpty: 'El campo contraseña es obligatorio.',
+				isString: 'La contraseña tiene que ser una cadena de texto.',
+				minLength: 'La contraseña tiene que tener al menos 6 caracteres.',
+				pattern: 'La contraseña tiene que incluir una letra mayúscula, una minúscula y un número.',
 				reset: 'RESET',
 			},
 			role: {
 				isNotEmpty: 'El campo rol no puede estar vacío.',
 				isArray: 'El campo rol debe contener un array de roles.',
 				isEnum: 'El campo rol es inválido.',
-				badRequest: 'Usuario no encontrado.',
+				badRequest: 'El usuario no fue encontrado.',
 				forbidden: '${user.name} ${user.lastname} no tiene los permisos de: [${validRoles}].',
-				updated: 'El rol del usuario ${user.name} ${user.lastname} ha sido actualizado con éxito.',
-				connotRemoveSelfRole: 'Un administrador no puede remover su propio rol de administrador.',
+				updated: 'El rol del usuario ${user.name} ${user.lastname} se actualizó con éxito.',
+				connotRemoveSelfRole: 'Un usuario no puede quitar su propio rol de administrador.',
 			},
 			photoUrl: {
 				isString: 'La foto de usuario debe ser una cadena de texto.',
 			},
 			state: {
-				isEnum: 'El estado no es válido.',
+				isEnum: 'El campo estado no es válido.',
 				isInactive: 'El usuario está inactivo.',
-				updated: 'User state updated successfully.',
 				isActiveState: 'activo',
 				isInactiveSate: 'inactivo',
+				validStates: ['activo', 'inactivo'],
+				invalidStateError: 'El estado proporcionado no es válido. Los estados válidos son activo o inactivo.',
+				cannotChangeOwnState: 'Un administrador no puede cambiar su propio estado.',
+				changeSuccess: 'El estado del usuario fue cambiado correctamente a ${state}.',
 			},
 			points: {
 				isNumber: 'Los puntos deben ser un número.',
@@ -47,9 +50,9 @@ export const validationMessages = {
 		},
 		account: {
 			success: {
-				registered: 'Usuario registrado con éxito.',
-				loggedIn: 'Usuario logueado con éxito.',
-				logout: 'Sesión cerrada correctamente.',
+				registered: 'El usuario se registró con éxito.',
+				loggedIn: 'El usuario ingresó con éxito.',
+				logout: 'La sesión se cerró con éxito.',
 				deleted: 'El usuario ${user.name} ${user.lastname} (${userId}) fue eliminado con éxito.',
 				selfDeleted: 'Tu cuenta fue eliminada con éxito.',
 			},
@@ -57,8 +60,9 @@ export const validationMessages = {
 				unauthorized: 'No estás autorizado a realizar esta acción. Por favor, ingresá al sistema con credenciales de usuario válidas.',
 				userNotFound: 'El usuario no fue encontrado.',
 				wrongCredentials: 'Las credenciales de acceso son incorrectas.',
-				alreadyLoggedIn: 'Ya se encuentra logueado con un usuario activo. Por favor, cierre la sesión y vuelva a intentarlo.',
-				notFound: 'Usuario no encontrado.',
+				alreadyLoggedIn: 'Estás intentando reingresar pero ya estás logueado con una cuenta. Por favor, cerrá la sesión y volvé a intentarlo.',
+				notFound: 'El usuario no fue encontrado.',
+				inactiveAccount: 'Tu cuenta está inactiva y no podés ingresar al sistema. Comunicate con un administrador para recibir más detalles. ¡Muchas gracias!',
 			},
 		},
 		token: {
@@ -67,17 +71,17 @@ export const validationMessages = {
 			invalidOrExpired: 'El token es inválido o expiró.',
 		},
 		mongoose: {
-			unique: 'El valor para {PATH} ya está en uso y debe ser único.',
+			unique: 'El valor para {PATH} ya está en uso y tiene que ser único.',
 		},
 		forgotPassword: {
-			emailSent: 'Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña.',
+			emailSent: 'Se envió un correo electrónico con instrucciones para restablecer la contraseña.',
 			userNotFound: 'No existe una cuenta con ese correo electrónico.',
-			error: 'Ocurrió un error al intentar realizar la operación de restablecimiento de contraseña.',
+			error: 'Hubo un error al intentar realizar la operación de restablecimiento de contraseña.',
 		},
 		resetPassword: {
-			success: 'La contraseña ha sido restablecida con éxito.',
-			tokenInvalidOrExpired: 'El token de restablecimiento no es válido o ha expirado.',
-			error: 'Ocurrió un error al restablecer la contraseña.',
+			success: 'La contraseña fue restablecida con éxito.',
+			tokenInvalidOrExpired: 'El token de restablecimiento no es válido o expiró.',
+			error: 'Hubo un error al restablecer la contraseña.',
 		},
 	},
 	mails: {
@@ -86,36 +90,39 @@ export const validationMessages = {
 			subject: 'Restablecimiento de contraseña',
 			body: `
 				<h1>Solicitud de restablecimiento de contraseña</h1>
-				<p>Para restablecer tu contraseña, por favor sigue el siguiente enlace:</p>
+				<p>Para restablecer tu contraseña, por favor ingresá al siguiente enlace:</p>
 				<a href="{{resetUrl}}">Restablecer contraseña</a>
 			`,
 		},
 		passwordChanged: {
-			subject: 'Tu contraseña ha sido cambiada',
+			subject: 'Tu contraseña fue recientemente cambiada',
 			body: `
 				<h1>Cambio de Contraseña</h1>
-				<p>Este es un correo de confirmación de que la contraseña para tu cuenta ha sido cambiada correctamente.</p>
+				<p>Este es un correo de confirmación, notificando que la contraseña de tu cuenta fue cambiada por una nueva.</p>
 			`,
 		},
 	},
 	packages: {
 		userArray: {
-			packageNotFound: 'Paquete no encontrado o no asignado al repartidor.',
-			userNotFound: 'Usuario no encontrado o lista de paquetes no válida.',
+			packageNotFound: 'El paquete no fue encontrado o no está asignado al repartidor.',
+			userNotFound: 'El usuario no fue encontrado o la lista de paquetes asociada al usuario no es válida.',
 			isArray: 'La lista de paquetes tiene que ser un arreglo.',
-			isNotEmpty: 'El listado de paquetes del usuario no está vacío.',
-			cannotUpdate: 'No se pudo actualizar el paquete de la lista.',
+			isNotEmpty: 'La lista de paquetes del usuario no está vacía.',
+			cannotUpdate: 'No se pudo actualizar el paquete de la lista del usuario.',
 			dailyDeliveryLimit: 'No se pueden asignar más de 10 paquetes a la vez.',
+			packagesNotFound: 'No se encontraron los siguientes paquetes: ${packages}',
+			packageNotAssigned: 'El paquete no está asignado al repartidor y no puede ser cancelado.',
 		},
 		error: {
-			packageNotFound: 'Paquete no encontrado.',
-			deliveredNotFound: 'Error al obtener los paquetes entregados.',
+			packageNotFound: 'El paquete no fue encontrado.',
+			deliveredNotFound: 'Hubo un error al obtener los paquetes entregados.',
+			createError: 'Hubo un error de servidor al intentar crear el paquete.',
 		},
 		success: {
-			updatedPackages: 'Paquetes actualizados correctamente.',
-			delivered: 'Paquete entregado y registrado correctamente.',
-			cancelled: 'Paquete cancelado exitosamente.',
-			deleted: 'Paquete eliminado exitosamente.',
+			updatedPackages: 'Los paquetes fueron actualizados correctamente.',
+			delivered: 'El paquete fue entregado y registrado correctamente.',
+			cancelled: 'La entrega del paquete fue cancelada correctamente.',
+			deleted: 'Se eliminó el paquete correctamente.',
 		},
 		state: {
 			available: 'disponible',
@@ -124,15 +131,18 @@ export const validationMessages = {
 			delivered: 'entregado',
 			notDelivered: 'sin entregar',
 		},
+		deliveryDate: {
+			dateNotValid: 'La fecha proporcionada no es válida.',
+		},
 	},
 	seed: {
 		success: {
-			seedCompleted: 'Base de datos reconstruida con datos de Faker.',
+			seedCompleted: 'La base de datos fue reconstruida con datos aleatorios de Faker.',
 		},
 	},
 	serverError: {
-		unexpected: 'Ocurrió un error inesperado.',
-		internal: 'Error interno en el servidor.',
+		unexpected: 'Hubo un error inesperado en el servidor.',
+		internal: 'Hubo un error interno en el servidor.',
 		urlNotFound: 'La ruta solicitada no existe.',
 	},
 	maps: {
@@ -140,8 +150,8 @@ export const validationMessages = {
 			statusOk: 'OK',
 		},
 		error: {
-			statusError: 'Error en la API de Google Maps: ',
-			locationError: 'Error al recibir la ubicación de Google Maps',
+			statusError: 'Hubo un error en la API de Google Maps: ',
+			locationError: 'Hubo un error al recibir la ubicación de Google Maps',
 		},
 	},
 	log: {

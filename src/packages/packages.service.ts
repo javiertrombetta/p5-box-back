@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotAcceptableException, NotFoundException, forwardRef } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, NotAcceptableException, NotFoundException, forwardRef } from '@nestjs/common';
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
@@ -25,11 +25,9 @@ export class PackagesService {
 	}
 
 	async findAvailablePackage(): Promise<Package[]> {
-		const startOfDay = new Date();
-		startOfDay.setHours(0, 0, 0, 0);
-
-		const endOfDay = new Date();
-		endOfDay.setHours(23, 59, 59, 999);
+		const now = new Date();
+		const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+		const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
 		return this.packageModel
 			.find({
@@ -49,11 +47,23 @@ export class PackagesService {
 	}
 
 	async create(createPackageDto: CreatePackageDto, userId: string): Promise<Package> {
+		const year = parseInt(createPackageDto.deliveryDate.substring(0, 4));
+		const month = parseInt(createPackageDto.deliveryDate.substring(4, 6)) - 1;
+		const day = parseInt(createPackageDto.deliveryDate.substring(6, 8));
+
+		const deliveryDate = new Date(year, month, day);
+
+		if (isNaN(deliveryDate.getTime())) {
+			throw new Error(validationMessages.packages.deliveryDate.dateNotValid);
+		}
+
 		const newPackage = new this.packageModel({
 			...createPackageDto,
+			deliveryDate,
 			deliveryMan: null,
 			state: validationMessages.packages.state.available,
 		});
+
 		await newPackage.save();
 
 		await this.logService.create({
@@ -159,6 +169,11 @@ export class PackagesService {
 
 	async updatePackageOnCancel(packageId: string, userId: string, res: Response): Promise<void> {
 		try {
+			const user = await this.authService.findById(userId);
+			if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
+
+			if (!user.packages.includes(packageId)) throw new NotFoundException(validationMessages.packages.userArray.packageNotAssigned);
+
 			const packageToUpdate = await this.packageModel.findById(packageId).exec();
 			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
@@ -176,6 +191,8 @@ export class PackagesService {
 				changes: { state: packageToUpdate.state, deliveryDate: packageToUpdate.deliveryDate, deliveryMan: packageToUpdate.deliveryMan },
 				performedBy: userId,
 			});
+
+			res.status(HttpStatus.OK).json({ message: validationMessages.packages.success.cancelled });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
@@ -202,6 +219,17 @@ export class PackagesService {
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
+	}
+
+	async verifyPackageExistence(packageIds: string[]): Promise<string[]> {
+		const notFoundPackages = [];
+		for (const packageId of packageIds) {
+			const exists = await this.packageModel.findById(packageId).exec();
+			if (!exists) {
+				notFoundPackages.push(packageId);
+			}
+		}
+		return notFoundPackages;
 	}
 
 	async finishPackage(packageId: string, userId: string): Promise<void> {

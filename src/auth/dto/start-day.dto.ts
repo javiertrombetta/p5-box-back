@@ -1,8 +1,10 @@
-import { Prop } from '@nestjs/mongoose';
+import { IsArray, ArrayNotEmpty, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class StartDayDto {
-	@Prop({ type: [{ type: String, ref: 'Package' }] })
+	@IsArray()
+	@ArrayNotEmpty()
+	@IsUUID(4, { each: true })
 	@ApiProperty()
 	packages: string[];
 }

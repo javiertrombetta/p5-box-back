@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, Min } from 'class-validator';
 
 export class CreatePackageDto {
 	@IsNotEmpty()
@@ -14,21 +14,12 @@ export class CreatePackageDto {
 
 	@IsNotEmpty()
 	@IsNumber()
+	@Min(0)
 	@ApiProperty()
 	deliveryWeight: number;
 
 	@IsNotEmpty()
-	@IsDate()
+	@IsString()
 	@ApiProperty()
-	daliveryDate: Date;
-
-	@IsOptional()
-	@IsString()
-	@IsUUID()
-	deliveryMan?: string;
-
-	@IsOptional()
-	@IsString()
-	@IsEnum({ disponible: 'disponible', pendiente: 'pendiente', en_curso: 'en curso', entregado: 'entregado' })
-	state?: string;
+	deliveryDate: string;
 }

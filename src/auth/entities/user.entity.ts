@@ -38,8 +38,8 @@ export class User extends mongoose.Document {
 	@ApiProperty()
 	packages: string[];
 
-	@Prop({ required: false })
-	photoUrl: string;
+	@Prop({ type: Buffer, required: false })
+	photoUrl: Buffer;
 
 	@Prop({ default: 'activo', enum: ['activo', 'inactivo'] })
 	state: string;
