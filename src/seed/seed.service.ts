@@ -56,7 +56,7 @@ export class SeedService {
 					deliveryFullname: faker.person.fullName(),
 					deliveryAddress: faker.location.streetAddress(),
 					deliveryWeight: faker.number.float({ min: 1, max: 100, multipleOf: 0.25 }),
-					daliveryDate: startOfDay(faker.date.soon()),
+					deliveryDate: startOfDay(faker.date.soon()),
 					state: faker.helpers.arrayElement(['pendiente', 'disponible', 'en curso', 'entregado', 'sin entregar']),
 					deliveryMan: repartidor._id,
 				};

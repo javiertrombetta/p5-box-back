@@ -56,11 +56,18 @@ export class AuthService {
 		const email = loginUserDto.email.toLowerCase().trim();
 		const user = await this.userModel.findOne({ email });
 
-		if (!user) throw new HttpException(validationMessages.auth.account.error.userNotFound, HttpStatus.UNAUTHORIZED);
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.error.userNotFound, HttpStatus.UNAUTHORIZED);
+		}
+
+		if (user.state !== validationMessages.auth.user.state.isActiveState) {
+			throw new HttpException(validationMessages.auth.account.error.inactiveAccount, HttpStatus.UNAUTHORIZED);
+		}
 
 		const isPasswordMatching = await bcrypt.compare(loginUserDto.password, user.password);
-
-		if (!isPasswordMatching) throw new HttpException(validationMessages.auth.account.error.wrongCredentials, HttpStatus.UNAUTHORIZED);
+		if (!isPasswordMatching) {
+			throw new HttpException(validationMessages.auth.account.error.wrongCredentials, HttpStatus.UNAUTHORIZED);
+		}
 
 		const payload = { id: user._id };
 		const token = this.jwtService.sign(payload);
@@ -82,6 +89,12 @@ export class AuthService {
 
 	async findById(id: string): Promise<User | null> {
 		return this.userModel.findById(id).exec();
+	}
+
+	async findUsersByState(state: string): Promise<User[]> {
+		const queryState =
+			state === validationMessages.auth.user.state.isActiveState ? validationMessages.auth.user.state.isActiveState : validationMessages.auth.user.state.isInactiveSate;
+		return this.userModel.find({ state: queryState }).exec();
 	}
 
 	async isPackageAssignedToUser(userId: string, packageId: string): Promise<boolean> {
@@ -299,28 +312,31 @@ export class AuthService {
 		});
 	}
 
-	async changeState(userId: string, newState: string): Promise<void> {
+	async changeState(userId: string, performedById: string): Promise<string> {
+		if (userId === performedById) {
+			throw new HttpException(validationMessages.auth.user.state.cannotChangeOwnState, HttpStatus.FORBIDDEN);
+		}
+
 		const user = await this.userModel.findById(userId);
 		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
-		let action;
-		if (newState === validationMessages.auth.user.state.isActiveState && user.state !== validationMessages.auth.user.state.isActiveState)
-			action = validationMessages.log.action.user.state.activate;
-		else if (newState === validationMessages.auth.user.state.isInactiveSate && user.state !== validationMessages.auth.user.state.isInactiveSate)
-			action = validationMessages.log.action.user.state.deactivate;
-
+		const newState =
+			user.state === validationMessages.auth.user.state.isActiveState ? validationMessages.auth.user.state.isInactiveSate : validationMessages.auth.user.state.isActiveState;
 		user.state = newState;
 		await user.save();
 
-		if (action) {
-			await this.logService.create({
-				action: action,
-				entity: validationMessages.log.entity.user,
-				entityId: user._id.toString(),
-				changes: { state: newState },
-				performedBy: userId,
-			});
-		}
+		const action =
+			newState === validationMessages.auth.user.state.isActiveState ? validationMessages.log.action.user.state.activate : validationMessages.log.action.user.state.deactivate;
+
+		await this.logService.create({
+			action: action,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: { state: newState },
+			performedBy: performedById,
+		});
+
+		return newState;
 	}
 
 	async finishPackage(uuidPackage: string, userId: string): Promise<void> {
