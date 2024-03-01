@@ -129,7 +129,7 @@ export const validationMessages = {
 			pending: 'pendiente',
 			onTheWay: 'en curso',
 			delivered: 'entregado',
-			notDelivered: 'sin entregar',
+			// notDelivered: 'sin entregar',
 		},
 		deliveryDate: {
 			dateNotValid: 'La fecha proporcionada no es válida.',
@@ -152,6 +152,15 @@ export const validationMessages = {
 		error: {
 			statusError: 'Hubo un error en la API de Google Maps: ',
 			locationError: 'Hubo un error al recibir la ubicación de Google Maps',
+		},
+		route: {
+			notFound: 'No se pudo obtener la ruta. Verifica que la dirección de entrega del paquete sea correcta.',
+			apiError: 'Hubo un error al comunicarse con Google Maps API.',
+		},
+	},
+	locations: {
+		lastLocation: {
+			notFound: 'No tenés una ubicación registrada.',
 		},
 	},
 	log: {
