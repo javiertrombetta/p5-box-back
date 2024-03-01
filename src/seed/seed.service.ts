@@ -9,8 +9,10 @@ import { Model } from 'mongoose';
 import { User } from '../auth/entities';
 import { Package } from '../packages/entities';
 import { Log } from '../log/entities';
+import { Location } from '../locations/entities';
 
 import { validationMessages } from '../common/constants';
+import { ValidRoles } from 'src/auth/interfaces';
 
 @Injectable()
 export class SeedService {
@@ -18,17 +20,19 @@ export class SeedService {
 		@InjectModel(User.name) private readonly userModel: Model<User>,
 		@InjectModel(Package.name) private readonly packageModel: Model<Package>,
 		@InjectModel(Log.name) private readonly logModel: Model<Log>,
+		@InjectModel(Location.name) private readonly locationModel: Model<Location>,
 	) {}
 
 	async populateDB() {
 		await this.userModel.deleteMany({});
 		await this.packageModel.deleteMany({});
 		await this.logModel.deleteMany({});
+		await this.locationModel.deleteMany({});
 
 		const repartidores = [];
 
 		for (let i = 0; i < 20; i++) {
-			const roles = [faker.helpers.arrayElement(['repartidor', 'administrador'])];
+			const roles = [faker.helpers.arrayElement([ValidRoles.repartidor, ValidRoles.administrador])];
 			const plainPassword = this.generatePassword();
 			const hashedPassword = await bcrypt.hash(plainPassword, 10);
 			const photoUrl = faker.image.avatar();
@@ -45,7 +49,14 @@ export class SeedService {
 
 			const newUser = await new this.userModel(userData).save();
 
-			if (roles.includes('repartidor')) repartidores.push(newUser);
+			if (roles.includes(ValidRoles.repartidor)) repartidores.push(newUser);
+
+			const locationData = {
+				userId: newUser._id,
+				latitude: faker.location.latitude(),
+				longitude: faker.location.longitude(),
+			};
+			await new this.locationModel(locationData).save();
 		}
 
 		for (const repartidor of repartidores) {
@@ -54,10 +65,15 @@ export class SeedService {
 			for (let j = 0; j < Math.floor(Math.random() * 10) + 1; j++) {
 				const packageData = {
 					deliveryFullname: faker.person.fullName(),
-					deliveryAddress: faker.location.streetAddress(),
+					deliveryAddress: `${faker.location.streetAddress({ useFullAddress: true })}`,
 					deliveryWeight: faker.number.float({ min: 1, max: 100, multipleOf: 0.25 }),
 					deliveryDate: startOfDay(faker.date.soon()),
-					state: faker.helpers.arrayElement(['pendiente', 'disponible', 'en curso', 'entregado', 'sin entregar']),
+					state: faker.helpers.arrayElement([
+						validationMessages.packages.state.available,
+						validationMessages.packages.state.delivered,
+						validationMessages.packages.state.onTheWay,
+						validationMessages.packages.state.pending,
+					]),
 					deliveryMan: repartidor._id,
 				};
 

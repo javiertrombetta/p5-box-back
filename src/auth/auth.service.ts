@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { validationMessages } from '../common/constants';
 import { CreateUserDto, LoginUserDto } from './dto';
-import { User } from './entities/user.entity';
+import { User } from './entities';
 import { MailService } from '../mail/mail.service';
 import { PackagesService } from '../packages/packages.service';
 import { LogService } from '../log/log.service';

@@ -1,4 +1,4 @@
-import { HttpStatus, Inject, Injectable, NotAcceptableException, NotFoundException, forwardRef } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
@@ -19,7 +19,7 @@ export class PackagesService {
 
 	async findById(id: string): Promise<Package> {
 		const paquete = await this.packageModel.findById(id);
-		if (!paquete) throw new NotAcceptableException(validationMessages.packages.error.packageNotFound);
+		if (!paquete) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
 		return paquete;
 	}
