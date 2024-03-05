@@ -355,7 +355,8 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
   {
   	"deliveryFullname": "Carlos López",
   	"deliveryAddress": "Calle Flasa 123",
-  	"deliveryWeight": 3
+  	"deliveryWeight": 3,
+    "deliveryDate": "20240325"
   }
   ```
 

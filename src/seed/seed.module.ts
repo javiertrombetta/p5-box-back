@@ -12,6 +12,7 @@ import { Log, LogSchema } from '../log/entities';
 
 import { SeedService } from './seed.service';
 import { SeedController } from './seed.controller';
+import { Location, LocationSchema } from 'src/locations/entities';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { SeedController } from './seed.controller';
 			{ name: User.name, schema: UserSchema },
 			{ name: Package.name, schema: PackageSchema },
 			{ name: Log.name, schema: LogSchema },
+			{ name: Location.name, schema: LocationSchema },
 		]),
 		AuthModule,
 		PackagesModule,

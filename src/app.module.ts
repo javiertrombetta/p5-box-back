@@ -14,6 +14,7 @@ import { MailModule } from './mail/mail.module';
 import { LogModule } from './log/log.module';
 import { ReportsModule } from './reports/reports.module';
 import { TasksModule } from './tasks/tasks.module';
+import { LegalDeclarationsModule } from './legals/legals.module';
 
 @Module({
 	imports: [
@@ -41,6 +42,7 @@ import { TasksModule } from './tasks/tasks.module';
 		LogModule,
 		ReportsModule,
 		TasksModule,
+		LegalDeclarationsModule,
 	],
 })
 export class AppModule {}

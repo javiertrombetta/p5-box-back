@@ -25,7 +25,7 @@ export class PackagesController {
 		}
 	}
 
-	@Get('delivered')
+	@Get('/me/delivered')
 	@Auth(ValidRoles.repartidor)
 	async getDeliveredPackages(@GetUser() user, @Res() res: Response) {
 		try {
@@ -41,9 +41,8 @@ export class PackagesController {
 	async getPackageDetails(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
 		try {
 			const packageDetails = await this.packagesService.findPackages(userId, uuidPackage);
-			if (!packageDetails) {
-				throw new HttpException(validationMessages.packages.userArray.packageNotFound, HttpStatus.NOT_FOUND);
-			}
+			if (!packageDetails) throw new HttpException(validationMessages.packages.userArray.packageNotFound, HttpStatus.NOT_FOUND);
+
 			res.json(packageDetails);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
@@ -52,26 +51,46 @@ export class PackagesController {
 
 	@Post('new')
 	@Auth(ValidRoles.administrador)
-	createPackage(@Body(ValidationPipe) createPackageDto: CreatePackageDto, @GetUser() user) {
-		return this.packagesService.create(createPackageDto, user.id);
+	async createPackage(@Body() createPackageDto: CreatePackageDto, @GetUser('id') userId: string, @Res() res: Response) {
+		try {
+			const newPackage = await this.packagesService.create(createPackageDto, userId);
+			res.status(HttpStatus.CREATED).json(newPackage);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 
 	@Put('finish')
 	@Auth(ValidRoles.repartidor)
-	update(@Param('packageId') pkgId: string, @GetUser() user, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto) {
-		return this.packagesService.updateById(pkgId, updatePackageDto, user.id);
+	async update(@Param('packageId') pkgId: string, @GetUser() user, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @Res() res: Response) {
+		try {
+			const updatedPackage = await this.packagesService.updateById(pkgId, updatePackageDto, user.id);
+			res.status(HttpStatus.OK).json(updatedPackage);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 
 	@Put('at/:packageId/assign')
 	@Auth(ValidRoles.repartidor)
-	assignPackage(@Param('packageId') pkgId: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @GetUser() user) {
-		return this.packagesService.updateById(pkgId, updatePackageDto, user.id);
+	async assignPackage(@Param('packageId') pkgId: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @GetUser() user, @Res() res: Response) {
+		try {
+			const assignedPackage = await this.packagesService.updateById(pkgId, updatePackageDto, user.id);
+			res.status(HttpStatus.OK).json(assignedPackage);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 
 	@Put('at/:packageId/state')
 	@Auth(ValidRoles.administrador)
-	updateState(@Param('packageId') pkgId: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @GetUser() user) {
-		return this.packagesService.updateById(pkgId, updatePackageDto, user.id);
+	async updateState(@Param('packageId') pkgId: string, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @GetUser() user, @Res() res: Response) {
+		try {
+			const updatedPackageState = await this.packagesService.updateById(pkgId, updatePackageDto, user.id);
+			res.status(HttpStatus.OK).json(updatedPackageState);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 
 	@Delete('at/:uuidPackage/remove')

@@ -13,6 +13,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { MailModule } from '../mail/mail.module';
 import { PackagesModule } from '../packages/packages.module';
 import { LogModule } from '../log/log.module';
+import { LegalDeclarationsModule } from '../legals/legals.module';
+import { RewardsModule } from '../rewards/rewards.module';
 
 @Module({
 	imports: [
@@ -30,6 +32,8 @@ import { LogModule } from '../log/log.module';
 		MailModule,
 		forwardRef(() => PackagesModule),
 		LogModule,
+		forwardRef(() => LegalDeclarationsModule),
+		forwardRef(() => RewardsModule),
 	],
 	providers: [AuthService, JwtStrategy],
 	controllers: [AuthController],

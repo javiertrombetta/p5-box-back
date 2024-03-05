@@ -84,7 +84,7 @@ describe('User controllers E2E Test', () => {
 	});
 
 	describe('Post /auth/login', () => {
-		let cookie = '';
+		// let cookie = '';
 
 		it('should login the user successfully', async () => {
 			const response = await axios.post('http://localhost:3000/api/v1/auth/login', usersData[3]);

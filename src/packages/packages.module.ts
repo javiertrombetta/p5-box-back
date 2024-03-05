@@ -8,6 +8,7 @@ import { Package, PackageSchema } from './entities/package.entity';
 import { PassportModule } from '@nestjs/passport';
 import { AuthModule } from '../auth/auth.module';
 import { LogModule } from '../log/log.module';
+import { RewardsModule } from '../rewards/rewards.module';
 
 @Module({
 	imports: [
@@ -15,6 +16,7 @@ import { LogModule } from '../log/log.module';
 		MongooseModule.forFeature([{ name: Package.name, schema: PackageSchema }]),
 		forwardRef(() => AuthModule),
 		LogModule,
+		forwardRef(() => RewardsModule),
 	],
 	controllers: [PackagesController],
 	providers: [PackagesService],
