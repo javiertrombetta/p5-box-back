@@ -1,7 +1,8 @@
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, forwardRef } from '@nestjs/common';
 import { LogService } from '../log/log.service';
 import { PackagesService } from '../packages/packages.service';
 import { AuthService } from '../auth/auth.service';
+import { validationMessages } from '../common/constants';
 
 @Injectable()
 export class ReportsService {
@@ -12,39 +13,55 @@ export class ReportsService {
 	) {}
 
 	async getAvailableDeliverymanReport(year: string, month: string, day: string) {
-		const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
-		const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
-		const { activeUsers, inactiveUsers } = await this.logService.getLastStateOfUsers(startDate, endDate);
+		const date = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
 
-		const usersWithLogs = await this.logService.getUsersWithStateLogs();
+		const { activeUsers, inactiveUsers } = await this.logService.getLastStateOfUsersUntilDate(date);
 
-		const totalUsersCount = await this.authService.countUsers();
-		const usersWithoutLogsCount = totalUsersCount - usersWithLogs.length;
+		const totalUsersCount = await this.authService.countUsersRegisteredBeforeDate(date);
+		const usersWithLogsCount = await this.logService.countUsersWithStateLogsUntilDate(date);
 
+		const usersWithoutLogsCount = totalUsersCount - usersWithLogsCount;
 		const adjustedActiveUsers = activeUsers + usersWithoutLogsCount;
 
 		return {
+			date: date.toISOString().split('T')[0],
 			activeUsers: adjustedActiveUsers,
-			inactiveUsers,
+			inactiveUsers: inactiveUsers,
+			totalUsers: totalUsersCount,
 		};
 	}
 
 	async getDeliverymanStateDetails(year: string, month: string, day: string) {
-		const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
-		const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
-
-		return this.logService.getStateDetailsOfUsers(startDate, endDate);
+		const date = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
+		return this.logService.getStateDetailsOfUsersUntilDate(date);
 	}
 
-	async findDeliveredPackagesByDate(year: string, month: string, day: string): Promise<any> {
-		return this.packagesService.findPackagesByCriteria(year, month, day);
-	}
+	async findDeliveredPackagesByDate(year: string, month: string, day: string, userId?: string): Promise<any> {
+		if (userId) {
+			const user = await this.authService.findById(userId);
+			if (!user) {
+				throw new HttpException(validationMessages.auth.account.error.userNotFound, HttpStatus.UNAUTHORIZED);
+			}
+		}
 
-	async findDeliveredPackagesByDeliverymanAndDate(uuidUser: string, year: string, month: string, day: string): Promise<any> {
-		return this.packagesService.findPackagesByCriteria(year, month, day, uuidUser);
+		const deliveredPackages = await this.packagesService.findPackagesByCriteria(year, month, day, userId);
+
+		if (deliveredPackages.length === 0) {
+			throw new HttpException(validationMessages.reports.packagesNotFound, HttpStatus.NOT_FOUND);
+		}
+
+		return deliveredPackages;
 	}
 
 	async findAllPackagesByDate(year: string, month: string, day: string): Promise<any> {
-		return this.packagesService.findPackagesByCriteria(year, month, day, undefined, true);
+		const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+
+		const packages = await this.packagesService.findPackagesByDateAndOptionalState(date);
+
+		if (packages.length === 0) {
+			throw new HttpException(validationMessages.reports.packagesNotFound, HttpStatus.NOT_FOUND);
+		}
+
+		return packages;
 	}
 }

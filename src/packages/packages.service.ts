@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotAcceptableException, NotFoundException, forwardRef } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
@@ -8,29 +8,28 @@ import { CreatePackageDto, UpdatePackageDto } from './dto';
 import { AuthService } from '../auth/auth.service';
 import { ExceptionHandlerService } from '../common/helpers';
 import { LogService } from '../log/log.service';
+import { RewardsService } from '../rewards/rewards.service';
 
 @Injectable()
 export class PackagesService {
 	constructor(
 		@InjectModel(Package.name) private packageModel: mongoose.Model<Package>,
 		@Inject(forwardRef(() => AuthService)) private authService: AuthService,
+		@Inject(forwardRef(() => RewardsService)) private rewardsService: RewardsService,
 		private logService: LogService,
 	) {}
 
 	async findById(id: string): Promise<Package> {
 		const paquete = await this.packageModel.findById(id);
-		if (!paquete) {
-			throw new NotAcceptableException(validationMessages.packages.error.packageNotFound);
-		}
+		if (!paquete) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
+
 		return paquete;
 	}
 
 	async findAvailablePackage(): Promise<Package[]> {
-		const startOfDay = new Date();
-		startOfDay.setHours(0, 0, 0, 0);
-
-		const endOfDay = new Date();
-		endOfDay.setHours(23, 59, 59, 999);
+		const now = new Date();
+		const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+		const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
 		return this.packageModel
 			.find({
@@ -50,11 +49,23 @@ export class PackagesService {
 	}
 
 	async create(createPackageDto: CreatePackageDto, userId: string): Promise<Package> {
+		const year = parseInt(createPackageDto.deliveryDate.substring(0, 4));
+		const month = parseInt(createPackageDto.deliveryDate.substring(4, 6)) - 1;
+		const day = parseInt(createPackageDto.deliveryDate.substring(6, 8));
+
+		const deliveryDate = new Date(year, month, day);
+
+		if (isNaN(deliveryDate.getTime())) {
+			throw new Error(validationMessages.packages.deliveryDate.dateNotValid);
+		}
+
 		const newPackage = new this.packageModel({
 			...createPackageDto,
+			deliveryDate,
 			deliveryMan: null,
 			state: validationMessages.packages.state.available,
 		});
+
 		await newPackage.save();
 
 		await this.logService.create({
@@ -70,9 +81,7 @@ export class PackagesService {
 
 	async updateById(pkgId: string, updatePackageDto: UpdatePackageDto, userId: string): Promise<Package> {
 		const packageToUpdate = await this.packageModel.findById(pkgId);
-		if (!packageToUpdate) {
-			throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-		}
+		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
 		const updatedPackage = await this.packageModel.findByIdAndUpdate(pkgId, updatePackageDto, { new: true }).exec();
 
@@ -120,9 +129,7 @@ export class PackagesService {
 	async updatePackageOnDelete(packageId: string, res: Response): Promise<void> {
 		try {
 			const packageToUpdate = await this.packageModel.findById(packageId);
-			if (!packageToUpdate) {
-				throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-			}
+			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
 			packageToUpdate.deliveryMan = null;
 			packageToUpdate.state = validationMessages.packages.state.available;
@@ -132,17 +139,31 @@ export class PackagesService {
 		}
 	}
 
+	async updatePackagesStateToPending(packageIds: string[]): Promise<void> {
+		await this.packageModel.updateMany({ _id: { $in: packageIds } }, { $set: { state: validationMessages.packages.state.pending } });
+	}
+
 	async changeStateAndReorder(userId: string, uuidPackage: string, performedById: string, res: Response): Promise<Package> {
 		try {
+			const packageAssigned = await this.authService.isPackageAssignedToUser(userId, uuidPackage);
+			if (!packageAssigned) throw new NotFoundException(validationMessages.packages.userArray.packageNotFound);
+
+			const user = await this.authService.findById(userId);
+			if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
+
+			const otherPackages = user.packages.filter(packageId => packageId !== uuidPackage);
+
+			await this.updatePackagesStateToPending(otherPackages);
+
 			const packageToUpdate = await this.packageModel.findById(uuidPackage);
-			if (!packageToUpdate) {
-				throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-			}
+			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
+
+			packageToUpdate.state = validationMessages.packages.state.onTheWay;
+			await packageToUpdate.save();
 
 			await this.authService.reorderUserPackages(userId, uuidPackage, performedById);
 
-			packageToUpdate.state = validationMessages.packages.state.onTheWay;
-			return packageToUpdate.save();
+			return packageToUpdate;
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
@@ -150,10 +171,13 @@ export class PackagesService {
 
 	async updatePackageOnCancel(packageId: string, userId: string, res: Response): Promise<void> {
 		try {
+			const user = await this.authService.findById(userId);
+			if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
+
+			if (!user.packages.includes(packageId)) throw new NotFoundException(validationMessages.packages.userArray.packageNotAssigned);
+
 			const packageToUpdate = await this.packageModel.findById(packageId).exec();
-			if (!packageToUpdate) {
-				throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-			}
+			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
 			packageToUpdate.state = validationMessages.packages.state.available;
 			packageToUpdate.deliveryDate = new Date();
@@ -162,6 +186,8 @@ export class PackagesService {
 
 			await this.authService.removePackageFromUser(userId, packageId);
 
+			await this.rewardsService.subtractPointsForCancellation(userId, res);
+
 			await this.logService.create({
 				action: validationMessages.log.action.packages.updateOnCancel,
 				entity: validationMessages.log.entity.package,
@@ -169,6 +195,8 @@ export class PackagesService {
 				changes: { state: packageToUpdate.state, deliveryDate: packageToUpdate.deliveryDate, deliveryMan: packageToUpdate.deliveryMan },
 				performedBy: userId,
 			});
+
+			res.status(HttpStatus.OK).json({ message: validationMessages.packages.success.cancelled });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
@@ -197,7 +225,18 @@ export class PackagesService {
 		}
 	}
 
-	async finishPackage(packageId: string, userId: string): Promise<void> {
+	async verifyPackageExistence(packageIds: string[]): Promise<string[]> {
+		const notFoundPackages = [];
+		for (const packageId of packageIds) {
+			const exists = await this.packageModel.findById(packageId).exec();
+			if (!exists) {
+				notFoundPackages.push(packageId);
+			}
+		}
+		return notFoundPackages;
+	}
+
+	async finishPackage(packageId: string, userId: string, res: Response): Promise<void> {
 		const packageToUpdate = await this.packageModel.findById(packageId);
 		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
@@ -205,6 +244,8 @@ export class PackagesService {
 		packageToUpdate.deliveryMan = null;
 		packageToUpdate.deliveryDate = new Date();
 		await packageToUpdate.save();
+
+		await this.rewardsService.addPointsForDelivery(userId, res);
 
 		await this.logService.create({
 			action: validationMessages.log.action.packages.state.delivered,
@@ -231,8 +272,24 @@ export class PackagesService {
 		if (uuidUser) {
 			query.deliveryMan = uuidUser;
 		}
+
 		if (!includeAllStates) {
 			query.state = validationMessages.packages.state.delivered;
+		}
+
+		return this.packageModel.find(query).exec();
+	}
+
+	async findPackagesByDateAndOptionalState(deliveryDate: Date, state?: string): Promise<Package[]> {
+		const query: any = {
+			deliveryDate: {
+				$gte: new Date(deliveryDate.setHours(0, 0, 0, 0)),
+				$lt: new Date(deliveryDate.setHours(23, 59, 59, 999)),
+			},
+		};
+
+		if (state) {
+			query.state = state;
 		}
 
 		return this.packageModel.find(query).exec();

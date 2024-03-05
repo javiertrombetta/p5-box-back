@@ -22,16 +22,13 @@ export class MailService {
 
 	async sendMail(to: string, subject: string, content: string): Promise<void> {
 		try {
-			const info = await this.transporter.sendMail({
+			await this.transporter.sendMail({
 				from: validationMessages.mails.from,
 				to: to,
 				subject: subject,
 				html: content,
 			});
-
-			console.log('Message sent: %s', info.messageId);
 		} catch (error) {
-			console.error('Error sending email: ', error);
 			throw new Error(validationMessages.auth.forgotPassword.error);
 		}
 	}
