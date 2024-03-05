@@ -1,29 +1,43 @@
-// src/packages/dto/update-package.dto.ts
 import { PartialType } from '@nestjs/mapped-types';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-
+import { IsNotEmpty, IsOptional, IsString, IsUUID, Validate } from 'class-validator';
 import { CreatePackageDto } from './create-package.dto';
+import { validationMessages } from '../../common/constants';
+
+class StateValidator {
+	validate(value: any) {
+		const validStates = [
+			validationMessages.packages.state.available,
+			validationMessages.packages.state.pending,
+			validationMessages.packages.state.onTheWay,
+			validationMessages.packages.state.delivered,
+		];
+		return validStates.includes(value);
+	}
+
+	defaultMessage() {
+		return validationMessages.packages.state.dto;
+	}
+}
 
 export class UpdatePackageDto extends PartialType(CreatePackageDto) {
 	@IsOptional()
-	@IsNotEmpty()
-	@IsString()
+	@IsNotEmpty({ message: validationMessages.auth.user.name.isNotEmpty })
+	@IsString({ message: validationMessages.auth.user.name.isString })
 	description?: string;
 
 	@IsOptional()
-	@IsNotEmpty()
+	@IsNotEmpty({ message: validationMessages.packages.error.packageNotFound })
 	@IsString()
 	deliveryAddress?: string;
 
 	@IsOptional()
 	@IsNotEmpty()
-	@IsString()
-	@IsEnum({ pendiente: 'pendiente', en_camino: 'en camino', entregado: 'entregado' })
+	@Validate(StateValidator, { message: validationMessages.packages.state.dto })
 	state?: string;
 
 	@IsOptional()
 	@IsNotEmpty()
-	@IsString()
 	@IsUUID()
+	@IsString()
 	deliveryMan?: string;
 }

@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as mongooseUniqueValidator from 'mongoose-unique-validator';
 import { validationMessages } from '../../common/constants/validation-messages.constants';
 import { ApiProperty } from '@nestjs/swagger';
+import { ValidRoles } from '../interfaces';
 
 @Schema({ timestamps: true })
 export class User extends mongoose.Document {
@@ -29,23 +30,30 @@ export class User extends mongoose.Document {
 	resetPasswordExpires: Date;
 
 	@Prop({
-		type: [{ type: String, enum: ['repartidor', 'administrador'] }],
-		default: ['repartidor'],
+		type: [{ type: String, enum: [ValidRoles.repartidor, ValidRoles.administrador] }],
+		default: [ValidRoles.repartidor],
 	})
 	roles: string[];
 
-	@Prop({ type: [{ type: String, ref: 'Package' }] })
+	@Prop({ type: [{ type: String, ref: validationMessages.mongoose.packages }] })
 	@ApiProperty()
 	packages: string[];
 
 	@Prop({ type: Buffer, required: false })
 	photoUrl: Buffer;
 
-	@Prop({ default: 'activo', enum: ['activo', 'inactivo'] })
+	@Prop({ default: validationMessages.auth.user.state.isActiveState, enum: [validationMessages.auth.user.state.isActiveState, validationMessages.auth.user.state.isInactiveSate] })
 	state: string;
 
 	@Prop({ default: 0 })
 	points: number;
+
+	@Prop({ default: null })
+	blockUntil: Date;
+
+	@Prop({ default: 0 })
+	@ApiProperty()
+	consecutiveDeliveries: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

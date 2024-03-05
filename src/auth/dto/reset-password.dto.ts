@@ -5,7 +5,7 @@ import { validationMessages } from '../../common/constants';
 export class ResetPasswordDto {
 	@IsNotEmpty()
 	@IsString()
-	@ApiProperty()
+	@ApiProperty({ description: validationMessages.swagger.user.token, required: true })
 	token: string;
 
 	@IsNotEmpty({ message: validationMessages.auth.user.password.isNotEmpty })
@@ -14,6 +14,6 @@ export class ResetPasswordDto {
 	@Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
 		message: validationMessages.auth.user.password.pattern,
 	})
-	@ApiProperty()
+	@ApiProperty({ description: validationMessages.swagger.user.newPassword, required: true })
 	newPassword: string;
 }

@@ -3,10 +3,13 @@ import { Response } from 'express';
 import { LocationsService } from './locations.service';
 import { Auth, GetUser } from '../auth/decorators';
 import { ValidRoles } from '../auth/interfaces';
-import { LocationDto } from './dto/locations.dto';
+import { LocationDto } from './dto';
 import { User } from '../auth/entities';
 import { validationMessages } from '../common/constants';
+import { ApiTags } from '@nestjs/swagger';
+import { ExceptionHandlerService } from '../common/helpers';
 
+@ApiTags('Locations')
 @Controller('locations')
 export class LocationsController {
 	constructor(private locationService: LocationsService) {}
@@ -26,13 +29,18 @@ export class LocationsController {
 			const route = await this.locationService.getRoute(originLatitude, originLongitude, packageId);
 			res.status(HttpStatus.OK).json(route);
 		} catch (error) {
-			res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
+			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
 	@Post('deliveryman/update')
 	@Auth(ValidRoles.repartidor)
-	async updateLocation(@Body() locationDto: LocationDto, @GetUser() user: User) {
-		return await this.locationService.updateUserLocation(user.id.toString(), locationDto);
+	async updateLocation(@Body() locationDto: LocationDto, @GetUser() user: User, @Res() res: Response) {
+		try {
+			const updatedLocation = await this.locationService.updateUserLocation(user.id.toString(), locationDto);
+			res.status(HttpStatus.OK).json(updatedLocation);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 }

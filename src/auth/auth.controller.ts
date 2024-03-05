@@ -1,9 +1,9 @@
 import { Body, Controller, Post, Get, Put, Delete, Param, Req, Res, HttpStatus, HttpException, Query } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-//import { User } from './entities/user.entity';
 import { AuthService } from './auth.service';
 import { PackagesService } from '../packages/packages.service';
+import { LegalDeclarationsService } from '../legals/legals.service';
 
 import { GetUser, Auth } from './decorators';
 import { ValidRoles } from './interfaces';
@@ -19,6 +19,7 @@ export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly packagesService: PackagesService,
+		private readonly legalDeclarationsService: LegalDeclarationsService,
 	) {}
 
 	// POST
@@ -54,12 +55,8 @@ export class AuthController {
 
 	@Post('logout')
 	@Auth(ValidRoles.administrador, ValidRoles.repartidor)
-	logout(@Res() res: Response) {
-		res.clearCookie('Authentication', {
-			httpOnly: true,
-			path: '/',
-		});
-		res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.logout });
+	async logout(@Res() res: Response) {
+		await this.authService.logout(res);
 	}
 
 	@Post('forgot-password')
@@ -170,7 +167,7 @@ export class AuthController {
 		}
 	}
 
-	@Get('/users/state/:state')
+	@Get('users/state/:state')
 	@Auth(ValidRoles.administrador)
 	async getUsersByState(@Param('state') state: string, @Res() res: Response) {
 		try {
@@ -183,7 +180,7 @@ export class AuthController {
 		}
 	}
 
-	@Get('/users/:uuidUser/packages')
+	@Get('users/:uuidUser/packages')
 	@Auth(ValidRoles.administrador)
 	async getUserPackages(@Param('uuidUser') uuidUser: string, @Res() res: Response) {
 		try {
@@ -229,29 +226,56 @@ export class AuthController {
 	@Auth(ValidRoles.repartidor)
 	async updateMyPackages(@GetUser('id') userId: string, @Body() startDayDto: StartDayDto, @Res() res: Response) {
 		try {
-			const { packages } = startDayDto;
-			if (packages.length > 10) throw new HttpException(validationMessages.packages.userArray.dailyDeliveryLimit, HttpStatus.BAD_REQUEST);
-
 			const user = await this.authService.findById(userId);
 			if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
-			const notFoundPackages = await this.packagesService.verifyPackageExistence(packages);
+			await this.legalDeclarationsService.createDeclaration(userId, startDayDto);
+
+			if (startDayDto.hasConsumedAlcohol || startDayDto.isUsingPsychoactiveDrugs || startDayDto.hasEmotionalDistress) {
+				await this.legalDeclarationsService.handleNegativeDeclaration(userId, res);
+				return;
+			}
+
+			if (startDayDto.packages.length > 10) {
+				throw new HttpException(validationMessages.packages.userArray.dailyDeliveryLimit, HttpStatus.BAD_REQUEST);
+			}
+
+			const notFoundPackages = await this.packagesService.verifyPackageExistence(startDayDto.packages);
 			if (notFoundPackages.length > 0) {
 				const message = validationMessages.packages.userArray.packagesNotFound.replace('${packages}', notFoundPackages.join(', '));
 				throw new HttpException(message, HttpStatus.NOT_FOUND);
 			}
 
-			for (const packageId of user.packages) await this.packagesService.updatePackageOnCancel(packageId, userId, res);
+			let addedPackagesCount = 0;
+			let skippedPackagesCount = 0;
+			const skippedPackageIds = [];
 
-			for (const packageId of packages) await this.packagesService.assignPackageToUser(userId, packageId, res);
+			for (const packageId of startDayDto.packages) {
+				if (user.packages.includes(packageId)) {
+					skippedPackagesCount++;
+					skippedPackageIds.push(packageId);
+					continue;
+				}
+				await this.packagesService.assignPackageToUser(userId, packageId, res);
+				addedPackagesCount++;
+			}
 
-			res.status(HttpStatus.OK).json({ message: validationMessages.packages.success.updatedPackages });
+			let message = validationMessages.packages.userArray.updateSummary
+				.replace('${addedPackagesCount}', addedPackagesCount.toString())
+				.replace('${skippedPackagesCount}', skippedPackagesCount.toString());
+
+			if (skippedPackagesCount > 0) {
+				const skippedMessages = skippedPackageIds.map(packageId => validationMessages.packages.userArray.packageAlreadyAssigned.replace('${packageId}', packageId));
+				message += ` Detalles: ${skippedMessages.join(', ')}`;
+			}
+
+			res.status(HttpStatus.OK).json({ message: message });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
-	@Put('/me/packages/:uuidPackage/cancel')
+	@Put('me/packages/:uuidPackage/cancel')
 	@Auth(ValidRoles.repartidor)
 	async cancelPackage(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
 		try {
@@ -262,24 +286,25 @@ export class AuthController {
 		}
 	}
 
-	@Put('/me/packages/:uuidPackage/finish')
+	@Put('me/packages/:uuidPackage/finish')
 	@Auth(ValidRoles.repartidor)
 	async finishPackage(@Param('uuidPackage') uuidPackage: string, @GetUser() user, @Res() res: Response) {
 		try {
-			await this.authService.finishPackage(uuidPackage, user.id);
+			await this.authService.finishPackage(uuidPackage, user.id, res);
 			res.status(HttpStatus.OK).json({ message: validationMessages.packages.success.delivered });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
 	}
 
-	@Put('/users/:uuidUser/state')
+	@Put('users/:uuidUser/state')
 	@Auth(ValidRoles.administrador)
 	async changeUserState(@Param('uuidUser') uuidUser: string, @GetUser('id') performedById: string, @Res() res: Response) {
 		try {
 			const newState = await this.authService.changeState(uuidUser, performedById);
-			const readableState = newState === validationMessages.auth.user.state.isActiveState ? 'activo' : 'inactivo';
-			res.status(HttpStatus.OK).json({ message: `El estado del usuario ha sido cambiado correctamente a ${readableState}.` });
+			const readableState =
+				newState === validationMessages.auth.user.state.isActiveState ? validationMessages.auth.user.state.isActiveState : validationMessages.auth.user.state.isInactiveSate;
+			res.status(HttpStatus.OK).json({ message: validationMessages.auth.user.state.changeSuccess.replace('${state}', readableState) });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
