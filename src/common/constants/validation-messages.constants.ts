@@ -71,6 +71,8 @@ export const validationMessages = {
 			},
 		},
 		token: {
+			isNotEmpty: 'El token no puede puede estar vacío.',
+			isString: 'El token tiene que ser una cadena de texto.',
 			isValid: 'El token es válido',
 			notFound: 'No se encontró el token de autenticación.',
 			invalidOrExpired: 'El token es inválido o expiró.',
@@ -117,6 +119,7 @@ export const validationMessages = {
 			userNotFound: 'El usuario no fue encontrado o la lista de paquetes asociada al usuario no es válida.',
 			isArray: 'La lista de paquetes tiene que ser un arreglo.',
 			isNotEmpty: 'La lista de paquetes del usuario no está vacía.',
+			isUUID: 'La lista tiene que tener paquetes del formato UUID.',
 			cannotUpdate: 'No se pudo actualizar el paquete de la lista del usuario.',
 			dailyDeliveryLimit: 'No se pueden asignar más de 10 paquetes a la vez.',
 			packagesNotFound: 'No se encontraron los siguientes paquetes: ${packages}',
@@ -136,13 +139,33 @@ export const validationMessages = {
 			deleted: 'Se eliminó el paquete correctamente.',
 		},
 		state: {
+			isNotEmpty: 'El campo estado de entrega del paquete no puede estar vacío.',
 			available: 'disponible',
 			pending: 'pendiente',
 			onTheWay: 'en curso',
 			delivered: 'entregado',
-			dto: 'El estado proporcionado no es válido. Los estados válidos son: pendiente, disponible, en curso, entregado, sin entregar.',
+			dto: 'El estado proporcionado no es válido. Los estados válidos son: pendiente, disponible, en curso, entregado.',
+		},
+		deliveryFullname: {
+			isNotEmpty: 'Se requiere un nombre de destinatario.',
+			isString: 'El nombre de destinatario tiene que se una cadena de texto.',
+		},
+		deliveryAddress: {
+			isNotEmpty: 'Se requiere una dirección de entrega.',
+			isString: 'La dirección de entrega tiene que se una cadena de texto.',
+		},
+		deliveryWeight: {
+			isNotEmpty: 'Se requiere un peso de paquete de entrega.',
+			isNumber: 'El peso ingresado tiene queser un número.',
+			isMin: 'El peso tiene que ser positivo.',
+		},
+		deliveryMan: {
+			isNotEmpty: 'Se requiere un repartidor asignado.',
+			isUUID: 'El repartidor asignado tiene que ser del formato UUID.',
 		},
 		deliveryDate: {
+			isNotEmpty: 'Se requiere una fecha de entrega.',
+			isString: '',
 			dateNotValid: 'La fecha proporcionada no es válida.',
 		},
 	},
@@ -170,6 +193,14 @@ export const validationMessages = {
 		},
 	},
 	locations: {
+		latitude: {
+			isNotEmpty: 'La latitud no puede estar vacía.',
+			isNumber: ' La latitud tiene que se un número.',
+		},
+		longitude: {
+			isNotEmpty: 'La longitud no puede estar vacía.',
+			isNumber: ' La longitud tiene que se un número.',
+		},
 		lastLocation: {
 			notFound: 'No tenés una ubicación registrada.',
 		},
@@ -224,11 +255,31 @@ export const validationMessages = {
 				updateDataPkg: 'UPDATE_pkg_change_data',
 				deleted: 'DELETE_pkg',
 			},
+			isNotEmpty: 'El campo acción no puede estar vacío.',
+			isString: 'El campo acción debe ser una cadena de caracteres.',
 		},
 		entity: {
 			user: 'User',
 			package: 'Package',
 			cron: 'SYSTEM',
+			isNotEmpty: 'El campo entidad no puede estar vacío.',
+			isString: 'El campo entidad debe ser una cadena de caracteres.',
+		},
+		entityId: {
+			isNotEmpty: 'El campo ID de entidad no puede estar vacío.',
+			isString: 'El campo ID de entidad debe ser una cadena de caracteres.',
+		},
+		timestamp: {
+			isNotEmpty: 'La fecha y hora de la acción no puede estar vacía.',
+			isDate: 'La fecha y hora proporcionadas deben ser un valor de fecha válido.',
+		},
+		changes: {
+			isNotEmpty: 'El campo cambios no puede estar vacío.',
+			isObject: 'El campo cambios debe ser un objeto.',
+		},
+		performedBy: {
+			isNotEmpty: ' El usuario quien registra el log no puede estar vacío.',
+			isString: 'El usuario quien registra el log tiene que ser una cadena de texto.',
 		},
 	},
 	reports: {
@@ -251,18 +302,40 @@ export const validationMessages = {
 			isUsingPsychoactiveDrugs: 'Declaración Jurada de consumo de drogas',
 			hasEmotionalDistress: 'Declaración Jurada de estado emocional',
 		},
+		log: {
+			timestamp: 'Fecha de acción realizada',
+			action: 'Nombre de acción realizada',
+			entity: 'Esquema de destino de BD',
+			entityId: 'Registro al cual se aplica la acción',
+			changes: 'Cambios realizados',
+			performedBy: 'Usuario que realiza la acción',
+		},
 		locations: {
 			latitude: 'Latitud de la ubicación',
 			longitude: 'Longitud de la ubicación',
 		},
 		packages: {
 			deliveryFullname: 'Nombre completo del destinatario',
-			deliveryAddress: 'Dirección de entretga',
+			deliveryAddress: 'Dirección de entrega',
 			deliveryWeight: 'Peso del paquete',
 			deliveryDate: 'Fecha de entrega del paquete',
+			state: 'Estado de entrega del paquete',
+			deliveryMan: 'Repartidor asignado',
 		},
 	},
 	legals: {
+		hasConsumedAlcohol: {
+			isNotEmpty: 'La propiedad hasConsumedAlcohol no puede estar vacía.',
+			isBoolean: 'La propiedad hasConsumedAlcohol es boolena (true o false).',
+		},
+		isUsingPsychoactiveDrugs: {
+			isNotEmpty: 'La propiedad isUsingPsychoactiveDrugs no puede estar vacía.',
+			isBoolean: 'La propiedad isUsingPsychoactiveDrugs es boolena (true o false).',
+		},
+		hasEmotionalDistress: {
+			isNotEmpty: 'La propiedad hasEmotionalDistress no puede estar vacía.',
+			isBoolean: 'La propiedad hasEmotionalDistress es boolena (true o false).',
+		},
 		positiveInfo: 'Jornada de reparto iniciada con éxito.',
 		negativeReason: 'Declaración jurada negativa',
 		negativeInfo: 'Se cerró la sesión debido a la declaración jurada registrada.',

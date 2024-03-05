@@ -66,22 +66,27 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 <br>
 
-## Pasos para instalar dependencias del proyecto
+## Pasos para inicializar el proyecto
 
 1. Clonar el repositorio. Leé primero [Pasos a seguir con Gitflow](#pasos-a-seguir-con-gitflow).
-2. Ejecutar
+   
+2. Instalar todas las dependencias del proyecto
 
    ```bash
    $ npm install
    ```
 
-3. Tener Nest CLI instalado
+3. Instalar Nest CLI
 
    ```bash
    $ npm i -g @nestjs/cli
    ```
 
-4. Levantar la base de datos
+4. Clonar el archivo ```.env.template``` y renombar la copia a ```.env```
+
+5. Completar con datos reales las variables de entorno definidas en el ```.env```
+
+6. Iniciar la base de datos
    ```bash
    $ docker-compose up -d
    ```
@@ -157,7 +162,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
   }
   ```
 
-#### `Inicio de sesión` [Usuario no autenticado]
+#### `Iniciar sesión` [Usuario no autenticado]
 
 ```bach
 [POST] http://localhost:3000/api/v1/auth/login
@@ -200,7 +205,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 [GET] http://localhost:3000/api/v1/auth/verify-token?token=TOKEN_AQUÍ
 ```
 
-#### `Restablecimiento de contraseña` [Usuario no autenticado]
+#### `Restablecer contraseña` [Usuario no autenticado]
 
 ```bach
 [POST] http://localhost:3000/api/v1/auth/reset-password
@@ -215,13 +220,13 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
   }
   ```
 
-#### `Información del usuario autenticado` [Usuario autenticado]
+#### `Obtener información del usuario autenticado` [Usuario autenticado]
 
 ```bach
 [GET] http://localhost:3000/api/v1/auth/me
 ```
 
-#### `Paquetes del usuario autenticado` [Usuario autenticado con rol repartidor]
+#### `Obtener paquetes del usuario autenticado` [Usuario autenticado con rol repartidor]
 
 ```bach
 [GET] http://localhost:3000/api/v1/auth/me/packages
@@ -239,6 +244,18 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 [GET] http://localhost:3000/api/v1/auth/users/:userId
 ```
 
+#### `Obtener todos los usuarios filtrando por un estado específico` [Usuario autenticado con rol administrador]
+
+```bach
+[GET] http://localhost:3000/api/v1/auth/users/state/:state
+```
+
+#### `Obtener todos los paquetes de un usuario` [Usuario autenticado con rol administrador]
+
+```bach
+[GET] http://localhost:3000/api/v1/auth/users/:uuidUser/packages
+```
+
 #### `Actualizar rol de un usuario` [Usuario autenticado con rol administrador]
 
 ```bach
@@ -253,7 +270,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
   }
   ```
 
-#### `Cambiar estado de un paquete y reordenar` [Usuario autenticado con rol repartidor]
+#### `Iniciar reaparto de un paquete del listado de paquetes del día` [Usuario autenticado con rol repartidor]
 
 ```bach
 [PUT] http://localhost:3000/api/v1/auth/me/packages/:uuidPackage
@@ -261,7 +278,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 - No requiere body.
 
-#### `Actualizar paquetes del usuario autenticado` [Usuario autenticado con rol repartidor]
+#### `Comenzar jornada de repartos, enviando también la declaración jurada` [Usuario autenticado con rol repartidor]
 
 ```bach
 [PUT] http://localhost:3000/api/v1/auth/me/packages
@@ -271,7 +288,10 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
   ```json
   {
-      "packages": ["ID_PAQUETE_1", "ID_PAQUETE_2", ...]
+      "packages": ["ID_PAQUETE_1", "ID_PAQUETE_2", ...],
+      "hasConsumedAlcohol": false,
+      "isUsingPsychoactiveDrugs": false,
+      "hasEmotionalDistress": false
   }
   ```
 
@@ -283,7 +303,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 - No requiere body.
 
-#### `Marcar paquete como entregado` [Usuario autenticado con rol repartidor]
+#### `Finalizar entrega de paquete` [Usuario autenticado con rol repartidor]
 
 ```bach
 [PUT] http://localhost:3000/api/v1/auth/me/packages/:uuidPackage/finish
@@ -291,10 +311,10 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 - No requiere body.
 
-#### `Cambiar estado del usuario` [Usuario autenticado con rol administrador]
+#### `Cambiar estado de un usuario` [Usuario autenticado con rol administrador]
 
 ```bach
-[PUT] http://localhost:3000/api/v1/auth/me/packages
+[PUT] http://localhost:3000/api/v1/auth/users/:uuidUser/state'
 ```
 
 - Body (JSON):
@@ -305,7 +325,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
   }
   ```
 
-#### `Eliminar usuario autenticado` [Usuario autenticado]
+#### `Eliminar el propio usuario` [Usuario autenticado]
 
 ```bach
 [DELETE] http://localhost:3000/api/v1/auth/me/delete
@@ -334,7 +354,7 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 #### `Obtener paquetes entregados` [Usuario autenticado con rol repartidor]
 
 ```bach
-[GET] http://localhost:3000/api/v1/packages/delivered
+[GET] http://localhost:3000/api/v1/packages/me/delivered
 ```
 
 #### `Obtener detalles de un paquete específico` [Usuario autenticado con rol repartidor]
@@ -400,46 +420,61 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 ### Rutas de Ubicación (Google Maps)
 
-#### `Obtener Ubicación de un Paquete` [Usuario autenticado con rol repartidor]
+#### `Obtener ubicación de un Paquete` [Usuario autenticado con rol repartidor]
 
 ```bach
 [GET] http://localhost:3000/api/v1/locations/package/:packageId
 
 ```
 
+#### `Registrar ubicación de repartidor` [Usuario autenticado con rol repartidor]
+
+```bach
+[PUT] http://localhost:3000/api/v1/locations/deliveryman/update
+```
+
+- Body (JSON):
+
+  ```json
+  {
+    "latitude": -34.549148146059096,
+    "longitude": -58.468021206013034
+  }
+  ```
+
 <br>
 
 ### Rutas de Reportes
 
-#### `Reporte de repartidores disponibles por fecha` [Usuario autenticado con rol administrador]
+#### `Reporte de cantidad total de repartidores agrupados por estado y fecha` [Usuario autenticado con rol administrador]
 
 ```bach
-[GET] http://localhost:3000/api/v1/reports/deliveryman/all/state/available/:year/:month/:day
+[GET] http://localhost:3000/api/v1/reports/deliveryman/all/state/totals/:year/:month/:day
 
 ```
 
-#### `Reporte de detalles de estado de repartidores por fecha` [Usuario autenticado con rol administrador]
+#### `Reporte detallado de repartidores por fecha` [Usuario autenticado con rol administrador]
 
 ```bach
 [GET] http://localhost:3000/api/v1/reports/deliveryman/all/state/details/:year/:month/:day
 
 ```
 
-#### `Reporte de paquetes entregados por fecha` [Usuario autenticado con rol administrador]
+#### `Reporte detallado de paquetes entregados por fecha` [Usuario autenticado con rol administrador]
 
 ```bach
-[GET] http://localhost:3000/api/v1/reports/on/all/delivered/:year/:month/:day
+[GET] http://localhost:3000/api/v1/reports/packages/delivered/:year/:month/:day
 
 ```
 
-#### `Reporte de paquetes entregados por repartidor y fecha` [Usuario autenticado con rol administrador]
+#### `Reporte detallado de paquetes entregados por un repartidor y en una determinada fecha` [Usuario autenticado con rol administrador]
 
 ```bach
-[GET] http://localhost:3000/api/v1/reports/deliveryman/on/:uuidUser/delivered/:year/:month/:day
+[GET] http://localhost:3000/api/v1/reports/packages/delivered/:year/:month/:day?userId=[ESCRIBIR_EL_UUUID_DEL_REPARTIDOR]
 
 ```
 
-#### `Reporte de todos los paquetes por fecha` [Usuario autenticado con rol administrador]
+#### `Reporte detallado de todos los paquetes por fecha` [Usuario autenticado con rol administrador]
 
 ```bach
 [GET] http://localhost:3000/api/v1/reports/packages/all/:year/:month/:day
