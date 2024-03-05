@@ -15,13 +15,15 @@ import { LogModule } from './log/log.module';
 import { ReportsModule } from './reports/reports.module';
 import { TasksModule } from './tasks/tasks.module';
 import { LegalDeclarationsModule } from './legals/legals.module';
+import { JoiValidationSchema } from './config/joi.validation';
 
 @Module({
 	imports: [
-		ScheduleModule.forRoot(),
 		ConfigModule.forRoot({
 			isGlobal: true,
+			validationSchema: JoiValidationSchema,
 		}),
+		ScheduleModule.forRoot(),
 		ServeStaticModule.forRoot({
 			rootPath: join(__dirname, '..', 'public'),
 		}),

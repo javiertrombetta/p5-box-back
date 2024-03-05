@@ -31,17 +31,25 @@ export class AuthService {
 		if (existingUser) throw new HttpException(validationMessages.auth.user.email.inUse, HttpStatus.CONFLICT);
 
 		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+		let photoBuffer = null;
+		if (createUserDto.photoUrl) {
+			photoBuffer = Buffer.from(createUserDto.photoUrl, 'base64');
+		}
+
 		const user = new this.userModel({
 			...createUserDto,
 			email,
 			password: hashedPassword,
 			roles: [ValidRoles.repartidor],
+			photoUrl: photoBuffer,
 		});
 
 		await user.save();
 
 		const changesForLog = { ...createUserDto };
 		delete changesForLog.password;
+		delete changesForLog.photoUrl;
 
 		await this.logService.create({
 			action: validationMessages.log.action.user.register,
@@ -216,7 +224,7 @@ export class AuthService {
 
 		await user.save();
 
-		const resetUrl = `${process.env.FRONTEND_URL_DEV}/reset-password?token=${resetToken}`;
+		const resetUrl = `${process.env.CORS_ORIGIN}/reset-password?token=${resetToken}`;
 
 		const mailContent = validationMessages.mails.resetPasswordEmail.body.replace('{{resetUrl}}', resetUrl);
 

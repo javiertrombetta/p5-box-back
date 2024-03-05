@@ -3,21 +3,21 @@ import { ApiProperty } from '@nestjs/swagger';
 import { validationMessages } from '../../common/constants';
 
 export class StartDayDto {
-	@IsArray()
-	@ArrayNotEmpty()
-	@IsUUID(4, { each: true })
+	@IsArray({ message: validationMessages.packages.userArray.isArray })
+	@ArrayNotEmpty({ message: validationMessages.packages.userArray.isNotEmpty })
+	@IsUUID(4, { each: true, message: validationMessages.packages.userArray.isUUID })
 	@ApiProperty({ description: validationMessages.swagger.user.packages, required: true })
 	packages: string[];
 
-	@IsBoolean()
-	@ApiProperty({ description: 'Declaración jurada de consumo de alcohol' })
+	@IsBoolean({ message: validationMessages.legals.hasConsumedAlcohol.isBoolean })
+	@ApiProperty({ description: validationMessages.swagger.legals.hasConsumedAlcohol })
 	hasConsumedAlcohol: boolean;
 
-	@IsBoolean()
-	@ApiProperty({ description: 'Declaración jurada de uso de drogas psicoactivas' })
+	@IsBoolean({ message: validationMessages.legals.isUsingPsychoactiveDrugs.isBoolean })
+	@ApiProperty({ description: validationMessages.swagger.legals.isUsingPsychoactiveDrugs })
 	isUsingPsychoactiveDrugs: boolean;
 
-	@IsBoolean()
-	@ApiProperty({ description: 'Declaración jurada de estrés emocional' })
+	@IsBoolean({ message: validationMessages.legals.hasEmotionalDistress.isBoolean })
+	@ApiProperty({ description: validationMessages.swagger.legals.hasEmotionalDistress })
 	hasEmotionalDistress: boolean;
 }

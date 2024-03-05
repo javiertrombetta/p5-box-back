@@ -60,16 +60,16 @@ export class PackagesController {
 		}
 	}
 
-	@Put('finish')
-	@Auth(ValidRoles.repartidor)
-	async update(@Param('packageId') pkgId: string, @GetUser() user, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @Res() res: Response) {
-		try {
-			const updatedPackage = await this.packagesService.updateById(pkgId, updatePackageDto, user.id);
-			res.status(HttpStatus.OK).json(updatedPackage);
-		} catch (error) {
-			ExceptionHandlerService.handleException(error, res);
-		}
-	}
+	// @Put('finish')
+	// @Auth(ValidRoles.repartidor)
+	// async update(@Param('packageId') pkgId: string, @GetUser() user, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @Res() res: Response) {
+	// 	try {
+	// 		const updatedPackage = await this.packagesService.updateById(pkgId, updatePackageDto, user.id);
+	// 		res.status(HttpStatus.OK).json(updatedPackage);
+	// 	} catch (error) {
+	// 		ExceptionHandlerService.handleException(error, res);
+	// 	}
+	// }
 
 	@Put('at/:packageId/assign')
 	@Auth(ValidRoles.repartidor)
