@@ -66,18 +66,16 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 <br>
 
-## Pasos para inicializar el proyecto
+## Pasos para inicializar en entorno de `desarrollo`
 
 1. Clonar el repositorio. Leé primero [Pasos a seguir con Gitflow](#pasos-a-seguir-con-gitflow).
    
-2. Instalar todas las dependencias del proyecto
-
+2. Instalar todas las dependencias del proyecto:
    ```bash
    $ npm install
    ```
 
-3. Instalar Nest CLI
-
+3. Instalar Nest CLI:
    ```bash
    $ npm i -g @nestjs/cli
    ```
@@ -86,52 +84,42 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 5. Completar con datos reales las variables de entorno definidas en el ```.env```
 
-6. Iniciar la base de datos
+6. Iniciar la base de datos y ejecutarla en segundo plano:
    ```bash
    $ docker-compose up -d
    ```
 
-<br>
-
-## Ejecutando el proyecto
-
-#### En entorno de `desarrollo`
-
-1. Ejecutar desde una terminal:
-
+7. Ejecutar desde una terminal:
    ```bash
-   # Recarga automática de cambios en desarrollo
+   # Recarga automática de cambios en entorno de desarrollo
    $ npm run start:dev
    ```
 
-2. Reconstruir la base de datos con datos de [_Faker_](https://www.npmjs.com/package/@faker-js/faker) en desarrollo:
+8. Reconstruir la base de datos con datos de [_Faker_](https://www.npmjs.com/package/@faker-js/faker) en desarrollo:
 
    - Usando un navegador web, ingresar a: [http://localhost:3000/api/v1/seed](http://localhost:3000/api/v1/seed)
    - o desde [Postman](https://www.postman.com/):
-     ```bash
-     [GET] http://localhost:3000/api/v1/seed
-     ```
+    
+        ```bash
+        [GET] http://localhost:3000/api/v1/seed
+        ```
 
 <br>
 
-#### En entorno de `producción`
+## Desplegue en entorno de `producción`
 
-- Ejecutar desde una terminal:
-
-  1. Reconstruir la carpeta de compilación del proyecto
-
-     ```bash
-     $ npm build
-     ```
-
-  2. Ejecutar el proyecto en entorno de proudcción
-     ```bash
-     $ npm run start:prod
-     ```
+1. Crear el archivo ```.env.prod```
+   
+2. Llenar las variables de entorno de prod
+   
+3. Crear la nueva imagen:
+```
+docker-compose -f docker-compose.prod.yaml --env-file .env.prod up --build
+```
 
 <br>
 
-## Ejemplos de uso de la API con [Postman](https://www.postman.com/)
+## Documentación de las rutas
 
 ### Rutas de Seed
 

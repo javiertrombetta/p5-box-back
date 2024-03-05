@@ -2,7 +2,9 @@ import * as Joi from 'joi';
 
 export const JoiValidationSchema = Joi.object({
 	CORS_ORIGIN: Joi.string().uri().required(),
-	CORS_METHODS: Joi.string().valid('GET', 'POST', 'PUT', 'DELETE').required(),
+	CORS_METHODS: Joi.string()
+		.pattern(/^(GET|POST|PUT|DELETE)(,(GET|POST|PUT|DELETE))*$/)
+		.required(),
 	CORS_CREDENTIALS: Joi.boolean().required(),
 
 	MONGODB_URI: Joi.string().required(),
