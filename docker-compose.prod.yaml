@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  boxapi:
+    depends_on:
+      - db
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: boxapi-docker
+    container_name: boxapi
+    restart: always
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      MONGODB: ${MONGODB_URI}
+      PORT: ${PORT}
+      DEFAULT_LIMIT: ${DEFAULT_LIMIT}
+
+  db:
+    image: mongo:5.0.24
+    container_name: mongo-boxdb
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGODB_DATABASE: box-db
+    volumes:
+      - ./mongo:/data/db

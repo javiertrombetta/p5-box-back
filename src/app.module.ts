@@ -35,7 +35,7 @@ import { JoiValidationSchema } from './config/joi.validation';
 			inject: [ConfigService],
 		}),
 		AuthModule,
-		SeedModule,
+		...(process.env.NODE_ENV !== 'production' ? [SeedModule] : []),
 		PackagesModule,
 		RewardsModule,
 		CommonModule,
