@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import * as mongooseUniqueValidator from 'mongoose-unique-validator';
+import { validationMessages } from '../../common/constants';
 
 @Schema({ timestamps: true })
 export class Package extends mongoose.Document {
@@ -20,10 +21,19 @@ export class Package extends mongoose.Document {
 	@Prop()
 	deliveryDate: Date;
 
-	@Prop({ type: String, ref: 'User' })
+	@Prop({ type: String, ref: validationMessages.mongoose.users })
 	deliveryMan: string;
 
-	@Prop({ required: true, default: 'disponible', enum: ['pendiente', 'disponible', 'en curso', 'entregado', 'sin entregar'] })
+	@Prop({
+		required: true,
+		default: validationMessages.packages.state.available,
+		enum: [
+			validationMessages.packages.state.pending,
+			validationMessages.packages.state.available,
+			validationMessages.packages.state.onTheWay,
+			validationMessages.packages.state.delivered,
+		],
+	})
 	state: string;
 }
 export const PackageSchema = SchemaFactory.createForClass(Package);

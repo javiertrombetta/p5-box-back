@@ -35,7 +35,8 @@ export const validationMessages = {
 			},
 			state: {
 				isEnum: 'El campo estado no es válido.',
-				isInactive: 'El usuario está inactivo.',
+				isInactive: 'Tu cuenta está deshabilitada.',
+				isInactiveByScore: 'Tu cuenta está deshabilitada por baja puntuación.',
 				isActiveState: 'activo',
 				isInactiveSate: 'inactivo',
 				validStates: ['activo', 'inactivo'],
@@ -46,6 +47,10 @@ export const validationMessages = {
 			points: {
 				isNumber: 'Los puntos deben ser un número.',
 				isPositive: 'Los puntos deben ser un número positivo.',
+				setPoints: 'Puntos establecidos a ${points} para el usuario ${userId}.',
+			},
+			blockUntil: {
+				loginInfo: 'Debido a tu declaración jurada recientemente registrada, no podés iniciar sesión hasta el',
 			},
 		},
 		account: {
@@ -101,6 +106,10 @@ export const validationMessages = {
 				<p>Este es un correo de confirmación, notificando que la contraseña de tu cuenta fue cambiada por una nueva.</p>
 			`,
 		},
+		blockedByLegalDeclaration: {
+			subject: 'Cuenta Desactivada Temporalmente',
+			body: 'Tu cuenta ha sido desactivada temporalmente por la siguiente razón: ${reason}. No podrás iniciar sesión hasta el ${blockUntil} hs.',
+		},
 	},
 	packages: {
 		userArray: {
@@ -112,6 +121,8 @@ export const validationMessages = {
 			dailyDeliveryLimit: 'No se pueden asignar más de 10 paquetes a la vez.',
 			packagesNotFound: 'No se encontraron los siguientes paquetes: ${packages}',
 			packageNotAssigned: 'El paquete no está asignado al repartidor y no puede ser cancelado.',
+			packageAlreadyAssigned: 'El paquete ${packageId} ya está asignado a la lista de paquetes del usuario.',
+			updateSummary: '${addedPackagesCount} paquete(s) cargado(s) exitosamente. ${skippedPackagesCount} paquete(s) ya estaba(n) cargado(s) y se ha(n) omitido.',
 		},
 		error: {
 			packageNotFound: 'El paquete no fue encontrado.',
@@ -129,7 +140,7 @@ export const validationMessages = {
 			pending: 'pendiente',
 			onTheWay: 'en curso',
 			delivered: 'entregado',
-			// notDelivered: 'sin entregar',
+			dto: 'El estado proporcionado no es válido. Los estados válidos son: pendiente, disponible, en curso, entregado, sin entregar.',
 		},
 		deliveryDate: {
 			dateNotValid: 'La fecha proporcionada no es válida.',
@@ -180,6 +191,16 @@ export const validationMessages = {
 				state: {
 					activate: 'UPDATE_user_change_stateToActivate',
 					deactivate: 'UPDATE_user_change_stateToDeactivate',
+					deactivateByPoints: 'UPDATE_user_change_deactivateByPoints',
+				},
+				points: {
+					sumForDelivered: 'UPDATE_user_sum_DeliveredPoints',
+					sumForBonus: 'UPDATE_user_sum_BonusPoints',
+					substractForCancel: 'UPDATE_user_substract_CancelPoints',
+					substractForUndelivered: 'UPDATE_user_substract_UndeliveredPoints',
+					substractForLegalDeclare: 'UPDATE_user_substract_LegalDeclarePoints',
+					resetDeliveriesCount: 'UPDATE_user_reset_DeliveriesCountPoints',
+					setPoints: 'UPDATE_user_set_points',
 				},
 				register: 'CREATE_user',
 				deleteUser: 'DELETE_user',
@@ -188,6 +209,7 @@ export const validationMessages = {
 				forgotPassword: 'INFO_user_forgotPassword',
 				resetPassword: 'UPDATE_user_change_resetPassword',
 			},
+			cron: 'Tarea de CRON ejecutada.',
 			packages: {
 				state: {
 					toAvailable: 'UDPATE_pkg_change_stateToAvailable',
@@ -206,6 +228,49 @@ export const validationMessages = {
 		entity: {
 			user: 'User',
 			package: 'Package',
+			cron: 'SYSTEM',
 		},
+	},
+	reports: {
+		packagesNotFound: 'No se encontraron paquetes entregados para la fecha especificada.',
+	},
+	swagger: {
+		user: {
+			name: 'Nombre del usuario',
+			lastname: 'Apellido del usuario',
+			email: 'Correo electrónico del usuario',
+			password: 'Contraseña del usuario',
+			newPassword: 'Nueva contraseña del usuario',
+			photoUrl: 'URL de la foto del usuario',
+			token: 'Token recibido por mail',
+			packages: 'Lista de paquetes del usuario para comenzar el día de reparto',
+			roles: 'Roles del usuario',
+		},
+		legals: {
+			hasConsumedAlcohol: 'Declaración Jurada de consumo de alcohol',
+			isUsingPsychoactiveDrugs: 'Declaración Jurada de consumo de drogas',
+			hasEmotionalDistress: 'Declaración Jurada de estado emocional',
+		},
+		locations: {
+			latitude: 'Latitud de la ubicación',
+			longitude: 'Longitud de la ubicación',
+		},
+		packages: {
+			deliveryFullname: 'Nombre completo del destinatario',
+			deliveryAddress: 'Dirección de entretga',
+			deliveryWeight: 'Peso del paquete',
+			deliveryDate: 'Fecha de entrega del paquete',
+		},
+	},
+	legals: {
+		positiveInfo: 'Jornada de reparto iniciada con éxito.',
+		negativeReason: 'Declaración jurada negativa',
+		negativeInfo: 'Se cerró la sesión debido a la declaración jurada registrada.',
+		timeBlocked: '12h',
+		notFound: 'No se encontró la declaración jurada del usuario.',
+	},
+	mongoose: {
+		packages: 'Package',
+		users: 'User',
 	},
 };

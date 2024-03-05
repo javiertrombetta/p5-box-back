@@ -60,7 +60,21 @@ export class AuthService {
 			throw new HttpException(validationMessages.auth.account.error.userNotFound, HttpStatus.UNAUTHORIZED);
 		}
 
-		if (user.state !== validationMessages.auth.user.state.isActiveState) {
+		if (new Date() < user.blockUntil) {
+			const blockDate = user.blockUntil;
+			const formattedDate = `${blockDate.getDate()}/${blockDate.getMonth() + 1}/${blockDate.getFullYear()}`;
+			const formattedTime = blockDate.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+			const errorMessage = `${validationMessages.auth.user.blockUntil.loginInfo} ${formattedDate} a las ${formattedTime} hs.`;
+			throw new HttpException(errorMessage, HttpStatus.FORBIDDEN);
+		} else {
+			validationMessages.auth.user.blockUntil = null;
+		}
+
+		if (user.points < -100 && user.state === validationMessages.auth.user.state.isActiveState) {
+			throw new HttpException(validationMessages.auth.user.state.isInactiveByScore, HttpStatus.UNAUTHORIZED);
+		}
+
+		if (user.state === validationMessages.auth.user.state.isInactiveSate) {
 			throw new HttpException(validationMessages.auth.account.error.inactiveAccount, HttpStatus.UNAUTHORIZED);
 		}
 
@@ -81,6 +95,24 @@ export class AuthService {
 		});
 
 		return { token };
+	}
+
+	async logout(res: Response, negativeDeclaration: boolean = false): Promise<void> {
+		try {
+			res.clearCookie('Authentication', {
+				httpOnly: true,
+				path: '/',
+			});
+
+			console.log(res);
+			if (negativeDeclaration) {
+				res.status(HttpStatus.OK).json({ message: validationMessages.legals.negativeInfo });
+			} else {
+				res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.logout });
+			}
+		} catch (error) {
+			throw new HttpException(validationMessages.serverError.unexpected, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	async findAll(): Promise<User[]> {
@@ -238,24 +270,6 @@ export class AuthService {
 		});
 	}
 
-	async updateUserPackages(userId: string, packageId: string, performedById: string): Promise<void> {
-		const user = await this.findById(userId);
-		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
-
-		if (!Array.isArray(user.packages)) user.packages = [];
-
-		user.packages.push(packageId);
-		await user.save();
-
-		await this.logService.create({
-			action: validationMessages.log.action.user.array.addUserPackage,
-			entity: validationMessages.log.entity.user,
-			entityId: user._id.toString(),
-			changes: { addedPackage: packageId },
-			performedBy: performedById,
-		});
-	}
-
 	async reorderUserPackages(userId: string, packageIdToReorder: string, performedById: string): Promise<void> {
 		const user = await this.findById(userId);
 		if (!user || !user.packages) throw new HttpException(validationMessages.packages.userArray.userNotFound, HttpStatus.NOT_FOUND);
@@ -298,7 +312,9 @@ export class AuthService {
 
 	async loadUserPackage(userId: string, packageId: string): Promise<void> {
 		const user = await this.userModel.findById(userId).exec();
-		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+		}
 
 		user.packages = [...user.packages, packageId];
 		await user.save();
@@ -339,8 +355,8 @@ export class AuthService {
 		return newState;
 	}
 
-	async finishPackage(uuidPackage: string, userId: string): Promise<void> {
-		await this.packagesService.finishPackage(uuidPackage, userId);
+	async finishPackage(uuidPackage: string, userId: string, res: Response): Promise<void> {
+		await this.packagesService.finishPackage(uuidPackage, userId, res);
 		await this.removePackageFromUser(userId, uuidPackage);
 	}
 
@@ -366,7 +382,95 @@ export class AuthService {
 		});
 	}
 
-	async countUsers(): Promise<number> {
-		return this.userModel.countDocuments().exec();
+	async findUsersBeforeDate(date: Date): Promise<User[]> {
+		return this.userModel.find({ createdAt: { $lte: date } }).exec();
+	}
+
+	async countUsersRegisteredBeforeDate(date: Date): Promise<number> {
+		return this.userModel.countDocuments({ createdAt: { $lte: date } }).exec();
+	}
+
+	async setBlockTimeDuration(userId: string, duration: string, reason: string): Promise<void> {
+		const user = await this.userModel.findById(userId);
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+		}
+
+		const blockUntil = new Date();
+		blockUntil.setHours(blockUntil.getHours() + parseInt(duration.replace('h', ''), 10));
+		user.blockUntil = blockUntil;
+
+		await user.save();
+
+		const formattedBlockUntil = `${blockUntil.getDate()}/${blockUntil.getMonth() + 1}/${blockUntil.getFullYear()} a las ${blockUntil.getHours()}:${blockUntil.getMinutes().toString().padStart(2, '0')}`;
+		const body = validationMessages.mails.blockedByLegalDeclaration.body.replace('${reason}', reason).replace('${blockUntil}', formattedBlockUntil);
+
+		await this.mailService.sendMail(user.email, validationMessages.mails.blockedByLegalDeclaration.subject, body);
+
+		await this.logService.create({
+			action: validationMessages.log.action.user.state.deactivate,
+			entity: validationMessages.log.entity.user,
+			entityId: userId,
+			changes: { state: user.state, reason },
+			performedBy: 'SYSTEM',
+		});
+	}
+
+	async adjustPoints(userId: string, points: number): Promise<void> {
+		const user = await this.userModel.findById(userId);
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+		}
+
+		user.points += points;
+		if (user.points <= -100) {
+			user.state = validationMessages.auth.user.state.isInactiveSate;
+			await this.logService.create({
+				action: validationMessages.log.action.user.state.deactivateByPoints,
+				entity: validationMessages.log.entity.user,
+				entityId: user._id.toString(),
+				changes: {
+					previousState: user.state,
+					newState: validationMessages.auth.user.state.isInactiveSate,
+				},
+				performedBy: user._id.toString(),
+			});
+		}
+		await user.save();
+	}
+
+	async addPointsForConsecutiveDeliveries(userId: string, pointsForDelivery: number): Promise<void> {
+		const user = await this.userModel.findById(userId);
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+		}
+		user.consecutiveDeliveries = (user.consecutiveDeliveries || 0) + 1;
+		let pointsToAdd = pointsForDelivery;
+		if (user.consecutiveDeliveries >= 10) {
+			pointsToAdd += 50;
+			user.consecutiveDeliveries = 0;
+
+			await this.logService.create({
+				action: validationMessages.log.action.user.points.sumForBonus,
+				entity: validationMessages.log.entity.user,
+				entityId: userId,
+				changes: {
+					consecutiveDeliveries: 10,
+					pointsAdded: 50,
+				},
+				performedBy: userId,
+			});
+		}
+		user.points += pointsToAdd;
+		await user.save();
+	}
+
+	async resetConsecutiveDeliveries(userId: string): Promise<void> {
+		const user = await this.userModel.findById(userId);
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+		}
+		user.consecutiveDeliveries = 0;
+		await user.save();
 	}
 }

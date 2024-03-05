@@ -8,12 +8,14 @@ import { CreatePackageDto, UpdatePackageDto } from './dto';
 import { AuthService } from '../auth/auth.service';
 import { ExceptionHandlerService } from '../common/helpers';
 import { LogService } from '../log/log.service';
+import { RewardsService } from '../rewards/rewards.service';
 
 @Injectable()
 export class PackagesService {
 	constructor(
 		@InjectModel(Package.name) private packageModel: mongoose.Model<Package>,
 		@Inject(forwardRef(() => AuthService)) private authService: AuthService,
+		@Inject(forwardRef(() => RewardsService)) private rewardsService: RewardsService,
 		private logService: LogService,
 	) {}
 
@@ -184,6 +186,8 @@ export class PackagesService {
 
 			await this.authService.removePackageFromUser(userId, packageId);
 
+			await this.rewardsService.subtractPointsForCancellation(userId, res);
+
 			await this.logService.create({
 				action: validationMessages.log.action.packages.updateOnCancel,
 				entity: validationMessages.log.entity.package,
@@ -232,7 +236,7 @@ export class PackagesService {
 		return notFoundPackages;
 	}
 
-	async finishPackage(packageId: string, userId: string): Promise<void> {
+	async finishPackage(packageId: string, userId: string, res: Response): Promise<void> {
 		const packageToUpdate = await this.packageModel.findById(packageId);
 		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
@@ -240,6 +244,8 @@ export class PackagesService {
 		packageToUpdate.deliveryMan = null;
 		packageToUpdate.deliveryDate = new Date();
 		await packageToUpdate.save();
+
+		await this.rewardsService.addPointsForDelivery(userId, res);
 
 		await this.logService.create({
 			action: validationMessages.log.action.packages.state.delivered,
@@ -263,9 +269,28 @@ export class PackagesService {
 			deliveryDate: { $gte: date, $lt: nextDay },
 		};
 
-		if (uuidUser) query.deliveryMan = uuidUser;
+		if (uuidUser) {
+			query.deliveryMan = uuidUser;
+		}
 
-		if (!includeAllStates) query.state = validationMessages.packages.state.delivered;
+		if (!includeAllStates) {
+			query.state = validationMessages.packages.state.delivered;
+		}
+
+		return this.packageModel.find(query).exec();
+	}
+
+	async findPackagesByDateAndOptionalState(deliveryDate: Date, state?: string): Promise<Package[]> {
+		const query: any = {
+			deliveryDate: {
+				$gte: new Date(deliveryDate.setHours(0, 0, 0, 0)),
+				$lt: new Date(deliveryDate.setHours(23, 59, 59, 999)),
+			},
+		};
+
+		if (state) {
+			query.state = state;
+		}
 
 		return this.packageModel.find(query).exec();
 	}

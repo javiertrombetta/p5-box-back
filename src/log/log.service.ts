@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -6,10 +6,14 @@ import { Model } from 'mongoose';
 import { Log } from './entities';
 import { CreateLogDto } from './dto/create-log.dto';
 import { validationMessages } from '../common/constants';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class LogService {
-	constructor(@InjectModel(Log.name) private readonly logModel: Model<Log>) {}
+	constructor(
+		@InjectModel(Log.name) private readonly logModel: Model<Log>,
+		@Inject(forwardRef(() => AuthService)) private authService: AuthService,
+	) {}
 
 	async create(createLogDto: CreateLogDto): Promise<Log> {
 		const newLog = new this.logModel(createLogDto);
@@ -20,24 +24,17 @@ export class LogService {
 		return this.logModel.find().exec();
 	}
 
-	async getUsersWithStateLogs(): Promise<string[]> {
-		const usersWithLogs = await this.logModel.distinct('entityId', {
-			action: { $in: [validationMessages.log.action.user.state.activate, validationMessages.log.action.user.state.deactivate] },
-			entity: validationMessages.log.entity.user,
-		});
-		return usersWithLogs;
-	}
-
-	async getLastStateOfUsers(startDate: Date, endDate: Date): Promise<{ activeUsers: number; inactiveUsers: number }> {
-		const aggregationPipeline = [
+	async getLastStateOfUsersUntilDate(date: Date): Promise<{ activeUsers: number; inactiveUsers: number }> {
+		const aggregationPipeline: any = [
 			{
 				$match: {
-					timestamp: { $gte: startDate, $lte: endDate },
+					timestamp: { $lte: date },
 					action: { $in: [validationMessages.log.action.user.state.activate, validationMessages.log.action.user.state.deactivate] },
+					entity: validationMessages.log.entity.user,
 				},
 			},
 			{
-				$sort: { timestamp: -1 as const },
+				$sort: { timestamp: -1 },
 			},
 			{
 				$group: {
@@ -69,41 +66,59 @@ export class LogService {
 		return { activeUsers, inactiveUsers };
 	}
 
-	async getStateDetailsOfUsers(startDate: Date, endDate: Date): Promise<any> {
-		const aggregationPipeline: any = [
+	async countUsersWithStateLogsUntilDate(date: Date): Promise<number> {
+		const aggregationPipeline = [
 			{
 				$match: {
-					timestamp: { $gte: startDate, $lte: endDate },
+					timestamp: { $lte: date },
 					action: { $in: [validationMessages.log.action.user.state.activate, validationMessages.log.action.user.state.deactivate] },
+					entity: validationMessages.log.entity.user,
 				},
 			},
-			{ $sort: { timestamp: -1 } },
 			{
 				$group: {
 					_id: '$entityId',
-					lastAction: { $first: '$action' },
-					lastTimestamp: { $first: '$timestamp' },
 				},
 			},
 			{
-				$lookup: {
-					from: validationMessages.log.entity.user,
-					localField: '_id',
-					foreignField: '_id',
-					as: 'userDetails',
-				},
-			},
-			{ $unwind: '$userDetails' },
-			{
-				$project: {
-					_id: 0,
-					name: '$userDetails.name',
-					lastname: '$userDetails.lastname',
-					lastState: '$lastAction',
-				},
+				$count: 'totalUsersWithLogs',
 			},
 		];
 
-		return this.logModel.aggregate(aggregationPipeline);
+		const result = await this.logModel.aggregate(aggregationPipeline);
+
+		if (result.length > 0) {
+			return result[0].totalUsersWithLogs;
+		} else {
+			return 0;
+		}
+	}
+
+	async getStateDetailsOfUsersUntilDate(date: Date): Promise<any> {
+		const users = await this.authService.findUsersBeforeDate(date);
+		const userIds = users.map(user => user._id);
+
+		const logs = await this.logModel
+			.find({
+				entityId: { $in: userIds },
+				timestamp: { $lte: date },
+				action: { $in: [validationMessages.log.action.user.state.activate, validationMessages.log.action.user.state.deactivate] },
+			})
+			.sort({ timestamp: -1 })
+			.exec();
+
+		const userStates = {};
+		logs.forEach(log => {
+			if (!userStates[log.entityId]) {
+				userStates[log.entityId] = log.action === validationMessages.log.action.user.state.activate ? 'activo' : 'inactivo';
+			}
+		});
+
+		const details = userIds.map(userId => ({
+			userId,
+			state: userStates[userId] || 'activo',
+		}));
+
+		return details;
 	}
 }
