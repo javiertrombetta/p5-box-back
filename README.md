@@ -66,56 +66,105 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 <br>
 
-## Pasos para inicializar en entorno de `desarrollo`
+## Proyecto en distintos entornos
 
-1. Clonar el repositorio. Leé primero [Pasos a seguir con Gitflow](#pasos-a-seguir-con-gitflow).
-   
-2. Instalar todas las dependencias del proyecto:
-   ```bash
-   $ npm install
-   ```
+#### Antes de continuar, descargá la última versión de [Docker](https://www.docker.com/), compatible para tu sistema operativo.
 
-3. Instalar Nest CLI:
-   ```bash
-   $ npm i -g @nestjs/cli
-   ```
+#### `IMPORTANTE`: El Engine de Docker tiene que estar ejecutándose.
 
-4. Clonar el archivo ```.env.template``` y renombar la copia a ```.env```
+* ### Inicializar proyecto en entorno de `desarrollo`
 
-5. Completar con datos reales las variables de entorno definidas en el ```.env```
+  1. Clonar el repositorio. Leé primero [Pasos a seguir con Gitflow](#pasos-a-seguir-con-gitflow).
+     
+  2. Instalar todas las dependencias del proyecto:
+     ```bash
+     $ npm install
+     ```
 
-6. Iniciar la base de datos y ejecutarla en segundo plano:
-   ```bash
-   $ docker-compose up -d
-   ```
+  3. Instalar Nest CLI:
+     ```bash
+     $ npm i -g @nestjs/cli
+     ```
 
-7. Ejecutar desde una terminal:
-   ```bash
-   # Recarga automática de cambios en entorno de desarrollo
-   $ npm run start:dev
-   ```
+  4. Clonar el archivo ```.env.template``` y renombar la copia a ```.env```
 
-8. Reconstruir la base de datos con datos de [_Faker_](https://www.npmjs.com/package/@faker-js/faker) en desarrollo:
+  5. Completar con datos reales las variables de entorno definidas en el ```.env```
 
-   - Usando un navegador web, ingresar a: [http://localhost:3000/api/v1/seed](http://localhost:3000/api/v1/seed)
-   - o desde [Postman](https://www.postman.com/):
-    
-        ```bash
-        [GET] http://localhost:3000/api/v1/seed
-        ```
+  6. Desplegar y ejecutar MongoDB en segundo plano:
+     ```bash
+     $ docker-compose -f docker-compose.yaml up -d
+     ```
+
+  7. Ejecutar desde una terminal:
+     ```bash
+     # Recarga automática de cambios en entorno de desarrollo
+     $ npm run start:dev
+     ```
+
+  8. Reconstruir la base de datos con datos de [_Faker_](https://www.npmjs.com/package/@faker-js/faker) en desarrollo:
+
+     - Usando un navegador web, ingresar a: [http://localhost:3000/api/v1/seed](http://localhost:3000/api/v1/seed)
+     - o desde [Postman](https://www.postman.com/):
+      
+          ```bash
+          [GET] http://localhost:3000/api/v1/seed
+          ```
 
 <br>
 
-## Desplegue en entorno de `producción`
+* ### Compliar el proyecto para usar la RestAPI en entorno de `producción`
+  
 
-1. Crear el archivo ```.env.prod```
+  1. Clonar el archivo ```.env.template``` y renombar la copia a ```.env.prod```
+
+  2. Completar con datos reales las variables de entorno definidas en el ```.env.prod```
+
+  3. Tener una base de datos de MongoDB ya configurada; o ejecutar el siguiente comando para desplegar y ejecutar la imagen de Docker Hub:
+     ```bash
+     $ docker-compose -f docker-compose.yaml up -d
+     ```
+
+  4. Ejecutar desde una terminal:
+     ```bash
+     # Compilar el proyecto en la carpeta ./dist
+     $ npm run build
+     ```
+
+  5. Ejecutar desde una terminal y en la carpeta raíz:
+     ```bash
+     # Ejemplo: Para ejecutar la API en un servicio de host terciarizado. Se requiere tener el proyecto disponibilizado en un repositorio externo.
+     $ node dist/main
+     ```
+
+<br>
+
+* ###  Crear una imagen Docker para uso en entorno de `producción`
+
+
+  1. Crear el archivo ```.env.prod```
+     
+  2. Llenar las variables de entorno de prod
+     
+  3. Crear la nueva imagen:
+      ```
+      docker-compose -f docker-compose.prod.yaml --env-file .env.prod up --build
+      ```
+
+* ###  Utilizar la imagen del proyecto disponible en [Docker Hub](https://hub.docker.com/)
+
+  1. Ejecutar desde una terminal:
    
-2. Llenar las variables de entorno de prod
+      ```bash
+      # Descargar la última versión de la imagen del proyecto
+      $ docker pull javiertrombetta/box-back
+      ```     
+     
+  2. Ejecutar desde una terminal:
    
-3. Crear la nueva imagen:
-```
-docker-compose -f docker-compose.prod.yaml --env-file .env.prod up --build
-```
+      ```bash
+      # Iniciar el contenedor desde la imagen descargada
+      $ docker container run -d -p 80:80 javiertrombetta/box-back
+      ```  
 
 <br>
 
