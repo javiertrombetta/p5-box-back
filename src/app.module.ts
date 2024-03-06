@@ -16,6 +16,7 @@ import { ReportsModule } from './reports/reports.module';
 import { TasksModule } from './tasks/tasks.module';
 import { LegalDeclarationsModule } from './legals/legals.module';
 import { JoiValidationSchema } from './config/joi.validation';
+import { FilesModule } from './files/files.module';
 
 @Module({
 	imports: [
@@ -45,6 +46,7 @@ import { JoiValidationSchema } from './config/joi.validation';
 		ReportsModule,
 		TasksModule,
 		LegalDeclarationsModule,
+		FilesModule,
 	],
 })
 export class AppModule {}

@@ -15,6 +15,7 @@ import { PackagesModule } from '../packages/packages.module';
 import { LogModule } from '../log/log.module';
 import { LegalDeclarationsModule } from '../legals/legals.module';
 import { RewardsModule } from '../rewards/rewards.module';
+import { FilesModule } from 'src/files/files.module';
 
 @Module({
 	imports: [
@@ -34,6 +35,7 @@ import { RewardsModule } from '../rewards/rewards.module';
 		LogModule,
 		forwardRef(() => LegalDeclarationsModule),
 		forwardRef(() => RewardsModule),
+		FilesModule,
 	],
 	providers: [AuthService, JwtStrategy],
 	controllers: [AuthController],
