@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { UnauthorizedExceptionFilter, NotFoundExceptionFilter } from './common/filters';
+import { AllExceptionsFilter, UnauthorizedExceptionFilter, NotFoundExceptionFilter } from './common/filters';
 
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -18,7 +18,7 @@ async function main() {
 		credentials: true,
 	});
 
-	app.useGlobalFilters(new UnauthorizedExceptionFilter(), new NotFoundExceptionFilter());
+	app.useGlobalFilters(new AllExceptionsFilter(), new UnauthorizedExceptionFilter(), new NotFoundExceptionFilter());
 
 	app.setGlobalPrefix(configService.get('GLOBAL_PREFIX'));
 	app.useGlobalPipes(

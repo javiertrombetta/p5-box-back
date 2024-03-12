@@ -14,7 +14,7 @@ services:
     ports:
       - '${PORT}:${PORT}'
     environment:
-      # TZ: America/Argentina/Buenos_Aires
+      TZ: America/Argentina/Buenos_Aires
       NODE_ENV: ${NODE_ENV}
       CORS_ORIGIN: ${CORS_ORIGIN}
       CORS_METHODS: ${CORS_METHODS}

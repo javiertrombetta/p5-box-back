@@ -92,25 +92,37 @@ export const validationMessages = {
 		},
 	},
 	mails: {
-		from: '"Box" <cuenta@dominio.com>',
-		resetPasswordEmail: {
-			subject: 'Restablecimiento de contraseña',
-			body: `
-				<h1>Solicitud de restablecimiento de contraseña</h1>
-				<p>Para restablecer tu contraseña, por favor ingresá al siguiente enlace:</p>
-				<a href="{{resetUrl}}">Restablecer contraseña</a>
-			`,
-		},
 		passwordChanged: {
 			subject: 'Tu contraseña fue recientemente cambiada',
 			body: `
 				<h1>Cambio de Contraseña</h1>
-				<p>Este es un correo de confirmación, notificando que la contraseña de tu cuenta fue cambiada por una nueva.</p>
+				<p>Este es un mail de confirmación, para avisarte que la contraseña de tu cuenta fue cambiada por una nueva.</p>
+				<p>Si no hiciste este cambio, por favor comunicate cuanto antes con un administrador.</p>
+				<p>Saludos,</p>
+				<p>Equipo de BoxApp</p>
 			`,
 		},
 		blockedByLegalDeclaration: {
 			subject: 'Cuenta Desactivada Temporalmente',
-			body: 'Tu cuenta ha sido desactivada temporalmente por la siguiente razón: ${reason}. No podrás iniciar sesión hasta el ${blockUntil} hs.',
+			body: `
+				<p>Tu cuenta fue desactivada temporalmente por la siguiente razón: {{reason}}.</p>
+				<p>No podés iniciar sesión hasta el {{blockUntil}} hs.</p>
+				<p>Abandoná la buena vida y seguí el camino de la luz.</p>
+				<p>Saludos,</p>
+				<p>Equipo de BoxApp</p>
+			`,
+		},
+		resetCodeEmail: {
+			subject: 'Código de Reseteo de Contraseña',
+			body: `
+				<h1>Código de Reseteo de Contraseña</h1>
+				<p>Recibiste este correo porque vos (o alguien más) solicitó restablecer la contraseña de tu cuenta.</p>
+				<p>Tu código temporal de reseteo es: <strong>{{resetCode}}</strong></p>
+				<p>Este código es válido solo por 5 minutos. Por favor, ingresá este código en la aplicación para continuar con el restablecimiento de tu contraseña.</p>
+				<p>Si no solicitaste este cambio, por favor ignorá este correo. En ese caso, tu contraseña permanece sin cambios.</p>
+				<p>Saludos,</p>
+				<p>Equipo de BoxApp</p>
+			`,
 		},
 	},
 	packages: {
@@ -128,6 +140,7 @@ export const validationMessages = {
 			updateSummary: '${addedPackagesCount} paquete(s) cargado(s) exitosamente. ${skippedPackagesCount} paquete(s) ya estaba(n) cargado(s) y se ha(n) omitido.',
 		},
 		error: {
+			packageNotAvailable: 'El paquete no fue encontrado o no está disponible.',
 			packageNotFound: 'El paquete no fue encontrado.',
 			deliveredNotFound: 'Hubo un error al obtener los paquetes entregados.',
 			createError: 'Hubo un error de servidor al intentar crear el paquete.',
