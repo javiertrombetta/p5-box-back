@@ -15,7 +15,7 @@ async function main() {
 	app.enableCors({
 		origin: configService.get('CORS_ORIGIN'),
 		methods: configService.get('CORS_METHODS'),
-		credentials: configService.get('CORS_CREDENTIALS') === 'true',
+		credentials: true,
 	});
 
 	app.useGlobalFilters(new UnauthorizedExceptionFilter(), new NotFoundExceptionFilter());

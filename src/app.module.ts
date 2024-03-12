@@ -15,14 +15,14 @@ import { LogModule } from './log/log.module';
 import { ReportsModule } from './reports/reports.module';
 import { TasksModule } from './tasks/tasks.module';
 import { LegalDeclarationsModule } from './legals/legals.module';
-import { JoiValidationSchema } from './config/joi.validation';
+import { JoiValidationDevSchema, JoiValidationProdSchema } from './config';
 import { FilesModule } from './files/files.module';
 
 @Module({
 	imports: [
 		ConfigModule.forRoot({
 			isGlobal: true,
-			validationSchema: JoiValidationSchema,
+			validationSchema: process.env.NODE_ENV !== 'production' ? JoiValidationDevSchema : JoiValidationProdSchema,
 		}),
 		ScheduleModule.forRoot(),
 		ServeStaticModule.forRoot({

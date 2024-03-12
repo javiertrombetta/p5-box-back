@@ -20,16 +20,18 @@ export class MailService {
 		} as nodemailer.TransportOptions);
 	}
 
-	async sendMail(to: string, subject: string, content: string): Promise<void> {
-		try {
-			await this.transporter.sendMail({
-				from: validationMessages.mails.from,
-				to: to,
-				subject: subject,
-				html: content,
-			});
-		} catch (error) {
-			throw new Error(validationMessages.auth.forgotPassword.error);
-		}
+	sendMail(to: string, subject: string, content: string): void {
+		setImmediate(async () => {
+			try {
+				await this.transporter.sendMail({
+					from: validationMessages.mails.from,
+					to: to,
+					subject: subject,
+					html: content,
+				});
+			} catch (error) {
+				throw new Error(validationMessages.auth.forgotPassword.error);
+			}
+		});
 	}
 }
