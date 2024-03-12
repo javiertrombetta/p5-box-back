@@ -26,6 +26,15 @@ export class PackagesService {
 		return paquete;
 	}
 
+	async findAvailablePackageById(packageId: string): Promise<Package | null> {
+		return this.packageModel
+			.findOne({
+				_id: packageId,
+				state: validationMessages.packages.state.available,
+			})
+			.exec();
+	}
+
 	async findAvailablePackage(): Promise<Package[]> {
 		const now = new Date();
 		const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
@@ -241,7 +250,6 @@ export class PackagesService {
 		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
 		packageToUpdate.state = validationMessages.packages.state.delivered;
-		packageToUpdate.deliveryMan = null;
 		packageToUpdate.deliveryDate = new Date();
 		await packageToUpdate.save();
 

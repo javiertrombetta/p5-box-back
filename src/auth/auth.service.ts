@@ -4,7 +4,6 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
 
 import { validationMessages } from '../common/constants';
 import { CreateUserDto, LoginUserDto } from './dto';
@@ -75,7 +74,7 @@ export class AuthService {
 			const errorMessage = `${validationMessages.auth.user.blockUntil.loginInfo} ${formattedDate} a las ${formattedTime} hs.`;
 			throw new HttpException(errorMessage, HttpStatus.FORBIDDEN);
 		} else {
-			validationMessages.auth.user.blockUntil = null;
+			user.blockUntil = null;
 		}
 
 		if (user.points < -100 && user.state === validationMessages.auth.user.state.isActiveState) {
@@ -215,20 +214,27 @@ export class AuthService {
 		const user = await this.userModel.findOne({ email: email.toLowerCase().trim() });
 		if (!user) throw new HttpException(validationMessages.auth.forgotPassword.userNotFound, HttpStatus.BAD_REQUEST);
 
-		const resetToken = uuidv4();
+		let resetToken: string;
+		let isUnique = false;
+		while (!isUnique) {
+			resetToken = Math.floor(10000 + Math.random() * 90000).toString();
+			const existingUser = await this.userModel.findOne({ resetPasswordToken: resetToken });
+			if (!existingUser) {
+				isUnique = true;
+			}
+		}
+
 		const expirationTime = new Date();
-		expirationTime.setHours(expirationTime.getHours() + 1);
+		expirationTime.setMinutes(expirationTime.getMinutes() + 5);
 
 		user.resetPasswordToken = resetToken;
 		user.resetPasswordExpires = expirationTime;
 
 		await user.save();
 
-		const resetUrl = `${process.env.CORS_ORIGIN}/reset-password?token=${resetToken}`;
+		const mailContent = validationMessages.mails.resetCodeEmail.body.replace('{{resetCode}}', resetToken);
 
-		const mailContent = validationMessages.mails.resetPasswordEmail.body.replace('{{resetUrl}}', resetUrl);
-
-		await this.mailService.sendMail(user.email, validationMessages.mails.resetPasswordEmail.subject, mailContent);
+		this.mailService.sendMail(user.email, validationMessages.mails.resetCodeEmail.subject, mailContent);
 
 		await this.logService.create({
 			action: validationMessages.log.action.user.forgotPassword,
@@ -411,7 +417,7 @@ export class AuthService {
 		await user.save();
 
 		const formattedBlockUntil = `${blockUntil.getDate()}/${blockUntil.getMonth() + 1}/${blockUntil.getFullYear()} a las ${blockUntil.getHours()}:${blockUntil.getMinutes().toString().padStart(2, '0')}`;
-		const body = validationMessages.mails.blockedByLegalDeclaration.body.replace('${reason}', reason).replace('${blockUntil}', formattedBlockUntil);
+		const body = validationMessages.mails.blockedByLegalDeclaration.body.replace('{{reason}}', reason).replace('{{blockUntil}}', formattedBlockUntil);
 
 		await this.mailService.sendMail(user.email, validationMessages.mails.blockedByLegalDeclaration.subject, body);
 

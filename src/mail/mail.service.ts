@@ -24,7 +24,7 @@ export class MailService {
 		setImmediate(async () => {
 			try {
 				await this.transporter.sendMail({
-					from: validationMessages.mails.from,
+					from: `${process.env.SMTP_FROM} <${process.env.SMTP_USER}>`,
 					to: to,
 					subject: subject,
 					html: content,
