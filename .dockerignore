@@ -1,7 +1,18 @@
 dist/
+mongo/
 node_modules/
+static/
+test/
+uploads/
+
 .gitignore
 .git/
+.github/workflows
 
+.env*
+.eslintrc*
+.prettierrc*
+
+CHANGELOG.md
 README.md
 
