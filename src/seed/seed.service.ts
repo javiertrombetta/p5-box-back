@@ -10,6 +10,7 @@ import { User } from '../auth/entities';
 import { Package } from '../packages/entities';
 import { Log } from '../log/entities';
 import { Location } from '../locations/entities';
+import { LegalDeclaration } from '../legals/entities';
 
 import { validationMessages } from '../common/constants';
 import { ValidRoles } from 'src/auth/interfaces';
@@ -21,6 +22,7 @@ export class SeedService {
 		@InjectModel(Package.name) private readonly packageModel: Model<Package>,
 		@InjectModel(Log.name) private readonly logModel: Model<Log>,
 		@InjectModel(Location.name) private readonly locationModel: Model<Location>,
+		@InjectModel(LegalDeclaration.name) private readonly legalDeclarationModel: Model<LegalDeclaration>,
 	) {}
 
 	async populateDB() {
@@ -28,6 +30,7 @@ export class SeedService {
 		await this.packageModel.deleteMany({});
 		await this.logModel.deleteMany({});
 		await this.locationModel.deleteMany({});
+		await this.legalDeclarationModel.deleteMany({});
 
 		const repartidores = [];
 
@@ -61,24 +64,42 @@ export class SeedService {
 
 		for (const repartidor of repartidores) {
 			const packagesForRepartidor = [];
+			let packageInTransitCreated = false;
 
 			for (let j = 0; j < Math.floor(Math.random() * 50) + 1; j++) {
+				let packageState = faker.helpers.arrayElement([
+					validationMessages.packages.state.available,
+					validationMessages.packages.state.delivered,
+					validationMessages.packages.state.onTheWay,
+					validationMessages.packages.state.pending,
+				]);
+
+				if (packageState === validationMessages.packages.state.onTheWay && packageInTransitCreated) {
+					packageState = validationMessages.packages.state.pending;
+				} else if (packageState === validationMessages.packages.state.onTheWay) {
+					packageInTransitCreated = true;
+				}
+
+				let deliveryManId = null;
+				if (packageState !== validationMessages.packages.state.available) {
+					deliveryManId = repartidor._id;
+				}
 				const packageData = {
 					deliveryFullname: faker.person.fullName(),
 					deliveryAddress: `${faker.location.streetAddress({ useFullAddress: true })}`,
 					deliveryWeight: faker.number.float({ min: 1, max: 100, multipleOf: 0.25 }),
 					deliveryDate: startOfDay(faker.date.soon()),
-					state: faker.helpers.arrayElement([
-						validationMessages.packages.state.available,
-						validationMessages.packages.state.delivered,
-						validationMessages.packages.state.onTheWay,
-						validationMessages.packages.state.pending,
-					]),
-					deliveryMan: repartidor._id,
+					state: packageState,
+					deliveryMan: deliveryManId,
 				};
 
 				const newPackage = await new this.packageModel(packageData).save();
-				packagesForRepartidor.push(newPackage._id);
+				if (packageState !== validationMessages.packages.state.delivered) {
+					packagesForRepartidor.push(newPackage._id);
+				}
+				if (packageState === validationMessages.packages.state.onTheWay) {
+					packagesForRepartidor.unshift(packagesForRepartidor.pop());
+				}
 			}
 
 			await this.userModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });

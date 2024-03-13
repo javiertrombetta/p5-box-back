@@ -184,7 +184,7 @@ export const validationMessages = {
 	},
 	seed: {
 		success: {
-			seedCompleted: 'La base de datos fue reconstruida con datos aleatorios de Faker.',
+			seedCompleted: 'La base de datos fue poblada correctamente con datos de ejemplo.',
 		},
 	},
 	serverError: {

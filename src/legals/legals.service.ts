@@ -28,7 +28,7 @@ export class LegalDeclarationsService {
 
 	async handleNegativeDeclaration(userId: string, res: Response): Promise<void> {
 		try {
-			await this.rewardsService.subtractPointsForNegativeDeclaration(userId, res);
+			await this.rewardsService.subtractPointsForNegativeDeclaration(userId);
 			await this.authService.setBlockTimeDuration(userId, validationMessages.legals.timeBlocked, validationMessages.legals.negativeReason);
 			await this.authService.logout(res, true);
 		} catch (error) {
