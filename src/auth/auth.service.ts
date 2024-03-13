@@ -273,7 +273,7 @@ export class AuthService {
 		await user.save();
 
 		const mailContent = validationMessages.mails.passwordChanged.body;
-		await this.mailService.sendMail(user.email, validationMessages.mails.passwordChanged.subject, mailContent);
+		this.mailService.sendMail(user.email, validationMessages.mails.passwordChanged.subject, mailContent);
 
 		await this.logService.create({
 			action: validationMessages.log.action.user.resetPassword,
@@ -419,7 +419,7 @@ export class AuthService {
 		const formattedBlockUntil = `${blockUntil.getDate()}/${blockUntil.getMonth() + 1}/${blockUntil.getFullYear()} a las ${blockUntil.getHours()}:${blockUntil.getMinutes().toString().padStart(2, '0')}`;
 		const body = validationMessages.mails.blockedByLegalDeclaration.body.replace('{{reason}}', reason).replace('{{blockUntil}}', formattedBlockUntil);
 
-		await this.mailService.sendMail(user.email, validationMessages.mails.blockedByLegalDeclaration.subject, body);
+		this.mailService.sendMail(user.email, validationMessages.mails.blockedByLegalDeclaration.subject, body);
 
 		await this.logService.create({
 			action: validationMessages.log.action.user.state.deactivate,
