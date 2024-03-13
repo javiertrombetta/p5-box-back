@@ -15,13 +15,16 @@ import { LogModule } from './log/log.module';
 import { ReportsModule } from './reports/reports.module';
 import { TasksModule } from './tasks/tasks.module';
 import { LegalDeclarationsModule } from './legals/legals.module';
+import { JoiValidationDevSchema, JoiValidationProdSchema } from './config';
+import { FilesModule } from './files/files.module';
 
 @Module({
 	imports: [
-		ScheduleModule.forRoot(),
 		ConfigModule.forRoot({
 			isGlobal: true,
+			validationSchema: process.env.NODE_ENV !== 'production' ? JoiValidationDevSchema : JoiValidationProdSchema,
 		}),
+		ScheduleModule.forRoot(),
 		ServeStaticModule.forRoot({
 			rootPath: join(__dirname, '..', 'public'),
 		}),
@@ -33,7 +36,7 @@ import { LegalDeclarationsModule } from './legals/legals.module';
 			inject: [ConfigService],
 		}),
 		AuthModule,
-		SeedModule,
+		...(process.env.NODE_ENV !== 'production' ? [SeedModule] : []),
 		PackagesModule,
 		RewardsModule,
 		CommonModule,
@@ -43,6 +46,7 @@ import { LegalDeclarationsModule } from './legals/legals.module';
 		ReportsModule,
 		TasksModule,
 		LegalDeclarationsModule,
+		FilesModule,
 	],
 })
 export class AppModule {}

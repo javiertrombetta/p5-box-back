@@ -62,7 +62,7 @@ export class SeedService {
 		for (const repartidor of repartidores) {
 			const packagesForRepartidor = [];
 
-			for (let j = 0; j < Math.floor(Math.random() * 10) + 1; j++) {
+			for (let j = 0; j < Math.floor(Math.random() * 50) + 1; j++) {
 				const packageData = {
 					deliveryFullname: faker.person.fullName(),
 					deliveryAddress: `${faker.location.streetAddress({ useFullAddress: true })}`,

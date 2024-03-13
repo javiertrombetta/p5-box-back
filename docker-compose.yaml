@@ -1,12 +1,14 @@
-version: '3'
+version: '3.1'
 
 services:
-  db:
-    image: mongo:5.0.24
+  boxdb:
+    user: "nfsnobody"
+    image: mongo:7.0.6
+    container_name: ${MONGO_DB_NAME}
     restart: always
     ports:
-      - 27017:27017
+      - ${MONGO_PORT}:${MONGO_PORT}
     environment:
-      MONGODB_DATABASE: box-db
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
     volumes:
       - ./mongo:/data/db

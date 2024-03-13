@@ -7,7 +7,7 @@ import { LegalDeclarationsService } from '../legals/legals.service';
 
 import { GetUser, Auth } from './decorators';
 import { ValidRoles } from './interfaces';
-import { CreateUserDto, LoginUserDto, ResetPasswordDto, UpdateUserDto, ForgotPasswordDto, StartDayDto } from './dto';
+import { CreateUserDto, LoginUserDto, ResetPasswordDto, UpdateUserRoleDto, ForgotPasswordDto, StartDayDto } from './dto';
 
 import { validationMessages } from '../common/constants';
 import { ExceptionHandlerService } from '../common/helpers';
@@ -198,9 +198,9 @@ export class AuthController {
 
 	@Put('users/:userId/role')
 	@Auth(ValidRoles.administrador)
-	async updateUserRole(@Param('userId') userId: string, @Body() updateUserDto: UpdateUserDto, @GetUser('id') performedById: string, @Res() res: Response) {
+	async updateUserRole(@Param('userId') userId: string, @Body() updateUserRoleDto: UpdateUserRoleDto, @GetUser('id') performedById: string, @Res() res: Response) {
 		try {
-			const updatedUser = await this.authService.updateUserRole(userId.toString(), updateUserDto.roles, performedById.toString(), res);
+			const updatedUser = await this.authService.updateUserRole(userId.toString(), updateUserRoleDto.roles, performedById.toString());
 			if (!updatedUser) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
 			res.status(HttpStatus.OK).json({
@@ -279,7 +279,7 @@ export class AuthController {
 	@Auth(ValidRoles.repartidor)
 	async cancelPackage(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
 		try {
-			await this.packagesService.updatePackageOnCancel(uuidPackage, userId.toString(), res);
+			await this.packagesService.updatePackageOnCancel(uuidPackage, userId.toString());
 			res.status(HttpStatus.OK).json({ message: validationMessages.packages.success.cancelled });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);

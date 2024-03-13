@@ -3,8 +3,8 @@ import { IsString, IsNotEmpty, MinLength, Matches } from 'class-validator';
 import { validationMessages } from '../../common/constants';
 
 export class ResetPasswordDto {
-	@IsNotEmpty()
-	@IsString()
+	@IsNotEmpty({ message: validationMessages.auth.token.isNotEmpty })
+	@IsString({ message: validationMessages.auth.token.isString })
 	@ApiProperty({ description: validationMessages.swagger.user.token, required: true })
 	token: string;
 

@@ -10,7 +10,6 @@ export class NotFoundExceptionFilter implements ExceptionFilter {
 		const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.NOT_FOUND;
 
 		response.status(status).json({
-			statusCode: status,
 			message: validationMessages.serverError.urlNotFound,
 		});
 	}
