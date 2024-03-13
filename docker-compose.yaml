@@ -2,6 +2,7 @@ version: '3.1'
 
 services:
   boxdb:
+    user: "nfsnobody"
     image: mongo:7.0.6
     container_name: ${MONGO_DB_NAME}
     restart: always
