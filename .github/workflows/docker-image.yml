@@ -36,8 +36,8 @@ jobs:
       env:
         NEW_VERSION: ${{ steps.version.outputs.version }}
       run: |
-        buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,windows/amd64 -t javiertrombetta/box-back:$NEW_VERSION --push .
-        buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,windows/amd64 -t javiertrombetta/box-back:latest --push .
+        docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,windows/amd64 -t javiertrombetta/box-back:$NEW_VERSION --push .
+        docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,windows/amd64 -t javiertrombetta/box-back:latest --push .
 #       docker build -t javiertrombetta/box-back:$NEW_VERSION .
 #       docker build -t javiertrombetta/box-back:latest .
 #   - name: Push Docker Image
