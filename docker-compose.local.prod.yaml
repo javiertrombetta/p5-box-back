@@ -14,16 +14,13 @@ services:
     ports:
       - '${PORT}:${PORT}'
     environment:
-      TZ: America/Argentina/Buenos_Aires
+      TZ: ${TIME_ZONE}
       NODE_ENV: ${NODE_ENV}
       CORS_ORIGIN: ${CORS_ORIGIN}
       CORS_METHODS: ${CORS_METHODS}
       GLOBAL_PREFIX: ${GLOBAL_PREFIX}
       PORT: ${PORT}
       MONGODB_URI: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_DB_NAME}
-      MONGO_USERNAME: ${MONGO_USERNAME}
-      MONGO_PASSWORD: ${MONGO_PASSWORD}
-      MONGO_DB_NAME: ${MONGO_DB_NAME}
       JWT_SECRET: ${JWT_SECRET}
       SMTP_SERVICES: ${SMTP_SERVICES}
       SMTP_HOST: ${SMTP_HOST}
