@@ -297,7 +297,12 @@ export class PackagesService {
 	}
 
 	async findAllPackagesWithDeliveryMan(): Promise<Package[]> {
-		return this.packageModel.find({ deliveryMan: { $ne: null } }).exec();
+		return this.packageModel
+			.find({
+				deliveryMan: { $ne: null },
+				state: { $ne: validationMessages.packages.state.delivered },
+			})
+			.exec();
 	}
 
 	async updatePackageState(packageId: string, newState: string): Promise<Package> {
