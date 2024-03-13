@@ -25,7 +25,7 @@ export class PackagesController {
 		}
 	}
 
-	@Get('/me/delivered')
+	@Get('me/delivered')
 	@Auth(ValidRoles.repartidor)
 	async getDeliveredPackages(@GetUser() user, @Res() res: Response) {
 		try {
@@ -36,7 +36,7 @@ export class PackagesController {
 		}
 	}
 
-	@Get('at/:uuidPackage/details')
+	@Get('me/:uuidPackage/details')
 	@Auth(ValidRoles.repartidor)
 	async getPackageDetails(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
 		try {
@@ -49,23 +49,26 @@ export class PackagesController {
 		}
 	}
 
+	@Get('at/:uuidPackage/available')
+	@Auth(ValidRoles.repartidor)
+	async getAvailablePackageDetails(@Param('uuidPackage') uuidPackage: string, @Res() res: Response) {
+		try {
+			const pkg = await this.packagesService.findAvailablePackageById(uuidPackage);
+			if (!pkg) {
+				return res.status(HttpStatus.NOT_FOUND).json({ message: validationMessages.packages.error.packageNotAvailable });
+			}
+			res.status(HttpStatus.OK).json(pkg);
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
+
 	@Post('new')
 	@Auth(ValidRoles.administrador)
 	async createPackage(@Body() createPackageDto: CreatePackageDto, @GetUser('id') userId: string, @Res() res: Response) {
 		try {
 			const newPackage = await this.packagesService.create(createPackageDto, userId);
 			res.status(HttpStatus.CREATED).json(newPackage);
-		} catch (error) {
-			ExceptionHandlerService.handleException(error, res);
-		}
-	}
-
-	@Put('finish')
-	@Auth(ValidRoles.repartidor)
-	async update(@Param('packageId') pkgId: string, @GetUser() user, @Body(ValidationPipe) updatePackageDto: UpdatePackageDto, @Res() res: Response) {
-		try {
-			const updatedPackage = await this.packagesService.updateById(pkgId, updatePackageDto, user.id);
-			res.status(HttpStatus.OK).json(updatedPackage);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}

@@ -10,7 +10,6 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
 		const request = ctx.getRequest<Request>();
 
 		response.status(HttpStatus.UNAUTHORIZED).json({
-			statusCode: HttpStatus.UNAUTHORIZED,
 			timestamp: new Date().toISOString(),
 			path: request.url,
 			message: validationMessages.auth.account.error.unauthorized,

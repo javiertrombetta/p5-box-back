@@ -1,4 +1,4 @@
-import { HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
@@ -26,6 +26,15 @@ export class PackagesService {
 		return paquete;
 	}
 
+	async findAvailablePackageById(packageId: string): Promise<Package | null> {
+		return this.packageModel
+			.findOne({
+				_id: packageId,
+				state: validationMessages.packages.state.available,
+			})
+			.exec();
+	}
+
 	async findAvailablePackage(): Promise<Package[]> {
 		const now = new Date();
 		const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
@@ -36,6 +45,7 @@ export class PackagesService {
 				state: validationMessages.packages.state.available,
 				deliveryDate: { $gte: startOfDay, $lte: endOfDay },
 			})
+			.sort({ deliveryDate: -1 })
 			.exec();
 	}
 
@@ -169,37 +179,29 @@ export class PackagesService {
 		}
 	}
 
-	async updatePackageOnCancel(packageId: string, userId: string, res: Response): Promise<void> {
-		try {
-			const user = await this.authService.findById(userId);
-			if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
+	async updatePackageOnCancel(packageId: string, userId: string): Promise<void> {
+		const user = await this.authService.findById(userId);
+		if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
 
-			if (!user.packages.includes(packageId)) throw new NotFoundException(validationMessages.packages.userArray.packageNotAssigned);
+		if (!user.packages.includes(packageId)) throw new NotFoundException(validationMessages.packages.userArray.packageNotAssigned);
 
-			const packageToUpdate = await this.packageModel.findById(packageId).exec();
-			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
+		const packageToUpdate = await this.packageModel.findById(packageId).exec();
+		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
-			packageToUpdate.state = validationMessages.packages.state.available;
-			packageToUpdate.deliveryDate = new Date();
-			packageToUpdate.deliveryMan = null;
-			await packageToUpdate.save();
+		packageToUpdate.state = validationMessages.packages.state.available;
+		packageToUpdate.deliveryDate = new Date();
+		packageToUpdate.deliveryMan = null;
+		await packageToUpdate.save();
 
-			await this.authService.removePackageFromUser(userId, packageId);
-
-			await this.rewardsService.subtractPointsForCancellation(userId, res);
-
-			await this.logService.create({
-				action: validationMessages.log.action.packages.updateOnCancel,
-				entity: validationMessages.log.entity.package,
-				entityId: packageId,
-				changes: { state: packageToUpdate.state, deliveryDate: packageToUpdate.deliveryDate, deliveryMan: packageToUpdate.deliveryMan },
-				performedBy: userId,
-			});
-
-			res.status(HttpStatus.OK).json({ message: validationMessages.packages.success.cancelled });
-		} catch (error) {
-			ExceptionHandlerService.handleException(error, res);
-		}
+		await this.authService.removePackageFromUser(userId, packageId);
+		await this.rewardsService.subtractPointsForCancellation(userId);
+		await this.logService.create({
+			action: validationMessages.log.action.packages.updateOnCancel,
+			entity: validationMessages.log.entity.package,
+			entityId: packageId,
+			changes: { state: packageToUpdate.state, deliveryDate: packageToUpdate.deliveryDate, deliveryMan: packageToUpdate.deliveryMan },
+			performedBy: userId,
+		});
 	}
 
 	async assignPackageToUser(userId: string, packageId: string, res: Response): Promise<void> {
@@ -241,7 +243,6 @@ export class PackagesService {
 		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
 		packageToUpdate.state = validationMessages.packages.state.delivered;
-		packageToUpdate.deliveryMan = null;
 		packageToUpdate.deliveryDate = new Date();
 		await packageToUpdate.save();
 
@@ -296,7 +297,12 @@ export class PackagesService {
 	}
 
 	async findAllPackagesWithDeliveryMan(): Promise<Package[]> {
-		return this.packageModel.find({ deliveryMan: { $ne: null } }).exec();
+		return this.packageModel
+			.find({
+				deliveryMan: { $ne: null },
+				state: { $ne: validationMessages.packages.state.delivered },
+			})
+			.exec();
 	}
 
 	async updatePackageState(packageId: string, newState: string): Promise<Package> {

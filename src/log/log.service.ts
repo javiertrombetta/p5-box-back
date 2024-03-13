@@ -110,13 +110,14 @@ export class LogService {
 		const userStates = {};
 		logs.forEach(log => {
 			if (!userStates[log.entityId]) {
-				userStates[log.entityId] = log.action === validationMessages.log.action.user.state.activate ? 'activo' : 'inactivo';
+				userStates[log.entityId] =
+					log.action === validationMessages.log.action.user.state.activate ? validationMessages.auth.user.state.isActiveState : validationMessages.auth.user.state.isInactiveSate;
 			}
 		});
 
 		const details = userIds.map(userId => ({
 			userId,
-			state: userStates[userId] || 'activo',
+			state: userStates[userId] || validationMessages.auth.user.state.isActiveState,
 		}));
 
 		return details;
