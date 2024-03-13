@@ -3,9 +3,9 @@
 /node_modules
 /mongo
 
-.env
-.env.prod.local
-.env.prod.remote
+/.env
+/.env.prod.local
+/.env.prod.remote
 
 package-lock.json
 
