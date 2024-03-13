@@ -3,7 +3,7 @@ import * as Joi from 'joi';
 export const JoiValidationDevSchema = Joi.object({
 	NODE_ENV: Joi.string().valid('development').required(),
 
-	CORS_ORIGIN: Joi.string().uri().required(),
+	// CORS_ORIGIN: Joi.string().uri().required(),
 	CORS_METHODS: Joi.string()
 		.pattern(/^(GET|POST|PUT|DELETE)(,(GET|POST|PUT|DELETE))*$/)
 		.required(),
