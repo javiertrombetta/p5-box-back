@@ -143,7 +143,7 @@ export class AuthService {
 		return user.packages.includes(packageId);
 	}
 
-	async updateUserRole(userId: string, newRoles: string[], performedById: string, res: Response): Promise<User> {
+	async updateUserRole(userId: string, newRoles: string[], performedById: string): Promise<User> {
 		const originalUser = await this.userModel.findById(userId);
 
 		if (!originalUser) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
@@ -157,7 +157,7 @@ export class AuthService {
 		if (!updatedUser) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
 		if (newRoles.includes(ValidRoles.administrador)) {
-			await this.clearUserPackagesAndResetPackages(userId, res);
+			await this.clearUserPackagesAndResetPackages(userId);
 		}
 
 		let action: string;
@@ -179,12 +179,12 @@ export class AuthService {
 		return updatedUser;
 	}
 
-	async clearUserPackagesAndResetPackages(userId: string, res: Response): Promise<void> {
+	async clearUserPackagesAndResetPackages(userId: string): Promise<void> {
 		const user = await this.userModel.findById(userId);
 		if (!user || !user.packages.length) return;
 
 		for (const packageId of user.packages) {
-			await this.packagesService.updatePackageOnCancel(packageId, userId, res);
+			await this.packagesService.updatePackageOnCancel(packageId, userId);
 		}
 
 		user.packages = [];

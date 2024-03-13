@@ -27,20 +27,16 @@ export class RewardsService {
 		}
 	}
 
-	async subtractPointsForCancellation(userId: string, res: Response): Promise<void> {
-		try {
-			await this.authService.adjustPoints(userId, -10);
-			await this.authService.resetConsecutiveDeliveries(userId);
-			await this.logService.create({
-				action: validationMessages.log.action.user.points.substractForCancel,
-				entity: validationMessages.log.entity.user,
-				entityId: userId,
-				changes: { pointsSubtracted: 10 },
-				performedBy: userId,
-			});
-		} catch (error) {
-			ExceptionHandlerService.handleException(error, res);
-		}
+	async subtractPointsForCancellation(userId: string): Promise<void> {
+		await this.authService.adjustPoints(userId, -10);
+		await this.authService.resetConsecutiveDeliveries(userId);
+		await this.logService.create({
+			action: validationMessages.log.action.user.points.substractForCancel,
+			entity: validationMessages.log.entity.user,
+			entityId: userId,
+			changes: { pointsSubtracted: 10 },
+			performedBy: userId,
+		});
 	}
 
 	async subtractPointsForUndeliveredPackages(userId: string, packagesCount: number): Promise<void> {
