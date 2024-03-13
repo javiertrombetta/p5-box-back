@@ -45,7 +45,7 @@ export class PackagesService {
 				state: validationMessages.packages.state.available,
 				deliveryDate: { $gte: startOfDay, $lte: endOfDay },
 			})
-			.sort({ deliveryDate: 1 })
+			.sort({ deliveryDate: -1 })
 			.exec();
 	}
 
