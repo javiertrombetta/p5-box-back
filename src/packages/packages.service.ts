@@ -1,12 +1,10 @@
-import { Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
-import { Response } from 'express';
+import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Package } from './entities/package.entity';
 import { validationMessages } from '../common/constants';
 import { CreatePackageDto, UpdatePackageDto } from './dto';
 import { AuthService } from '../auth/auth.service';
-import { ExceptionHandlerService } from '../common/helpers';
 import { LogService } from '../log/log.service';
 import { RewardsService } from '../rewards/rewards.service';
 
@@ -136,47 +134,39 @@ export class PackagesService {
 		}
 	}
 
-	async updatePackageOnDelete(packageId: string, res: Response): Promise<void> {
-		try {
-			const packageToUpdate = await this.packageModel.findById(packageId);
-			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
+	async updatePackageOnDelete(packageId: string): Promise<void> {
+		const packageToUpdate = await this.packageModel.findById(packageId);
+		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
-			packageToUpdate.deliveryMan = null;
-			packageToUpdate.state = validationMessages.packages.state.available;
-			await packageToUpdate.save();
-		} catch (error) {
-			ExceptionHandlerService.handleException(error, res);
-		}
+		packageToUpdate.deliveryMan = null;
+		packageToUpdate.state = validationMessages.packages.state.available;
+		await packageToUpdate.save();
 	}
 
 	async updatePackagesStateToPending(packageIds: string[]): Promise<void> {
 		await this.packageModel.updateMany({ _id: { $in: packageIds } }, { $set: { state: validationMessages.packages.state.pending } });
 	}
 
-	async changeStateAndReorder(userId: string, uuidPackage: string, performedById: string, res: Response): Promise<Package> {
-		try {
-			const packageAssigned = await this.authService.isPackageAssignedToUser(userId, uuidPackage);
-			if (!packageAssigned) throw new NotFoundException(validationMessages.packages.userArray.packageNotFound);
+	async changeStateAndReorder(userId: string, uuidPackage: string, performedById: string): Promise<Package> {
+		const packageAssigned = await this.authService.isPackageAssignedToUser(userId, uuidPackage);
+		if (!packageAssigned) throw new NotFoundException(validationMessages.packages.userArray.packageNotFound);
 
-			const user = await this.authService.findById(userId);
-			if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
+		const user = await this.authService.findById(userId);
+		if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
 
-			const otherPackages = user.packages.filter(packageId => packageId !== uuidPackage);
+		const otherPackages = user.packages.filter(packageId => packageId !== uuidPackage);
 
-			await this.updatePackagesStateToPending(otherPackages);
+		await this.updatePackagesStateToPending(otherPackages);
 
-			const packageToUpdate = await this.packageModel.findById(uuidPackage);
-			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
+		const packageToUpdate = await this.packageModel.findById(uuidPackage);
+		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
-			packageToUpdate.state = validationMessages.packages.state.onTheWay;
-			await packageToUpdate.save();
+		packageToUpdate.state = validationMessages.packages.state.onTheWay;
+		await packageToUpdate.save();
 
-			await this.authService.reorderUserPackages(userId, uuidPackage, performedById);
+		await this.authService.reorderUserPackages(userId, uuidPackage, performedById);
 
-			return packageToUpdate;
-		} catch (error) {
-			ExceptionHandlerService.handleException(error, res);
-		}
+		return packageToUpdate;
 	}
 
 	async updatePackageOnCancel(packageId: string, userId: string): Promise<void> {
@@ -204,27 +194,27 @@ export class PackagesService {
 		});
 	}
 
-	async assignPackageToUser(userId: string, packageId: string, res: Response): Promise<void> {
-		try {
-			const packageToUpdate = await this.packageModel.findById(packageId).exec();
-			if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-
-			packageToUpdate.deliveryMan = userId;
-			packageToUpdate.state = validationMessages.packages.state.pending;
-			await packageToUpdate.save();
-
-			await this.authService.loadUserPackage(userId, packageId);
-
-			await this.logService.create({
-				action: validationMessages.log.action.packages.assignPkgToUser,
-				entity: validationMessages.log.entity.package,
-				entityId: packageId,
-				changes: { deliveryMan: userId, state: validationMessages.packages.state.pending },
-				performedBy: userId,
-			});
-		} catch (error) {
-			ExceptionHandlerService.handleException(error, res);
+	async assignPackageToUser(userId: string, packageId: string): Promise<void> {
+		const user = await this.authService.findById(userId);
+		if (user.packages.length >= 10) {
+			throw new HttpException(validationMessages.packages.userArray.dailyDeliveryLimit, HttpStatus.BAD_REQUEST);
 		}
+		const packageToUpdate = await this.packageModel.findById(packageId).exec();
+		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
+
+		packageToUpdate.deliveryMan = userId;
+		packageToUpdate.state = validationMessages.packages.state.pending;
+		await packageToUpdate.save();
+
+		await this.authService.loadUserPackage(userId, packageId);
+
+		await this.logService.create({
+			action: validationMessages.log.action.packages.assignPkgToUser,
+			entity: validationMessages.log.entity.package,
+			entityId: packageId,
+			changes: { deliveryMan: userId, state: validationMessages.packages.state.pending },
+			performedBy: userId,
+		});
 	}
 
 	async verifyPackageExistence(packageIds: string[]): Promise<string[]> {
@@ -238,7 +228,7 @@ export class PackagesService {
 		return notFoundPackages;
 	}
 
-	async finishPackage(packageId: string, userId: string, res: Response): Promise<void> {
+	async finishPackage(packageId: string, userId: string): Promise<void> {
 		const packageToUpdate = await this.packageModel.findById(packageId);
 		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 
@@ -246,7 +236,7 @@ export class PackagesService {
 		packageToUpdate.deliveryDate = new Date();
 		await packageToUpdate.save();
 
-		await this.rewardsService.addPointsForDelivery(userId, res);
+		await this.rewardsService.addPointsForDelivery(userId);
 
 		await this.logService.create({
 			action: validationMessages.log.action.packages.state.delivered,

@@ -191,13 +191,13 @@ export class AuthService {
 		await user.save();
 	}
 
-	async deleteUser(userId: string, performedById: string, res: Response): Promise<void> {
+	async deleteUser(userId: string, performedById: string): Promise<void> {
 		const user = await this.userModel.findById(userId).exec();
 		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
 		const packages = await this.packagesService.findPackages(userId);
 		if (Array.isArray(packages)) {
-			for (const pkg of packages) await this.packagesService.updatePackageOnDelete(pkg._id, res);
+			for (const pkg of packages) await this.packagesService.updatePackageOnDelete(pkg._id);
 		}
 
 		await this.userModel.findByIdAndDelete(userId).exec();
@@ -369,8 +369,8 @@ export class AuthService {
 		return newState;
 	}
 
-	async finishPackage(uuidPackage: string, userId: string, res: Response): Promise<void> {
-		await this.packagesService.finishPackage(uuidPackage, userId, res);
+	async finishPackage(uuidPackage: string, userId: string): Promise<void> {
+		await this.packagesService.finishPackage(uuidPackage, userId);
 		await this.removePackageFromUser(userId, uuidPackage);
 	}
 

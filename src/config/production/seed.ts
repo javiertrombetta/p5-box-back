@@ -1,42 +1,60 @@
-import { Injectable } from '@nestjs/common';
+import { config } from 'dotenv';
+import { connect, disconnect, model } from 'mongoose';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
 import { startOfDay } from 'date-fns';
 
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { UserSchema } from '../../auth/entities';
+import { PackageSchema } from '../../packages/entities';
+import { LogSchema } from '../../log/entities';
+import { LocationSchema } from '../../locations/entities';
+import { LegalDeclarationSchema } from '../../legals/entities';
 
-import { User } from '../auth/entities';
-import { Package } from '../packages/entities';
-import { Log } from '../log/entities';
-import { Location } from '../locations/entities';
-import { LegalDeclaration } from '../legals/entities';
+import { validationMessages } from '../../common/constants';
+import { ValidRoles } from '../../auth/interfaces';
 
-import { validationMessages } from '../common/constants';
-import { ValidRoles } from 'src/auth/interfaces';
+config();
 
-@Injectable()
-export class SeedService {
-	constructor(
-		@InjectModel(User.name) private readonly userModel: Model<User>,
-		@InjectModel(Package.name) private readonly packageModel: Model<Package>,
-		@InjectModel(Log.name) private readonly logModel: Model<Log>,
-		@InjectModel(Location.name) private readonly locationModel: Model<Location>,
-		@InjectModel(LegalDeclaration.name) private readonly legalDeclarationModel: Model<LegalDeclaration>,
-	) {}
+function generatePassword(): string {
+	const passwordLength = 10;
+	const upperCaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	const lowerCaseChars = 'abcdefghijklmnopqrstuvwxyz';
+	const digitChars = '0123456789';
+	const allChars = upperCaseChars + lowerCaseChars + digitChars;
 
-	async populateDB() {
-		await this.userModel.deleteMany({});
-		await this.packageModel.deleteMany({});
-		await this.logModel.deleteMany({});
-		await this.locationModel.deleteMany({});
-		await this.legalDeclarationModel.deleteMany({});
+	let password = '';
+	password += faker.helpers.arrayElement([...upperCaseChars]);
+	password += faker.helpers.arrayElement([...lowerCaseChars]);
+	password += faker.helpers.arrayElement([...digitChars]);
+
+	for (let i = 3; i < passwordLength; i++) {
+		password += faker.helpers.arrayElement([...allChars]);
+	}
+	return password;
+}
+
+async function seedDB() {
+	try {
+		console.log('Conectando a la base de datos en:', process.env.MONGODB_URI);
+		await connect(process.env.MONGODB_URI);
+
+		const UserModel = model('User', UserSchema);
+		const PackageModel = model('Package', PackageSchema);
+		const LogModel = model('Log', LogSchema);
+		const LegalModel = model('LegalDeclaration', LegalDeclarationSchema);
+		const LocationModel = model('Location', LocationSchema);
+
+		await UserModel.deleteMany({});
+		await PackageModel.deleteMany({});
+		await LogModel.deleteMany({});
+		await LegalModel.deleteMany({});
+		await LocationModel.deleteMany({});
 
 		const repartidores = [];
 
 		for (let i = 0; i < 20; i++) {
 			const roles = [faker.helpers.arrayElement([ValidRoles.repartidor, ValidRoles.administrador])];
-			const plainPassword = this.generatePassword();
+			const plainPassword = generatePassword();
 			const hashedPassword = await bcrypt.hash(plainPassword, 10);
 			const photoUrl = faker.image.avatar();
 
@@ -50,7 +68,7 @@ export class SeedService {
 				points: faker.number.int({ min: 0, max: 100 }),
 			};
 
-			const newUser = await new this.userModel(userData).save();
+			const newUser = (await UserModel.create(userData)) as any;
 
 			if (roles.includes(ValidRoles.repartidor)) repartidores.push(newUser);
 
@@ -59,7 +77,7 @@ export class SeedService {
 				latitude: faker.location.latitude(),
 				longitude: faker.location.longitude(),
 			};
-			await new this.locationModel(locationData).save();
+			await LocationModel.create(locationData);
 		}
 
 		for (const repartidor of repartidores) {
@@ -93,36 +111,24 @@ export class SeedService {
 					deliveryMan: deliveryManId,
 				};
 
-				const newPackage = await new this.packageModel(packageData).save();
+				const newPackage = (await PackageModel.create(packageData)) as any;
 				if (packageState !== validationMessages.packages.state.delivered) {
 					packagesForRepartidor.push(newPackage._id);
 				}
+
 				if (packageState === validationMessages.packages.state.onTheWay) {
 					packagesForRepartidor.unshift(packagesForRepartidor.pop());
 				}
 			}
 
-			await this.userModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
+			await UserModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
 		}
-
-		return { message: validationMessages.seed.success.seedCompleted };
-	}
-
-	generatePassword(): string {
-		const passwordLength = 10;
-		const upperCaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		const lowerCaseChars = 'abcdefghijklmnopqrstuvwxyz';
-		const digitChars = '0123456789';
-		const allChars = upperCaseChars + lowerCaseChars + digitChars;
-
-		let password = '';
-		password += faker.helpers.arrayElement([...upperCaseChars]);
-		password += faker.helpers.arrayElement([...lowerCaseChars]);
-		password += faker.helpers.arrayElement([...digitChars]);
-
-		for (let i = 3; i < passwordLength; i++) {
-			password += faker.helpers.arrayElement([...allChars]);
-		}
-		return password;
+		console.log('La base de datos fue poblada correctamente con datos de ejemplo.');
+	} catch (error) {
+		console.error('Error al poblar la base de datos:', error);
+	} finally {
+		await disconnect();
 	}
 }
+
+seedDB();

@@ -10,9 +10,14 @@ import { Package, PackageSchema } from '../packages/entities/package.entity';
 import { LogModule } from '../log/log.module';
 import { Log, LogSchema } from '../log/entities';
 
+import { LocationsModule } from '../locations/locations.module';
+import { Location, LocationSchema } from 'src/locations/entities';
+
+import { LegalDeclarationsModule } from 'src/legals/legals.module';
+import { LegalDeclaration, LegalDeclarationSchema } from 'src/legals/entities';
+
 import { SeedService } from './seed.service';
 import { SeedController } from './seed.controller';
-import { Location, LocationSchema } from 'src/locations/entities';
 
 @Module({
 	imports: [
@@ -21,10 +26,13 @@ import { Location, LocationSchema } from 'src/locations/entities';
 			{ name: Package.name, schema: PackageSchema },
 			{ name: Log.name, schema: LogSchema },
 			{ name: Location.name, schema: LocationSchema },
+			{ name: LegalDeclaration.name, schema: LegalDeclarationSchema },
 		]),
 		AuthModule,
 		PackagesModule,
 		LogModule,
+		LocationsModule,
+		LegalDeclarationsModule,
 	],
 	controllers: [SeedController],
 	providers: [SeedService],

@@ -215,7 +215,7 @@ export class AuthController {
 	@Auth(ValidRoles.repartidor)
 	async changePackageStateAndReorder(@Param('uuidPackage') uuidPackage: string, @GetUser() user, @Res() res: Response) {
 		try {
-			const pkg = await this.packagesService.changeStateAndReorder(user.id.toString(), uuidPackage.toString(), user.id.toString(), res);
+			const pkg = await this.packagesService.changeStateAndReorder(user.id.toString(), uuidPackage.toString(), user.id.toString());
 			res.status(HttpStatus.OK).json(pkg);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
@@ -236,11 +236,12 @@ export class AuthController {
 				return;
 			}
 
-			if (startDayDto.packages.length > 10) {
+			const totalPackagesAfterUpdate = user.packages.length + startDayDto.packages.length;
+			if (totalPackagesAfterUpdate > 10) {
 				throw new HttpException(validationMessages.packages.userArray.dailyDeliveryLimit, HttpStatus.BAD_REQUEST);
 			}
 
-			const notFoundPackages = await this.packagesService.verifyPackageExistence(startDayDto.packages);
+			const notFoundPackages = await this.packagesService.verifyPackageExistence(user.packages);
 			if (notFoundPackages.length > 0) {
 				const message = validationMessages.packages.userArray.packagesNotFound.replace('${packages}', notFoundPackages.join(', '));
 				throw new HttpException(message, HttpStatus.NOT_FOUND);
@@ -256,7 +257,7 @@ export class AuthController {
 					skippedPackageIds.push(packageId);
 					continue;
 				}
-				await this.packagesService.assignPackageToUser(userId, packageId, res);
+				await this.packagesService.assignPackageToUser(userId, packageId);
 				addedPackagesCount++;
 			}
 
@@ -290,7 +291,7 @@ export class AuthController {
 	@Auth(ValidRoles.repartidor)
 	async finishPackage(@Param('uuidPackage') uuidPackage: string, @GetUser() user, @Res() res: Response) {
 		try {
-			await this.authService.finishPackage(uuidPackage, user.id, res);
+			await this.authService.finishPackage(uuidPackage, user.id);
 			res.status(HttpStatus.OK).json({ message: validationMessages.packages.success.delivered });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
@@ -320,7 +321,7 @@ export class AuthController {
 
 			if (!userExists) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.FORBIDDEN);
 
-			await this.authService.deleteUser(user.id.toString(), user.id.toString(), res);
+			await this.authService.deleteUser(user.id.toString(), user.id.toString());
 			res.clearCookie('Authentication');
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.selfDeleted });
 		} catch (error) {
@@ -337,7 +338,7 @@ export class AuthController {
 			if (!authenticatedUser) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
 			if (authenticatedUser._id === userId) {
-				await this.authService.deleteUser(userId.toString(), userId.toString(), res);
+				await this.authService.deleteUser(userId.toString(), userId.toString());
 				res.clearCookie('Authentication');
 				return res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.selfDeleted });
 			}
@@ -345,7 +346,7 @@ export class AuthController {
 			const userToDelete = await this.authService.findById(userId.toString());
 			if (!userToDelete) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
-			await this.authService.deleteUser(userId, userId.toString(), res);
+			await this.authService.deleteUser(userId, userId.toString());
 
 			res.status(HttpStatus.OK).json({
 				message: validationMessages.auth.account.success.deleted
