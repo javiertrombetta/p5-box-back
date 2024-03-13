@@ -37,4 +37,4 @@ RUN adduser --disabled-password boxuser
 RUN chown -R boxuser:boxuser /app
 USER boxuser
 
-CMD [ "node","dist/main.js" ]
+CMD [ "node","dist/config/production/seed.js","&&","node","dist/main.js" ]

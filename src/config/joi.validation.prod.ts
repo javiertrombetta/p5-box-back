@@ -2,6 +2,7 @@ import * as Joi from 'joi';
 
 export const JoiValidationProdSchema = Joi.object({
 	NODE_ENV: Joi.string().valid('production').required(),
+	TIME_ZONE: Joi.string(),
 
 	CORS_ORIGIN: Joi.string().uri().required(),
 	CORS_METHODS: Joi.string()
@@ -11,9 +12,10 @@ export const JoiValidationProdSchema = Joi.object({
 	GLOBAL_PREFIX: Joi.string().required(),
 	PORT: Joi.number().default(3000),
 
-	MONGO_USERNAME: Joi.string().required(),
-	MONGO_PASSWORD: Joi.string().required(),
-	MONGO_DB_NAME: Joi.string().required(),
+	MONGODB_URI: Joi.string().required(),
+	MONGO_USERNAME: Joi.string(),
+	MONGO_PASSWORD: Joi.string(),
+	MONGO_DB_NAME: Joi.string(),
 
 	JWT_SECRET: Joi.string().min(1).required(),
 

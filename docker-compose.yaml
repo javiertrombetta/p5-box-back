@@ -4,11 +4,11 @@ services:
   boxdb:
     user: "nfsnobody"
     image: mongo:7.0.6
-    container_name: ${MONGO_DB_NAME}
+    container_name: boxdb
     restart: always
     ports:
       - ${MONGO_PORT}:${MONGO_PORT}
     environment:
-      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+      MONGO_INITDB_DATABASE: boxdb
     volumes:
       - ./mongo:/data/db

@@ -1,0 +1,31 @@
+version: '3.1'
+
+services:
+  boxapi:    
+    build:
+      target: ${NODE_ENV}      
+      context: .
+      dockerfile: Dockerfile
+    image: javiertrombetta/box-back:latest    
+    container_name: boxapi
+    restart: always
+    ports:
+      - '${PORT}:${PORT}'
+    environment:
+      TZ: ${TIME_ZONE}
+      NODE_ENV: ${NODE_ENV}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      CORS_METHODS: ${CORS_METHODS}
+      GLOBAL_PREFIX: ${GLOBAL_PREFIX}
+      PORT: ${PORT}
+      MONGODB_URI: ${MONGODB_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      SMTP_SERVICES: ${SMTP_SERVICES}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      GOOGLE_TRAVEL_MODE: ${GOOGLE_TRAVEL_MODE}
+      GOOGLE_ROUTING_PREFERENCE: ${GOOGLE_ROUTING_PREFERENCE}
+      GOOGLE_RESPONSE_FILEDS: ${GOOGLE_RESPONSE_FILEDS}
