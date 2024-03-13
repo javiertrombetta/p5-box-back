@@ -45,7 +45,7 @@ export class PackagesService {
 				state: validationMessages.packages.state.available,
 				deliveryDate: { $gte: startOfDay, $lte: endOfDay },
 			})
-			.sort({ deliveryDate: 1 })
+			.sort({ deliveryDate: -1 })
 			.exec();
 	}
 
@@ -297,7 +297,12 @@ export class PackagesService {
 	}
 
 	async findAllPackagesWithDeliveryMan(): Promise<Package[]> {
-		return this.packageModel.find({ deliveryMan: { $ne: null } }).exec();
+		return this.packageModel
+			.find({
+				deliveryMan: { $ne: null },
+				state: { $ne: validationMessages.packages.state.delivered },
+			})
+			.exec();
 	}
 
 	async updatePackageState(packageId: string, newState: string): Promise<Package> {
