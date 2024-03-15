@@ -1,8 +1,9 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Validate } from 'class-validator';
+import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Validate } from 'class-validator';
 import { CreatePackageDto } from './create-package.dto';
 import { validationMessages } from '../../common/constants';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 class StateValidator {
 	validate(value: any) {
@@ -41,9 +42,10 @@ export class UpdatePackageDto extends PartialType(CreatePackageDto) {
 
 	@IsOptional()
 	@IsNotEmpty({ message: validationMessages.packages.deliveryDate.isNotEmpty })
-	@IsString({ message: validationMessages.packages.deliveryDate.isString })
-	@ApiProperty({ description: validationMessages.swagger.packages.deliveryDate, required: false })
-	deliveryDate?: string;
+	@Type(() => Date)
+	@IsDate({ message: validationMessages.packages.deliveryDate.isDate })
+	@ApiProperty({ description: validationMessages.swagger.packages.deliveryDate, required: true, type: Date })
+	deliveryDate: Date;
 
 	@IsOptional()
 	@IsNotEmpty({ message: validationMessages.packages.state.isNotEmpty })
