@@ -120,7 +120,7 @@ export class AuthController {
 	@Auth(ValidRoles.repartidor)
 	async getMyPackages(@GetUser('id') userId: string, @Res() res: Response) {
 		try {
-			const packages = await this.packagesService.findPackages(userId.toString());
+			const packages = await this.packagesService.findPackagesByDeliveryMan(userId.toString());
 			res.status(HttpStatus.OK).json(packages);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
@@ -187,7 +187,7 @@ export class AuthController {
 			const userExists = await this.authService.findById(uuidUser.toString());
 			if (!userExists) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
-			const packages = await this.packagesService.findPackages(uuidUser.toString());
+			const packages = await this.packagesService.findPackagesByDeliveryMan(uuidUser.toString());
 			res.status(HttpStatus.OK).json(packages);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);

@@ -3,11 +3,12 @@ version: '3.1'
 services:
   boxdb:
     image: mongo:7.0.6
-    container_name: boxdb
+    container_name: ${MONGO_DB_NAME}
     restart: always
     ports:
       - ${MONGO_PORT}:${MONGO_PORT}
     environment:
-      MONGO_INITDB_DATABASE: boxdb
+      TZ: ${TIME_ZONE}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
     volumes:
       - ./mongo:/data/db

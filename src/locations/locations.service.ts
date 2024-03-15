@@ -17,7 +17,7 @@ export class LocationsService {
 	) {}
 
 	async getRoute(originLatitude: number, originLongitude: number, packageId: string): Promise<any> {
-		const pkg = await this.packagesService.findById(packageId);
+		const pkg = await this.packagesService.findPackagesById(packageId);
 
 		if (!pkg) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
 

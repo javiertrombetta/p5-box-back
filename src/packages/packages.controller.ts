@@ -18,7 +18,7 @@ export class PackagesController {
 	@Auth(ValidRoles.repartidor)
 	async getAvailablePackages(@Res() res: Response) {
 		try {
-			const packages = await this.packagesService.findAvailablePackage();
+			const packages = await this.packagesService.findAvailablePackagesForToday();
 			res.status(HttpStatus.OK).json(packages);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
@@ -29,7 +29,7 @@ export class PackagesController {
 	@Auth(ValidRoles.repartidor)
 	async getDeliveredPackages(@GetUser() user, @Res() res: Response) {
 		try {
-			const packages = await this.packagesService.findDeliveredPackageByDeliveryMan(user.id);
+			const packages = await this.packagesService.findPackagesByDeliveryManIdAndState(user.id, validationMessages.packages.state.delivered);
 			res.status(HttpStatus.OK).json(packages);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
@@ -40,7 +40,7 @@ export class PackagesController {
 	@Auth(ValidRoles.repartidor)
 	async getPackageDetails(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
 		try {
-			const packageDetails = await this.packagesService.findPackages(userId, uuidPackage);
+			const packageDetails = await this.packagesService.findPackagesByDeliveryMan(userId, uuidPackage);
 			if (!packageDetails) throw new HttpException(validationMessages.packages.userArray.packageNotFound, HttpStatus.NOT_FOUND);
 
 			res.json(packageDetails);
@@ -53,7 +53,7 @@ export class PackagesController {
 	@Auth(ValidRoles.repartidor)
 	async getAvailablePackageDetails(@Param('uuidPackage') uuidPackage: string, @Res() res: Response) {
 		try {
-			const pkg = await this.packagesService.findAvailablePackageById(uuidPackage);
+			const pkg = await this.packagesService.findPackagesByIdAndAvailableState(uuidPackage);
 			if (!pkg) {
 				return res.status(HttpStatus.NOT_FOUND).json({ message: validationMessages.packages.error.packageNotAvailable });
 			}
