@@ -122,6 +122,71 @@ export class AuthService {
 		}
 	}
 
+	async forgotPassword(email: string, performedById?: string): Promise<void> {
+		const user = await this.userModel.findOne({ email: email.toLowerCase().trim() });
+		if (!user) throw new HttpException(validationMessages.auth.forgotPassword.userNotFound, HttpStatus.BAD_REQUEST);
+
+		let resetToken: string;
+		let isUnique = false;
+		while (!isUnique) {
+			resetToken = Math.floor(10000 + Math.random() * 90000).toString();
+			const existingUser = await this.userModel.findOne({ resetPasswordToken: resetToken });
+			if (!existingUser) {
+				isUnique = true;
+			}
+		}
+
+		const expirationTime = new Date();
+		expirationTime.setMinutes(expirationTime.getMinutes() + 5);
+
+		user.resetPasswordToken = resetToken;
+		user.resetPasswordExpires = expirationTime;
+
+		await user.save();
+
+		const mailContent = validationMessages.mails.resetCodeEmail.body.replace('{{resetCode}}', resetToken);
+
+		this.mailService.sendMail(user.email, validationMessages.mails.resetCodeEmail.subject, mailContent);
+
+		await this.logService.create({
+			action: validationMessages.log.action.user.forgotPassword,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: { resetPasswordToken: user.resetPasswordToken },
+			performedBy: performedById || user._id.toString(),
+		});
+	}
+
+	async resetPassword(token: string, newPassword: string, performedById?: string): Promise<void> {
+		const user = await this.userModel.findOne({
+			resetPasswordToken: token,
+			resetPasswordExpires: { $gt: Date.now() },
+		});
+
+		if (!user) throw new HttpException(validationMessages.auth.resetPassword.tokenInvalidOrExpired, HttpStatus.BAD_REQUEST);
+
+		const hashedPassword = await bcrypt.hash(newPassword, 10);
+		user.password = hashedPassword;
+		user.resetPasswordToken = undefined;
+		user.resetPasswordExpires = undefined;
+		await user.save();
+
+		const mailContent = validationMessages.mails.passwordChanged.body;
+		this.mailService.sendMail(user.email, validationMessages.mails.passwordChanged.subject, mailContent);
+
+		await this.logService.create({
+			action: validationMessages.log.action.user.resetPassword,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: { password: validationMessages.auth.user.password.reset },
+			performedBy: performedById || user._id.toString(),
+		});
+	}
+
+	async countUsersRegisteredBeforeDate(date: Date): Promise<number> {
+		return this.userModel.countDocuments({ createdAt: { $lte: date } }).exec();
+	}
+
 	async findAll(): Promise<User[]> {
 		return this.userModel.find().exec();
 	}
@@ -134,6 +199,14 @@ export class AuthService {
 		const queryState =
 			state === validationMessages.auth.user.state.isActiveState ? validationMessages.auth.user.state.isActiveState : validationMessages.auth.user.state.isInactiveSate;
 		return this.userModel.find({ state: queryState }).exec();
+	}
+
+	async findAllUsersWithPackages(): Promise<User[]> {
+		return this.userModel.find({ 'packages.0': { $exists: true } }).exec();
+	}
+
+	async findUsersBeforeDate(date: Date): Promise<User[]> {
+		return this.userModel.find({ createdAt: { $lte: date } }).exec();
 	}
 
 	async isPackageAssignedToUser(userId: string, packageId: string): Promise<boolean> {
@@ -179,166 +252,27 @@ export class AuthService {
 		return updatedUser;
 	}
 
-	async clearUserPackagesAndResetPackages(userId: string): Promise<void> {
+	async updatePackages(userId: string, packages: string[] | string, performedById?: string): Promise<void> {
 		const user = await this.userModel.findById(userId);
-		if (!user || !user.packages.length) return;
-
-		for (const packageId of user.packages) {
-			await this.packagesService.updatePackageOnCancel(packageId, userId);
-		}
-
-		user.packages = [];
-		await user.save();
-	}
-
-	async deleteUser(userId: string, performedById: string): Promise<void> {
-		const user = await this.userModel.findById(userId).exec();
 		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 
-		const packages = await this.packagesService.findPackages(userId);
+		let actionLog = '';
 		if (Array.isArray(packages)) {
-			for (const pkg of packages) await this.packagesService.updatePackageOnDelete(pkg._id);
+			user.packages = packages;
+			actionLog = validationMessages.log.action.user.array.updateFullArray;
+		} else {
+			user.packages.push(packages);
+			actionLog = validationMessages.log.action.user.array.updateOnePackage;
 		}
 
-		await this.userModel.findByIdAndDelete(userId).exec();
+		await user.save();
+
 		await this.logService.create({
-			action: validationMessages.log.action.user.deleteUser,
+			action: actionLog,
 			entity: validationMessages.log.entity.user,
 			entityId: userId,
-			changes: { deletedUser: user._id },
-			performedBy: performedById,
-		});
-	}
-
-	async forgotPassword(email: string, performedById?: string): Promise<void> {
-		const user = await this.userModel.findOne({ email: email.toLowerCase().trim() });
-		if (!user) throw new HttpException(validationMessages.auth.forgotPassword.userNotFound, HttpStatus.BAD_REQUEST);
-
-		let resetToken: string;
-		let isUnique = false;
-		while (!isUnique) {
-			resetToken = Math.floor(10000 + Math.random() * 90000).toString();
-			const existingUser = await this.userModel.findOne({ resetPasswordToken: resetToken });
-			if (!existingUser) {
-				isUnique = true;
-			}
-		}
-
-		const expirationTime = new Date();
-		expirationTime.setMinutes(expirationTime.getMinutes() + 5);
-
-		user.resetPasswordToken = resetToken;
-		user.resetPasswordExpires = expirationTime;
-
-		await user.save();
-
-		const mailContent = validationMessages.mails.resetCodeEmail.body.replace('{{resetCode}}', resetToken);
-
-		this.mailService.sendMail(user.email, validationMessages.mails.resetCodeEmail.subject, mailContent);
-
-		await this.logService.create({
-			action: validationMessages.log.action.user.forgotPassword,
-			entity: validationMessages.log.entity.user,
-			entityId: user._id.toString(),
-			changes: { resetPasswordToken: user.resetPasswordToken },
-			performedBy: performedById || user._id.toString(),
-		});
-	}
-
-	async verifyResetPasswordToken(token: string): Promise<boolean> {
-		const user = await this.userModel
-			.findOne({
-				resetPasswordToken: token,
-				resetPasswordExpires: { $gt: Date.now() },
-			})
-			.exec();
-
-		if (!user) throw new HttpException(validationMessages.auth.resetPassword.tokenInvalidOrExpired, HttpStatus.BAD_REQUEST);
-
-		return true;
-	}
-
-	async resetPassword(token: string, newPassword: string, performedById?: string): Promise<void> {
-		const user = await this.userModel.findOne({
-			resetPasswordToken: token,
-			resetPasswordExpires: { $gt: Date.now() },
-		});
-
-		if (!user) throw new HttpException(validationMessages.auth.resetPassword.tokenInvalidOrExpired, HttpStatus.BAD_REQUEST);
-
-		const hashedPassword = await bcrypt.hash(newPassword, 10);
-		user.password = hashedPassword;
-		user.resetPasswordToken = undefined;
-		user.resetPasswordExpires = undefined;
-		await user.save();
-
-		const mailContent = validationMessages.mails.passwordChanged.body;
-		this.mailService.sendMail(user.email, validationMessages.mails.passwordChanged.subject, mailContent);
-
-		await this.logService.create({
-			action: validationMessages.log.action.user.resetPassword,
-			entity: validationMessages.log.entity.user,
-			entityId: user._id.toString(),
-			changes: { password: validationMessages.auth.user.password.reset },
-			performedBy: performedById || user._id.toString(),
-		});
-	}
-
-	async reorderUserPackages(userId: string, packageIdToReorder: string, performedById: string): Promise<void> {
-		const user = await this.findById(userId);
-		if (!user || !user.packages) throw new HttpException(validationMessages.packages.userArray.userNotFound, HttpStatus.NOT_FOUND);
-
-		const filteredPackages = user.packages.filter(packageId => packageId !== packageIdToReorder);
-		const reorderedPackages = [packageIdToReorder, ...filteredPackages];
-
-		user.packages = reorderedPackages;
-		await user.save();
-
-		await this.logService.create({
-			action: validationMessages.log.action.user.array.changeOrder,
-			entity: validationMessages.log.entity.user,
-			entityId: user._id.toString(),
-			changes: { reorderedPackages: reorderedPackages },
-			performedBy: performedById,
-		});
-	}
-
-	async removePackageFromUser(userId: string, packageId: string): Promise<void> {
-		const user = await this.userModel.findById(userId).exec();
-		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
-
-		const updatedPackages = user.packages.filter(pkgId => pkgId !== packageId);
-		user.packages = updatedPackages;
-		await user.save();
-
-		await this.logService.create({
-			action: validationMessages.log.action.user.array.clear,
-			entity: validationMessages.log.entity.user,
-			entityId: user._id.toString(),
-			changes: { removedPackage: packageId },
-			performedBy: userId,
-		});
-	}
-
-	async removePackageFromAllUsers(uuidPackage: string): Promise<void> {
-		await this.userModel.updateMany({ packages: uuidPackage }, { $pull: { packages: uuidPackage } }).exec();
-	}
-
-	async loadUserPackage(userId: string, packageId: string): Promise<void> {
-		const user = await this.userModel.findById(userId).exec();
-		if (!user) {
-			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
-		}
-
-		user.packages = [...user.packages, packageId];
-		await user.save();
-
-		await this.logService.create({
-			action: validationMessages.log.action.user.array.loadPackages,
-			entity: validationMessages.log.entity.user,
-			entityId: user._id.toString(),
-			changes: { package: packageId },
-			performedBy: userId,
+			changes: Array.isArray(packages) ? { newOrder: packages } : { package: packages },
+			performedBy: performedById || userId,
 		});
 	}
 
@@ -374,34 +308,17 @@ export class AuthService {
 		await this.removePackageFromUser(userId, uuidPackage);
 	}
 
-	async findAllUsersWithPackages(): Promise<User[]> {
-		return this.userModel.find({ 'packages.0': { $exists: true } }).exec();
-	}
+	async verifyResetPasswordToken(token: string): Promise<boolean> {
+		const user = await this.userModel
+			.findOne({
+				resetPasswordToken: token,
+				resetPasswordExpires: { $gt: Date.now() },
+			})
+			.exec();
 
-	async clearUserPackages(userId: string): Promise<void> {
-		const user = await this.userModel.findById(userId);
-		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+		if (!user) throw new HttpException(validationMessages.auth.resetPassword.tokenInvalidOrExpired, HttpStatus.BAD_REQUEST);
 
-		const previousPackages = [...user.packages];
-
-		user.packages = [];
-		await user.save();
-
-		await this.logService.create({
-			action: validationMessages.log.action.user.array.clear,
-			entity: validationMessages.log.entity.user,
-			entityId: userId,
-			changes: { previousPackages },
-			performedBy: 'CRON',
-		});
-	}
-
-	async findUsersBeforeDate(date: Date): Promise<User[]> {
-		return this.userModel.find({ createdAt: { $lte: date } }).exec();
-	}
-
-	async countUsersRegisteredBeforeDate(date: Date): Promise<number> {
-		return this.userModel.countDocuments({ createdAt: { $lte: date } }).exec();
+		return true;
 	}
 
 	async setBlockTimeDuration(userId: string, duration: string, reason: string): Promise<void> {
@@ -486,5 +403,75 @@ export class AuthService {
 		}
 		user.consecutiveDeliveries = 0;
 		await user.save();
+	}
+
+	async clearUserPackages(userId: string): Promise<void> {
+		const user = await this.userModel.findById(userId);
+		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+
+		const previousPackages = [...user.packages];
+
+		user.packages = [];
+		await user.save();
+
+		await this.logService.create({
+			action: validationMessages.log.action.user.array.clear,
+			entity: validationMessages.log.entity.user,
+			entityId: userId,
+			changes: { previousPackages },
+			performedBy: 'CRON',
+		});
+	}
+
+	async clearUserPackagesAndResetPackages(userId: string): Promise<void> {
+		const user = await this.userModel.findById(userId);
+		if (!user || !user.packages.length) return;
+
+		for (const packageId of user.packages) {
+			await this.packagesService.updatePackageOnCancel(packageId, userId);
+		}
+
+		user.packages = [];
+		await user.save();
+	}
+
+	async removePackageFromUser(userId: string, packageId: string): Promise<void> {
+		const user = await this.userModel.findById(userId).exec();
+		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+
+		const updatedPackages = user.packages.filter(pkgId => pkgId !== packageId);
+		user.packages = updatedPackages;
+		await user.save();
+
+		await this.logService.create({
+			action: validationMessages.log.action.user.array.clear,
+			entity: validationMessages.log.entity.user,
+			entityId: user._id.toString(),
+			changes: { removedPackage: packageId },
+			performedBy: userId,
+		});
+	}
+
+	async removePackageFromAllUsers(uuidPackage: string): Promise<void> {
+		await this.userModel.updateMany({ packages: uuidPackage }, { $pull: { packages: uuidPackage } }).exec();
+	}
+
+	async deleteUser(userId: string, performedById: string): Promise<void> {
+		const user = await this.userModel.findById(userId).exec();
+		if (!user) throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
+
+		const packages = await this.packagesService.findPackagesByDeliveryMan(userId);
+		if (Array.isArray(packages)) {
+			for (const pkg of packages) await this.packagesService.updatePackageOnDelete(pkg._id);
+		}
+
+		await this.userModel.findByIdAndDelete(userId).exec();
+		await this.logService.create({
+			action: validationMessages.log.action.user.deleteUser,
+			entity: validationMessages.log.entity.user,
+			entityId: userId,
+			changes: { deletedUser: user._id },
+			performedBy: performedById,
+		});
 	}
 }

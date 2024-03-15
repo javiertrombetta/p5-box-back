@@ -17,14 +17,27 @@ export class PackagesService {
 		private logService: LogService,
 	) {}
 
-	async findById(id: string): Promise<Package> {
+	async findPackagesById(id: string): Promise<Package> {
 		const paquete = await this.packageModel.findById(id);
 		if (!paquete) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-
 		return paquete;
 	}
 
-	async findAvailablePackageById(packageId: string): Promise<Package | null> {
+	async findPackagesByDeliveryMan(deliveryManId: string, packageId?: string): Promise<Package | Package[] | null> {
+		const user = await this.authService.findById(deliveryManId);
+		if (!user) throw new Error(validationMessages.packages.userArray.userNotFound);
+
+		if (packageId) {
+			return this.packageModel.findOne({ _id: packageId, deliveryMan: deliveryManId }).exec();
+		} else {
+			const packageIds = user.packages;
+			const packages = await this.packageModel.find({ _id: { $in: packageIds } });
+			const orderedPackages = packageIds.map(id => packages.find(pkg => pkg._id.toString() === id));
+			return orderedPackages;
+		}
+	}
+
+	async findPackagesByIdAndAvailableState(packageId: string): Promise<Package | null> {
 		return this.packageModel
 			.findOne({
 				_id: packageId,
@@ -33,7 +46,16 @@ export class PackagesService {
 			.exec();
 	}
 
-	async findAvailablePackage(): Promise<Package[]> {
+	async findPackagesByDeliveryManIdAndState(deliveryManId: string, state: string): Promise<Package[]> {
+		return this.packageModel
+			.find({
+				deliveryMan: deliveryManId,
+				state: state,
+			})
+			.exec();
+	}
+
+	async findAvailablePackagesForToday(): Promise<Package[]> {
 		const now = new Date();
 		const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 		const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
@@ -47,11 +69,46 @@ export class PackagesService {
 			.exec();
 	}
 
-	async findDeliveredPackageByDeliveryMan(deliveryManId: string): Promise<Package[]> {
+	async findPackagesByCriteria(year: string, month: string, day: string, uuidUser?: string, includeAllStates: boolean = false): Promise<Package[]> {
+		const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+		const nextDay = new Date(date);
+		nextDay.setDate(date.getDate() + 1);
+
+		const query: any = {
+			deliveryDate: { $gte: date, $lt: nextDay },
+		};
+
+		if (uuidUser) {
+			query.deliveryMan = uuidUser;
+		}
+
+		if (!includeAllStates) {
+			query.state = validationMessages.packages.state.delivered;
+		}
+
+		return this.packageModel.find(query).exec();
+	}
+
+	async findPackagesByDateAndOptionalState(deliveryDate: Date, state?: string): Promise<Package[]> {
+		const query: any = {
+			deliveryDate: {
+				$gte: new Date(deliveryDate.setHours(0, 0, 0, 0)),
+				$lt: new Date(deliveryDate.setHours(23, 59, 59, 999)),
+			},
+		};
+
+		if (state) {
+			query.state = state;
+		}
+
+		return this.packageModel.find(query).exec();
+	}
+
+	async findAllPackagesWithDeliveryMan(): Promise<Package[]> {
 		return this.packageModel
 			.find({
-				deliveryMan: deliveryManId,
-				state: validationMessages.packages.state.delivered,
+				deliveryMan: { $ne: null },
+				state: { $ne: validationMessages.packages.state.delivered },
 			})
 			.exec();
 	}
@@ -104,36 +161,6 @@ export class PackagesService {
 		return updatedPackage;
 	}
 
-	async removePackage(uuidPackage: string, performedById: string): Promise<void> {
-		const pkg = await this.findById(uuidPackage);
-		if (!pkg) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-		await this.authService.removePackageFromAllUsers(uuidPackage);
-
-		await this.packageModel.findByIdAndDelete(uuidPackage);
-
-		await this.logService.create({
-			action: validationMessages.log.action.packages.deleted,
-			entity: validationMessages.log.entity.package,
-			entityId: uuidPackage,
-			changes: { deleted: true },
-			performedBy: performedById,
-		});
-	}
-
-	async findPackages(deliveryManId: string, packageId?: string): Promise<Package | Package[] | null> {
-		const user = await this.authService.findById(deliveryManId);
-		if (!user) throw new Error(validationMessages.packages.userArray.userNotFound);
-
-		if (packageId) {
-			return this.packageModel.findOne({ _id: packageId, deliveryMan: deliveryManId }).exec();
-		} else {
-			const packageIds = user.packages;
-			const packages = await this.packageModel.find({ _id: { $in: packageIds } });
-			const orderedPackages = packageIds.map(id => packages.find(pkg => pkg._id.toString() === id));
-			return orderedPackages;
-		}
-	}
-
 	async updatePackageOnDelete(packageId: string): Promise<void> {
 		const packageToUpdate = await this.packageModel.findById(packageId);
 		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
@@ -141,32 +168,6 @@ export class PackagesService {
 		packageToUpdate.deliveryMan = null;
 		packageToUpdate.state = validationMessages.packages.state.available;
 		await packageToUpdate.save();
-	}
-
-	async updatePackagesStateToPending(packageIds: string[]): Promise<void> {
-		await this.packageModel.updateMany({ _id: { $in: packageIds } }, { $set: { state: validationMessages.packages.state.pending } });
-	}
-
-	async changeStateAndReorder(userId: string, uuidPackage: string, performedById: string): Promise<Package> {
-		const packageAssigned = await this.authService.isPackageAssignedToUser(userId, uuidPackage);
-		if (!packageAssigned) throw new NotFoundException(validationMessages.packages.userArray.packageNotFound);
-
-		const user = await this.authService.findById(userId);
-		if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
-
-		const otherPackages = user.packages.filter(packageId => packageId !== uuidPackage);
-
-		await this.updatePackagesStateToPending(otherPackages);
-
-		const packageToUpdate = await this.packageModel.findById(uuidPackage);
-		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
-
-		packageToUpdate.state = validationMessages.packages.state.onTheWay;
-		await packageToUpdate.save();
-
-		await this.authService.reorderUserPackages(userId, uuidPackage, performedById);
-
-		return packageToUpdate;
 	}
 
 	async updatePackageOnCancel(packageId: string, userId: string): Promise<void> {
@@ -194,6 +195,67 @@ export class PackagesService {
 		});
 	}
 
+	async updatePackageState(packageId: string, newState: string): Promise<Package> {
+		return this.packageModel.findByIdAndUpdate(packageId, { state: newState }, { new: true }).exec();
+	}
+
+	async updatePackageDeliveryDate(packageId: string, newDate: Date): Promise<Package> {
+		return this.packageModel.findByIdAndUpdate(packageId, { deliveryDate: newDate }, { new: true }).exec();
+	}
+
+	async updateDeliveryDateForNonDeliveredPackages(newDate: Date): Promise<void> {
+		const nonDeliveredPackages = await this.packageModel.find({ state: { $ne: validationMessages.packages.state.delivered } });
+
+		for (const pkg of nonDeliveredPackages) {
+			await this.packageModel.updateOne({ _id: pkg._id }, { $set: { deliveryDate: newDate } });
+
+			await this.logService.create({
+				action: validationMessages.log.action.packages.deliveryDate.nextDate,
+				entity: validationMessages.log.entity.package,
+				entityId: pkg._id,
+				changes: {
+					previousDate: pkg.deliveryDate,
+					newDate: newDate,
+				},
+				performedBy: 'CRON',
+			});
+		}
+	}
+
+	async changeStateAndReorder(userId: string, uuidPackage: string, performedById: string): Promise<Package> {
+		const isPackageAssigned = await this.authService.isPackageAssignedToUser(userId, uuidPackage);
+		if (!isPackageAssigned) throw new NotFoundException(validationMessages.packages.userArray.packageNotFound);
+
+		const user = await this.authService.findById(userId);
+		if (!user) throw new NotFoundException(validationMessages.auth.account.error.notFound);
+
+		const packageToUpdate = await this.packageModel.findByIdAndUpdate(
+			uuidPackage,
+			{
+				$set: { state: validationMessages.packages.state.onTheWay },
+			},
+			{ new: true },
+		);
+		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
+
+		const reorderedPackages = [uuidPackage, ...user.packages.filter(packageId => packageId !== uuidPackage)];
+		await this.authService.updatePackages(userId, reorderedPackages);
+
+		await this.logService.create({
+			action: validationMessages.log.action.user.array.startNewDelivery,
+			entity: validationMessages.log.entity.user,
+			entityId: uuidPackage,
+			changes: {
+				oldState: packageToUpdate.state,
+				newState: validationMessages.packages.state.onTheWay,
+				reorderedPackages: reorderedPackages,
+			},
+			performedBy: performedById,
+		});
+
+		return packageToUpdate;
+	}
+
 	async assignPackageToUser(userId: string, packageId: string): Promise<void> {
 		const user = await this.authService.findById(userId);
 		if (user.packages.length >= 10) {
@@ -206,7 +268,7 @@ export class PackagesService {
 		packageToUpdate.state = validationMessages.packages.state.pending;
 		await packageToUpdate.save();
 
-		await this.authService.loadUserPackage(userId, packageId);
+		await this.authService.updatePackages(userId, packageId);
 
 		await this.logService.create({
 			action: validationMessages.log.action.packages.assignPkgToUser,
@@ -251,78 +313,23 @@ export class PackagesService {
 		});
 	}
 
-	async findPackagesByCriteria(year: string, month: string, day: string, uuidUser?: string, includeAllStates: boolean = false): Promise<Package[]> {
-		const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
-		const nextDay = new Date(date);
-		nextDay.setDate(date.getDate() + 1);
-
-		const query: any = {
-			deliveryDate: { $gte: date, $lt: nextDay },
-		};
-
-		if (uuidUser) {
-			query.deliveryMan = uuidUser;
-		}
-
-		if (!includeAllStates) {
-			query.state = validationMessages.packages.state.delivered;
-		}
-
-		return this.packageModel.find(query).exec();
-	}
-
-	async findPackagesByDateAndOptionalState(deliveryDate: Date, state?: string): Promise<Package[]> {
-		const query: any = {
-			deliveryDate: {
-				$gte: new Date(deliveryDate.setHours(0, 0, 0, 0)),
-				$lt: new Date(deliveryDate.setHours(23, 59, 59, 999)),
-			},
-		};
-
-		if (state) {
-			query.state = state;
-		}
-
-		return this.packageModel.find(query).exec();
-	}
-
-	async findAllPackagesWithDeliveryMan(): Promise<Package[]> {
-		return this.packageModel
-			.find({
-				deliveryMan: { $ne: null },
-				state: { $ne: validationMessages.packages.state.delivered },
-			})
-			.exec();
-	}
-
-	async updatePackageState(packageId: string, newState: string): Promise<Package> {
-		return this.packageModel.findByIdAndUpdate(packageId, { state: newState }, { new: true }).exec();
-	}
-
 	async clearPackageDeliveryMan(packageId: string): Promise<Package> {
 		return this.packageModel.findByIdAndUpdate(packageId, { deliveryMan: null }, { new: true }).exec();
 	}
 
-	async updatePackageDeliveryDate(packageId: string, newDate: Date): Promise<Package> {
-		return this.packageModel.findByIdAndUpdate(packageId, { deliveryDate: newDate }, { new: true }).exec();
-	}
+	async removePackage(uuidPackage: string, performedById: string): Promise<void> {
+		const pkg = await this.findPackagesById(uuidPackage);
+		if (!pkg) throw new NotFoundException(validationMessages.packages.error.packageNotFound);
+		await this.authService.removePackageFromAllUsers(uuidPackage);
 
-	async updateDeliveryDateForNonDeliveredPackages(newDate: Date): Promise<void> {
-		const nonDeliveredPackages = await this.packageModel.find({ state: { $ne: validationMessages.packages.state.delivered } });
+		await this.packageModel.findByIdAndDelete(uuidPackage);
 
-		for (const pkg of nonDeliveredPackages) {
-			await this.packageModel.updateOne({ _id: pkg._id }, { $set: { deliveryDate: newDate } });
-
-			await this.logService.create({
-				action: validationMessages.log.action.packages.deliveryDate.nextDate,
-				entity: validationMessages.log.entity.package,
-				entityId: pkg._id,
-				changes: {
-					previousDate: pkg.deliveryDate,
-					newDate: newDate,
-				},
-				performedBy: 'CRON',
-			});
-		}
+		await this.logService.create({
+			action: validationMessages.log.action.packages.deleted,
+			entity: validationMessages.log.entity.package,
+			entityId: uuidPackage,
+			changes: { deleted: true },
+			performedBy: performedById,
+		});
 	}
 }
