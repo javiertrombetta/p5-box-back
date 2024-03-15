@@ -24,7 +24,7 @@ RUN npm run build
 FROM --platform=$BUILDPLATFORM node:21.7.1-alpine3.19 AS prod-deps
 WORKDIR /app
 COPY package.json package.json
-RUN npm install --production --frozen-lockfile
+RUN npm install --omit=dev --frozen-lockfile
 
 # Copiar los archivos construidos desde la etapa builder al directorio de trabajo
 FROM --platform=$BUILDPLATFORM node:21.7.1-alpine3.19 AS production

@@ -38,7 +38,11 @@ services:
       - box-vol:/data/db
     container_name: ${MONGO_DB_NAME}
     restart: always
-    environment:      
+    environment:
+      TZ: ${TIME_ZONE}
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_DB_NAME: ${MONGO_DB_NAME}        
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     command: ['--auth']

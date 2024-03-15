@@ -1,6 +1,7 @@
 import * as Joi from 'joi';
 
 export const JoiValidationDevSchema = Joi.object({
+	TZ: Joi.string().required(),
 	NODE_ENV: Joi.string().valid('development').required(),
 
 	CORS_ORIGIN: Joi.string().uri().required(),

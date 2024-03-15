@@ -1,6 +1,18 @@
+
 <p align="center">
   <a href="https://github.com/javiertrombetta/p5-box-back" target="blank"><img src="./public/assets/img/box.png" width="400" alt="Box" /></a>
 </p>
+
+![Static Badge](https://img.shields.io/badge/TypeScript-typescriptlang.org-blue)
+![Static Badge](https://img.shields.io/badge/JavaScript-nodejs.org-darkgreen)
+![Static Badge](https://img.shields.io/badge/NestJS-nestjs.com-red)
+![Static Badge](https://img.shields.io/badge/MongoDB-mongodb.com-green)
+![Static Badge](https://img.shields.io/badge/Docker-docker.com-blue)
+
+![GitHub repo size](https://img.shields.io/github/repo-size/javiertrombetta/p5-box-back)
+![Docker Image Version](https://img.shields.io/docker/v/javiertrombetta/box-back)
+
+
 
 <br>
 
@@ -66,11 +78,11 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 <br>
 
-## Proyecto en distintos entornos
+## Usando el proyecto en distintos entornos
 
-#### Antes de continuar, descargá la última versión de [Docker](https://www.docker.com/), compatible para tu sistema operativo.
+### Entorno de `desarrollo local`
 
-#### `IMPORTANTE`: El Engine de Docker tiene que estar ejecutándose.
+#### ***Requerimientos***: [Docker](https://www.docker.com/), compatible para tu sistema operativo. Una vez instalado, asegurarse que el Engine de Docker se encuentre ejecutándose.
 
 * ### Inicializar proyecto en entorno de `desarrollo`
 
