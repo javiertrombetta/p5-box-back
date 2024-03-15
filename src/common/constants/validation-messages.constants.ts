@@ -177,8 +177,8 @@ export const validationMessages = {
 			isUUID: 'El repartidor asignado tiene que ser del formato UUID.',
 		},
 		deliveryDate: {
+			isDate: 'La fecha proporcionada no es formato Date.',
 			isNotEmpty: 'Se requiere una fecha de entrega.',
-			isString: '',
 			dateNotValid: 'La fecha proporcionada no es válida.',
 		},
 	},

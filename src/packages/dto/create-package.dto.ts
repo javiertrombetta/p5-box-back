@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, Min } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, Min, IsDate } from 'class-validator';
 import { validationMessages } from '../../common/constants';
+import { Type } from 'class-transformer';
 
 export class CreatePackageDto {
 	@IsNotEmpty({ message: validationMessages.packages.deliveryFullname.isNotEmpty })
@@ -20,7 +21,8 @@ export class CreatePackageDto {
 	deliveryWeight: number;
 
 	@IsNotEmpty({ message: validationMessages.packages.deliveryDate.isNotEmpty })
-	@IsString({ message: validationMessages.packages.deliveryDate.isString })
-	@ApiProperty({ description: validationMessages.swagger.packages.deliveryDate, required: true })
-	deliveryDate: string;
+	@Type(() => Date)
+	@IsDate({ message: validationMessages.packages.deliveryDate.isDate })
+	@ApiProperty({ description: validationMessages.swagger.packages.deliveryDate, required: true, type: Date })
+	deliveryDate: Date;
 }
