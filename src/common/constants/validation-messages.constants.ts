@@ -223,9 +223,10 @@ export const validationMessages = {
 			user: {
 				array: {
 					clear: 'UPDATE_user_clear_array',
-					loadPackages: 'UPDATE_user_addManyPkgs_array',
+					updateOnePackage: 'UPDATE_user_reorderToTopOnlyOne_array',
+					updateFullArray: 'UPDATE_user_reorderAllAndSendOneToTop_array',
 					addUserPackage: 'UPDATE_user_addPkg_array',
-					changeOrder: 'UPDATE_user_changeOrder_array',
+					startNewDelivery: 'UPDATE_user_startNewDelivery_array',
 				},
 				role: {
 					addedBothRoles: 'UPDATE_user_change_roleToBoth',

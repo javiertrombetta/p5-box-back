@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
+import { PackagesService } from '../packages/packages.service';
 import { LogService } from '../log/log.service';
 import { validationMessages } from '../common/constants';
 
@@ -8,6 +9,7 @@ import { validationMessages } from '../common/constants';
 export class RewardsService {
 	constructor(
 		@Inject(forwardRef(() => AuthService)) private authService: AuthService,
+		@Inject(forwardRef(() => PackagesService)) private packageService: PackagesService,
 		private logService: LogService,
 	) {}
 
@@ -23,13 +25,21 @@ export class RewardsService {
 	}
 
 	async subtractPointsForCancellation(userId: string): Promise<void> {
-		await this.authService.adjustPoints(userId, -10);
+		const packagesInCourse = await this.packageService.findPackagesByDeliveryManIdAndState(userId, validationMessages.packages.state.onTheWay);
+		let pointsToSubtract = -10;
+
+		if (packagesInCourse.length > 0) {
+			pointsToSubtract -= 20;
+		}
+
+		await this.authService.adjustPoints(userId, pointsToSubtract);
 		await this.authService.resetConsecutiveDeliveries(userId);
+
 		await this.logService.create({
 			action: validationMessages.log.action.user.points.substractForCancel,
 			entity: validationMessages.log.entity.user,
 			entityId: userId,
-			changes: { pointsSubtracted: 10 },
+			changes: { pointsSubtracted: Math.abs(pointsToSubtract) },
 			performedBy: userId,
 		});
 	}
