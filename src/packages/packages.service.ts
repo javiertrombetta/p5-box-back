@@ -118,6 +118,8 @@ export class PackagesService {
 			throw new Error(validationMessages.packages.deliveryDate.dateNotValid);
 		}
 
+		createPackageDto.deliveryDate.setHours(0, 0, 0, 0);
+
 		const newPackage = new this.packageModel({
 			...createPackageDto,
 			deliveryMan: null,
