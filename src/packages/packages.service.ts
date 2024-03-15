@@ -114,19 +114,12 @@ export class PackagesService {
 	}
 
 	async create(createPackageDto: CreatePackageDto, userId: string): Promise<Package> {
-		const year = parseInt(createPackageDto.deliveryDate.substring(0, 4));
-		const month = parseInt(createPackageDto.deliveryDate.substring(4, 6)) - 1;
-		const day = parseInt(createPackageDto.deliveryDate.substring(6, 8));
-
-		const deliveryDate = new Date(year, month, day);
-
-		if (isNaN(deliveryDate.getTime())) {
+		if (isNaN(createPackageDto.deliveryDate.getTime())) {
 			throw new Error(validationMessages.packages.deliveryDate.dateNotValid);
 		}
 
 		const newPackage = new this.packageModel({
 			...createPackageDto,
-			deliveryDate,
 			deliveryMan: null,
 			state: validationMessages.packages.state.available,
 		});
