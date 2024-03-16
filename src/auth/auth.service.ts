@@ -111,7 +111,6 @@ export class AuthService {
 				path: '/',
 			});
 
-			console.log(res);
 			if (negativeDeclaration) {
 				res.status(HttpStatus.OK).json({ message: validationMessages.legals.negativeInfo });
 			} else {
