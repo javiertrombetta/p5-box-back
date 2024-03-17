@@ -2,11 +2,11 @@ import { Body, Controller, Post, Get, Put, Delete, Param, Req, Res, HttpStatus, 
 import { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 import { AuthService } from './auth.service';
 import { PackagesService } from '../packages/packages.service';
 import { LegalDeclarationsService } from '../legals/legals.service';
-import { PhotosService } from 'src/photos/photos.service';
 
 import { GetUser, Auth } from './decorators';
 import { ValidRoles } from './interfaces';
@@ -21,10 +21,10 @@ import { GoogleOauthGuard } from './guards/google-oauth.guard';
 @Controller('auth')
 export class AuthController {
 	constructor(
+		private readonly configService: ConfigService,
 		private readonly authService: AuthService,
 		private readonly packagesService: PackagesService,
 		private readonly legalDeclarationsService: LegalDeclarationsService,
-		private readonly photosService: PhotosService,
 	) {}
 
 	// POST
@@ -160,18 +160,21 @@ export class AuthController {
 		try {
 			if (req.cookies['Authentication']) return res.status(HttpStatus.BAD_REQUEST).json({ message: validationMessages.auth.account.error.alreadyLoggedIn });
 
-			const token = await this.authService.oAuthLogin(req.user);
+			const { token } = await this.authService.oAuthLogin(req.user);
 
-			res.cookie('Authentication', token.jwt, {
+			const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+
+			res.cookie('Authentication', token, {
 				httpOnly: true,
 				path: '/',
 				maxAge: 1000 * 60 * 60 * 2,
 				sameSite: 'strict',
-				secure: process.env.NODE_ENV === 'production',
+				secure: isProduction,
 			});
 
-			//res.end(res.redirect(`${process.env.CORS_ORIGIN}/oauth?token=${token.jwt}`));
-			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.loggedIn, token: token.jwt });
+			// const redirectUrl = this.configService.get<string>('CORS_ORIGIN');
+			// res.end(res.redirect(`${redirectUrl}/oauth?token=${token.jwt}`));
+			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.loggedIn, token: token });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}
