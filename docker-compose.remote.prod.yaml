@@ -1,12 +1,12 @@
 version: '3.1'
 
 services:
-  boxapi:    
+  boxapi:
     build:
-      target: ${NODE_ENV}      
+      target: ${NODE_ENV}
       context: .
       dockerfile: Dockerfile
-    image: javiertrombetta/box-back:latest    
+    image: javiertrombetta/box-back:latest
     container_name: boxapi
     restart: always
     ports:

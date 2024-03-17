@@ -4,13 +4,17 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
-import { validationMessages } from '../common/constants';
 import { CreateUserDto, LoginUserDto } from './dto';
 import { User } from './entities';
+
 import { MailService } from '../mail/mail.service';
 import { PackagesService } from '../packages/packages.service';
 import { LogService } from '../log/log.service';
+import { PhotosService } from '../photos/photos.service';
+
+import { validationMessages } from '../common/constants';
 import { ValidRoles } from './interfaces';
 
 @Injectable()
@@ -21,9 +25,56 @@ export class AuthService {
 		private mailService: MailService,
 		@Inject(forwardRef(() => PackagesService)) private packagesService: PackagesService,
 		private logService: LogService,
+		@Inject(forwardRef(() => PhotosService)) private photosService: PhotosService,
 	) {}
 
-	async register(createUserDto: CreateUserDto, performedById?: string): Promise<void> {
+	async oAuthLogin(user: any): Promise<{ jwt: string }> {
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.error.googleAccountNotFound, HttpStatus.UNAUTHORIZED);
+		}
+
+		let existingUser = await this.userModel.findOne({ email: user.email });
+
+		if (existingUser && !existingUser.provider) {
+			throw new HttpException(validationMessages.auth.user.email.inUse, HttpStatus.CONFLICT);
+		}
+
+		if (!existingUser) {
+			const randomPassword = crypto.randomBytes(16).toString('hex');
+			const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+			existingUser = new this.userModel({
+				name: user.name,
+				lastname: user.lastname,
+				email: user.email,
+				password: hashedPassword,
+				provider: user.provider,
+				providerId: user.providerId,
+				photoUrl: user.picture,
+				roles: [ValidRoles.repartidor],
+			});
+			await existingUser.save();
+
+			await this.logService.create({
+				action: validationMessages.log.action.user.oauth,
+				entity: validationMessages.log.entity.user,
+				entityId: existingUser._id.toString(),
+				changes: {
+					name: user.name,
+					email: user.email,
+					provider: user.provider,
+				},
+				performedBy: existingUser._id.toString(),
+			});
+		}
+
+		const payload = { email: existingUser.email, sub: existingUser._id };
+		const jwt = this.jwtService.sign(payload);
+
+		return { jwt };
+	}
+
+	async register(createUserDto: CreateUserDto, photoFile?: Express.Multer.File, performedById?: string): Promise<void> {
 		const email = createUserDto.email.toLowerCase().trim();
 		const existingUser = await this.userModel.findOne({ email });
 
@@ -31,9 +82,10 @@ export class AuthService {
 
 		const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-		let photoBuffer = null;
-		if (createUserDto.photoUrl) {
-			photoBuffer = Buffer.from(createUserDto.photoUrl, 'base64');
+		let photoUrl = '';
+
+		if (photoFile) {
+			photoUrl = await this.photosService.uploadFileToS3(photoFile);
 		}
 
 		const user = new this.userModel({
@@ -41,7 +93,7 @@ export class AuthService {
 			email,
 			password: hashedPassword,
 			roles: [ValidRoles.repartidor],
-			photoUrl: photoBuffer,
+			photoUrl,
 		});
 
 		await user.save();
@@ -206,6 +258,15 @@ export class AuthService {
 
 	async findUsersBeforeDate(date: Date): Promise<User[]> {
 		return this.userModel.find({ createdAt: { $lte: date } }).exec();
+	}
+
+	async updateUserPhotoUrl(userId: string, photoUrl: string): Promise<void> {
+		const user = await this.userModel.findById(userId);
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.error.userNotFound, HttpStatus.UNAUTHORIZED);
+		}
+		user.photoUrl = photoUrl;
+		await user.save();
 	}
 
 	async isPackageAssignedToUser(userId: string, packageId: string): Promise<boolean> {

@@ -6,6 +6,8 @@
 /.env
 /.env.prod.local
 /.env.prod.remote
+/.eslintignore
+/.prettierignore
 
 package-lock.json
 

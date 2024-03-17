@@ -15,7 +15,8 @@ import { PackagesModule } from '../packages/packages.module';
 import { LogModule } from '../log/log.module';
 import { LegalDeclarationsModule } from '../legals/legals.module';
 import { RewardsModule } from '../rewards/rewards.module';
-import { FilesModule } from 'src/files/files.module';
+import { PhotosModule } from '../photos/photos.module';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
 	imports: [
@@ -27,6 +28,7 @@ import { FilesModule } from 'src/files/files.module';
 				secret: configService.get<string>('JWT_SECRET'),
 				signOptions: { expiresIn: '2h' },
 			}),
+			global: true,
 			inject: [ConfigService],
 		}),
 		MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
@@ -35,9 +37,9 @@ import { FilesModule } from 'src/files/files.module';
 		LogModule,
 		forwardRef(() => LegalDeclarationsModule),
 		forwardRef(() => RewardsModule),
-		FilesModule,
+		PhotosModule,
 	],
-	providers: [AuthService, JwtStrategy],
+	providers: [AuthService, JwtStrategy, GoogleStrategy],
 	controllers: [AuthController],
 	exports: [JwtStrategy, PassportModule, JwtModule, AuthService],
 })

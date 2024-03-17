@@ -32,6 +32,11 @@ export const validationMessages = {
 			},
 			photoUrl: {
 				isString: 'La foto de usuario debe ser una cadena de texto.',
+				cannotGenerateUrl: 'No se pudo generar la URL de la foto a visualizar.',
+				fileNotValid: 'No se proporcionó un archivo de imagen o no es válido.',
+				fileNotFound: 'No se encontró un archivo de foto existente.',
+				uploadSuccess: 'La foto fue actualizada con éxito.',
+				uploadFail: 'La foto no pudo se pudo cargar correctamente por el siguiente error: {{error}}',
 			},
 			state: {
 				isEnum: 'El campo estado no es válido.',
@@ -64,6 +69,7 @@ export const validationMessages = {
 			error: {
 				unauthorized: 'No estás autorizado a realizar esta acción. Por favor, ingresá al sistema con credenciales de usuario válidas.',
 				userNotFound: 'El usuario no fue encontrado.',
+				googleAccountNotFound: 'La cuenta de Google no fue encontrada.',
 				wrongCredentials: 'Las credenciales de acceso son incorrectas.',
 				alreadyLoggedIn: 'Estás intentando reingresar pero ya estás logueado con una cuenta. Por favor, cerrá la sesión y volvé a intentarlo.',
 				notFound: 'El usuario no fue encontrado.',
@@ -187,6 +193,9 @@ export const validationMessages = {
 			seedCompleted: 'La base de datos fue poblada correctamente con datos de ejemplo.',
 		},
 	},
+	aws: {
+		bucketName: 'photo',
+	},
 	serverError: {
 		unexpected: 'Hubo un error inesperado en el servidor.',
 		internal: 'Hubo un error interno en el servidor.',
@@ -247,7 +256,8 @@ export const validationMessages = {
 					resetDeliveriesCount: 'UPDATE_user_reset_DeliveriesCountPoints',
 					setPoints: 'UPDATE_user_set_points',
 				},
-				register: 'CREATE_user',
+				register: 'CREATE_local_user',
+				oauth: 'CREATE_oauth_user',
 				deleteUser: 'DELETE_user',
 				login: 'INFO_user_login',
 				logout: 'INFO_user_logout',

@@ -1,2 +1,2 @@
-export { JoiValidationDevSchema } from './joi.validation.dev';
-export { JoiValidationProdSchema } from './joi.validation.prod';
+export { JoiValidationDevSchema } from './joi/joi.validation.dev';
+export { JoiValidationProdSchema } from './joi/joi.validation.prod';
