@@ -32,7 +32,7 @@ export const validationMessages = {
 			},
 			photoUrl: {
 				isString: 'La foto de usuario debe ser una cadena de texto.',
-				cannotGenerateUrl: 'No se pudo generar la URL de la foto a visualizar.',
+				cannotUpdatePhoto: 'Los usuarios de OAuth no pueden actualizar su foto de perfil por este medio.',
 				fileNotValid: 'No se proporcionó un archivo de imagen o no es válido.',
 				fileNotFound: 'No se encontró un archivo de foto existente.',
 				uploadSuccess: 'La foto fue actualizada con éxito.',

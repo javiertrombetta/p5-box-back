@@ -28,7 +28,7 @@ export class AuthService {
 		@Inject(forwardRef(() => PhotosService)) private photosService: PhotosService,
 	) {}
 
-	async oAuthLogin(user: any): Promise<{ jwt: string }> {
+	async oAuthLogin(user: any): Promise<{ token: string }> {
 		if (!user) {
 			throw new HttpException(validationMessages.auth.account.error.googleAccountNotFound, HttpStatus.UNAUTHORIZED);
 		}
@@ -68,10 +68,18 @@ export class AuthService {
 			});
 		}
 
-		const payload = { email: existingUser.email, sub: existingUser._id };
-		const jwt = this.jwtService.sign(payload);
+		const payload = { id: existingUser._id };
+		const token = this.jwtService.sign(payload);
 
-		return { jwt };
+		await this.logService.create({
+			action: validationMessages.log.action.user.login,
+			entity: validationMessages.log.entity.user,
+			entityId: existingUser._id.toString(),
+			changes: {},
+			performedBy: existingUser._id.toString(),
+		});
+
+		return { token };
 	}
 
 	async register(createUserDto: CreateUserDto, photoFile?: Express.Multer.File, performedById?: string): Promise<void> {

@@ -41,13 +41,14 @@ export class PhotoController {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Archivo no válido.' })
 	@Auth(ValidRoles.repartidor, ValidRoles.administrador)
 	async uploadUserPhoto(@UploadedFile() file: Express.Multer.File, @GetUser() user, @Res() res: Response) {
+		if (user.provider && user.photoUrl) {
+			return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Los usuarios de OAuth no pueden actualizar su foto de perfil por este medio.' });
+		}
+
 		try {
 			if (!file) throw new BadRequestException(validationMessages.auth.user.photoUrl.fileNotValid);
-
 			const photoUrl = await this.photosService.uploadFileToS3(file);
-
 			await this.authService.updateUserPhotoUrl(user.id, photoUrl);
-
 			return res.status(HttpStatus.OK).json({ message: validationMessages.auth.user.photoUrl.uploadSuccess, photoUrl });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
@@ -64,21 +65,25 @@ export class PhotoController {
 	async getUserPhoto(@GetUser() user, @Res() res: Response) {
 		const existingUser = await this.authService.findById(user.id);
 		if (!existingUser) {
-			throw new HttpException(validationMessages.auth.account.error.googleAccountNotFound, HttpStatus.UNAUTHORIZED);
+			throw new HttpException(validationMessages.auth.account.error.notFound, HttpStatus.NOT_FOUND);
 		}
 		if (!existingUser.photoUrl) {
 			throw new HttpException(validationMessages.auth.user.photoUrl.fileNotFound, HttpStatus.NOT_FOUND);
 		}
 
-		try {
-			const urlParts = new URL(existingUser.photoUrl);
-			const key = urlParts.pathname.substring(1);
+		let photoUrl = existingUser.photoUrl;
 
-			const photoUrl = await this.photosService.generatePresignedUrl(key);
-			return res.status(HttpStatus.OK).json({ photoUrl });
-		} catch (error) {
-			console.error(error);
-			return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: validationMessages.auth.user.photoUrl.cannotGenerateUrl });
+		if (!existingUser.provider && existingUser.photoUrl.includes('s3.amazonaws.com')) {
+			try {
+				const urlParts = new URL(existingUser.photoUrl);
+				const key = urlParts.pathname.substring(1);
+				photoUrl = await this.photosService.generatePresignedUrl(key);
+			} catch (error) {
+				ExceptionHandlerService.handleException(error, res);
+				return;
+			}
 		}
+
+		return res.status(HttpStatus.OK).json({ photoUrl });
 	}
 }
