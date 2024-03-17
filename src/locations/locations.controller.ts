@@ -3,10 +3,10 @@ import { Response } from 'express';
 import { LocationsService } from './locations.service';
 import { Auth, GetUser } from '../auth/decorators';
 import { ValidRoles } from '../auth/interfaces';
-import { LocationDto } from './dto';
+import { LocationDto, RouteDto } from './dto';
 import { User } from '../auth/entities';
 import { validationMessages } from '../common/constants';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ExceptionHandlerService } from '../common/helpers';
 
 @ApiTags('Locations')
@@ -15,6 +15,11 @@ export class LocationsController {
 	constructor(private locationService: LocationsService) {}
 
 	@Get('package/:packageId')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Obtener ruta para un paquete', description: 'Obtiene la última ubicación del repartidor y calcula la ruta hasta el paquete especificado.' })
+	@ApiParam({ name: 'packageId', type: 'string', required: true, description: 'Identificador único del paquete', example: '12345' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Ruta obtenida con éxito.', type: RouteDto })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Última ubicación no encontrada.' })
 	@Auth(ValidRoles.repartidor)
 	async getRoute(@Param('packageId') packageId: string, @GetUser() user: User, @Res() res: Response) {
 		try {
@@ -34,6 +39,10 @@ export class LocationsController {
 	}
 
 	@Post('deliveryman/update')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Actualizar ubicación del repartidor', description: 'Actualiza la ubicación actual del repartidor.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Ubicación actualizada con éxito.', type: LocationDto })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos de ubicación no válidos.' })
 	@Auth(ValidRoles.repartidor)
 	async updateLocation(@Body() locationDto: LocationDto, @GetUser() user: User, @Res() res: Response) {
 		try {

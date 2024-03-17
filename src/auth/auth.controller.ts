@@ -1,9 +1,12 @@
-import { Body, Controller, Post, Get, Put, Delete, Param, Req, Res, HttpStatus, HttpException, Query } from '@nestjs/common';
+import { Body, Controller, Post, Get, Put, Delete, Param, Req, Res, HttpStatus, HttpException, Query, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { PackagesService } from '../packages/packages.service';
 import { LegalDeclarationsService } from '../legals/legals.service';
+import { PhotosService } from 'src/photos/photos.service';
 
 import { GetUser, Auth } from './decorators';
 import { ValidRoles } from './interfaces';
@@ -11,7 +14,8 @@ import { CreateUserDto, LoginUserDto, ResetPasswordDto, UpdateUserRoleDto, Forgo
 
 import { validationMessages } from '../common/constants';
 import { ExceptionHandlerService } from '../common/helpers';
-import { ApiTags } from '@nestjs/swagger';
+
+import { GoogleOauthGuard } from './guards/google-oauth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -20,14 +24,35 @@ export class AuthController {
 		private readonly authService: AuthService,
 		private readonly packagesService: PackagesService,
 		private readonly legalDeclarationsService: LegalDeclarationsService,
+		private readonly photosService: PhotosService,
 	) {}
 
 	// POST
 
 	@Post('register')
-	async register(@Body() createUserDto: CreateUserDto, @Res() res: Response) {
+	@ApiOperation({ summary: 'Registrar usuario local' })
+	@ApiConsumes('multipart/form-data')
+	@ApiBody({
+		schema: {
+			type: 'object',
+			required: ['name', 'lastname', 'email', 'password'],
+			properties: {
+				name: { type: 'string', example: 'John' },
+				lastname: { type: 'string', example: 'Doe' },
+				email: { type: 'string', format: 'email', example: 'john.doe@example.com' },
+				password: { type: 'string', format: 'password', example: 'strongPassword123' },
+				photoUrl: {
+					type: 'string',
+					format: 'binary',
+					description: 'La carga de la foto en el registro es opcional.',
+				},
+			},
+		},
+	})
+	@UseInterceptors(FileInterceptor('photo'))
+	async register(@Body() createUserDto: CreateUserDto, @UploadedFile() photo: Express.Multer.File, @Res() res: Response) {
 		try {
-			await this.authService.register(createUserDto);
+			await this.authService.register(createUserDto, photo);
 			res.status(HttpStatus.CREATED).json({
 				message: validationMessages.auth.account.success.registered,
 			});
@@ -37,6 +62,17 @@ export class AuthController {
 	}
 
 	@Post('login')
+	@ApiOperation({ summary: 'Iniciar sesión' })
+	@ApiBody({
+		schema: {
+			type: 'object',
+			required: ['email', 'password'],
+			properties: {
+				email: { type: 'string', format: 'email', example: 'john.doe@example.com' },
+				password: { type: 'string', format: 'password', example: 'strongPassword123' },
+			},
+		},
+	})
 	async login(@Body() loginUserDto: LoginUserDto, @Req() request: Request, @Res() res: Response) {
 		try {
 			if (request.cookies['Authentication']) return res.status(HttpStatus.BAD_REQUEST).json({ message: validationMessages.auth.account.error.alreadyLoggedIn });
@@ -54,12 +90,24 @@ export class AuthController {
 	}
 
 	@Post('logout')
+	@ApiOperation({ summary: 'Cerrar sesión', description: 'Este endpoint requiere autenticación' })
+	@ApiBearerAuth()
 	@Auth(ValidRoles.administrador, ValidRoles.repartidor)
 	async logout(@Res() res: Response) {
 		await this.authService.logout(res);
 	}
 
 	@Post('forgot-password')
+	@ApiOperation({ summary: 'Enviar clave por mail por olvido de contraseña' })
+	@ApiBody({
+		schema: {
+			type: 'object',
+			required: ['email'],
+			properties: {
+				email: { type: 'string', format: 'email', example: 'john.doe@example.com' },
+			},
+		},
+	})
 	async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto, @Res() res: Response) {
 		try {
 			const { email } = forgotPasswordDto;
@@ -71,6 +119,17 @@ export class AuthController {
 	}
 
 	@Post('reset-password')
+	@ApiOperation({ summary: 'Cambiar contraseña a partir de la clave recibida' })
+	@ApiBody({
+		schema: {
+			type: 'object',
+			required: ['token', 'newPassword'],
+			properties: {
+				token: { type: 'string', example: 'Escribir acá el código recibido por mail' },
+				newPassword: { type: 'string', format: 'password', example: 'newStrongPassword123' },
+			},
+		},
+	})
 	async resetPassword(@Body() resetPasswordDto: ResetPasswordDto, @Req() req: Request, @Res() res: Response) {
 		try {
 			const { token, newPassword } = resetPasswordDto;
@@ -88,8 +147,44 @@ export class AuthController {
 	}
 
 	// GET
+	@Get('google')
+	@ApiOperation({ summary: 'Iniciar sesión con cuenta de Google (OAuth)' })
+	@UseGuards(GoogleOauthGuard)
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	async auth() {}
+
+	@Get('google/callback')
+	@ApiOperation({ summary: 'Retorno de inicio de sesión en plataforma de Google' })
+	@UseGuards(GoogleOauthGuard)
+	async googleAuthCallback(@Req() req, @Res() res: Response) {
+		try {
+			if (req.cookies['Authentication']) return res.status(HttpStatus.BAD_REQUEST).json({ message: validationMessages.auth.account.error.alreadyLoggedIn });
+
+			const token = await this.authService.oAuthLogin(req.user);
+
+			res.cookie('Authentication', token.jwt, {
+				httpOnly: true,
+				path: '/',
+				maxAge: 1000 * 60 * 60 * 2,
+				sameSite: 'strict',
+				secure: process.env.NODE_ENV === 'production',
+			});
+
+			//res.end(res.redirect(`${process.env.CORS_ORIGIN}/oauth?token=${token.jwt}`));
+			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.loggedIn, token: token.jwt });
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
 
 	@Get('verify-token')
+	@ApiOperation({ summary: 'Verificar clave recibida por mail' })
+	@ApiQuery({
+		name: 'token',
+		required: true,
+		type: String,
+		description: 'Token de verificación enviado por mail',
+	})
 	async verifyResetPasswordToken(@Query('token') token: string, @Res() res: Response) {
 		try {
 			const isValid = await this.authService.verifyResetPasswordToken(token);
@@ -101,6 +196,8 @@ export class AuthController {
 	}
 
 	@Get('me')
+	@ApiOperation({ summary: 'Obtener perfil del usuario actual', description: 'Este endpoint requiere autenticación' })
+	@ApiBearerAuth()
 	@Auth(ValidRoles.repartidor, ValidRoles.administrador)
 	async getProfile(@GetUser('id') userId: string, @Res() res: Response) {
 		try {
@@ -117,6 +214,8 @@ export class AuthController {
 	}
 
 	@Get('me/packages')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Obtener paquetes del repartidor actual', description: 'Este endpoint requiere autenticación y tener rol repartidor.' })
 	@Auth(ValidRoles.repartidor)
 	async getMyPackages(@GetUser('id') userId: string, @Res() res: Response) {
 		try {
@@ -128,6 +227,8 @@ export class AuthController {
 	}
 
 	@Get('users')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Obtener todos los usuarios', description: 'Este endpoint requiere autenticación y tener rol administrador.' })
 	@Auth(ValidRoles.administrador)
 	async getAllUsers(@Res() res: Response) {
 		try {
@@ -139,6 +240,15 @@ export class AuthController {
 	}
 
 	@Get('users/:userId')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Obtener datos de un usuario específico', description: 'Este endpoint requiere autenticación.' })
+	@ApiParam({
+		name: 'userId',
+		type: String,
+		required: true,
+		description: 'UUID del usuario a obtener',
+		example: '550e8400-e29b-41d4-a716-446655440000',
+	})
 	@Auth(ValidRoles.repartidor, ValidRoles.administrador)
 	async getUserData(@Param('userId') userId: string, @GetUser() user, @Res() res: Response) {
 		try {
@@ -168,6 +278,9 @@ export class AuthController {
 	}
 
 	@Get('users/state/:state')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Obtener usuarios por estado', description: 'Este endpoint requiere autenticación y tener rol administrador.' })
+	@ApiParam({ name: 'state', type: 'string', required: true, description: 'Estado de un usuario', example: 'activo' })
 	@Auth(ValidRoles.administrador)
 	async getUsersByState(@Param('state') state: string, @Res() res: Response) {
 		try {
@@ -181,6 +294,9 @@ export class AuthController {
 	}
 
 	@Get('users/:uuidUser/packages')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Obtener paquetes de un usuario específico', description: 'Este endpoint requiere autenticación y tener rol administrador.' })
+	@ApiParam({ name: 'uuidUser', type: 'string', required: true, description: 'UUID del usuario a actualizar', example: '550e8400-e29b-41d4-a716-446655440000' })
 	@Auth(ValidRoles.administrador)
 	async getUserPackages(@Param('uuidUser') uuidUser: string, @Res() res: Response) {
 		try {
@@ -197,6 +313,12 @@ export class AuthController {
 	// PUT
 
 	@Put('users/:userId/role')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Actualizar el rol de un usuario', description: 'Este endpoint requiere autenticación y tener rol administrador.' })
+	@ApiParam({ name: 'userId', type: 'string', required: true, description: 'UUID del usuario a actualizar', example: '550e8400-e29b-41d4-a716-446655440000' })
+	@ApiBody({ type: UpdateUserRoleDto })
+	@ApiResponse({ status: 200, description: 'Rol actualizado con éxito.' })
+	@ApiResponse({ status: 404, description: 'Usuario no encontrado.' })
 	@Auth(ValidRoles.administrador)
 	async updateUserRole(@Param('userId') userId: string, @Body() updateUserRoleDto: UpdateUserRoleDto, @GetUser('id') performedById: string, @Res() res: Response) {
 		try {
@@ -212,6 +334,10 @@ export class AuthController {
 	}
 
 	@Put('me/packages/:uuidPackage')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Cambiar estado y reordenar lista por inicio de reparto de paquete', description: 'Este endpoint requiere autenticación y tener rol repartidor.' })
+	@ApiParam({ name: 'uuidPackage', type: 'string', required: true, description: 'UUID del paquete a actualizar', example: '550e8400-e29b-41d4-a716-446655440000' })
+	@ApiResponse({ status: 200, description: 'Paquete modificado con éxito.' })
 	@Auth(ValidRoles.repartidor)
 	async changePackageStateAndReorder(@Param('uuidPackage') uuidPackage: string, @GetUser() user, @Res() res: Response) {
 		try {
@@ -223,6 +349,10 @@ export class AuthController {
 	}
 
 	@Put('me/packages')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Actualizar paquetes por inicio de jornada de reparto', description: 'Este endpoint requiere autenticación y tener rol repartidor.' })
+	@ApiBody({ type: StartDayDto })
+	@ApiResponse({ status: 200, description: 'Paquetes actualizados con éxito.' })
 	@Auth(ValidRoles.repartidor)
 	async updateMyPackages(@GetUser('id') userId: string, @Body() startDayDto: StartDayDto, @Res() res: Response) {
 		try {
@@ -277,6 +407,12 @@ export class AuthController {
 	}
 
 	@Put('me/packages/:uuidPackage/cancel')
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: 'Cancelar reparto de un paquete',
+		description: 'Este endpoint requiere autenticación, rol repartidor y tener el paquete asignado al listado de paquetes del día para poder cancelarlo.',
+	})
+	@ApiParam({ name: 'uuidPackage', type: 'string', required: true, description: 'UUID del paquete a cancelar', example: '550e8400-e29b-41d4-a716-446655440000' })
 	@Auth(ValidRoles.repartidor)
 	async cancelPackage(@Param('uuidPackage') uuidPackage: string, @GetUser('id') userId: string, @Res() res: Response) {
 		try {
@@ -288,6 +424,12 @@ export class AuthController {
 	}
 
 	@Put('me/packages/:uuidPackage/finish')
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: 'Finalizar reaprto de un paquete',
+		description: 'Este endpoint requiere autenticación, rol repartidor, y tener el paquete asignado al listado de paquetes para marcarlo como finalizado.',
+	})
+	@ApiParam({ name: 'uuidPackage', type: 'string', required: true, description: 'UUID del paquete a finalizar reparto', example: '550e8400-e29b-41d4-a716-446655440000' })
 	@Auth(ValidRoles.repartidor)
 	async finishPackage(@Param('uuidPackage') uuidPackage: string, @GetUser() user, @Res() res: Response) {
 		try {
@@ -299,6 +441,10 @@ export class AuthController {
 	}
 
 	@Put('users/:uuidUser/state')
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Cambiar el estado de un usuario', description: 'Este endpoint requiere autenticación y tener rol administrador.' })
+	@ApiParam({ name: 'uuidUser', type: 'string', required: true, description: 'UUID del usuario a cambiar estado', example: '550e8400-e29b-41d4-a716-446655440000' })
+	@ApiResponse({ status: 200, description: 'Estado del usuario actualizado con éxito' })
 	@Auth(ValidRoles.administrador)
 	async changeUserState(@Param('uuidUser') uuidUser: string, @GetUser('id') performedById: string, @Res() res: Response) {
 		try {
@@ -314,6 +460,11 @@ export class AuthController {
 	// DELETE
 
 	@Delete('me/delete')
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: 'Eliminar cuenta de usuario propio',
+		description: 'Permite a un usuario eliminar su propia cuenta. Este endpoint requiere autenticación.',
+	})
 	@Auth(ValidRoles.administrador, ValidRoles.repartidor)
 	async deleteOwnUser(@GetUser() user, @Res() res: Response) {
 		try {
@@ -330,6 +481,12 @@ export class AuthController {
 	}
 
 	@Delete('users/:userId')
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: 'Eliminar cuenta de otro usuario',
+		description: 'Permite a un administrador eliminar la cuenta de otro usuario o su propia cuenta. Este endpoint requiere autenticación y el rol de administrador.',
+	})
+	@ApiParam({ name: 'userId', description: 'UUID del usuario a eliminar', required: true, example: '550e8400-e29b-41d4-a716-446655440000' })
 	@Auth(ValidRoles.administrador)
 	async deleteUser(@Param('userId') userId: string, @GetUser('id') id: string, @Res() res: Response) {
 		try {

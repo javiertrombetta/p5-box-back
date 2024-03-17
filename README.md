@@ -1,4 +1,3 @@
-
 <p align="center">
   <a href="https://github.com/javiertrombetta/p5-box-back" target="blank"><img src="./public/assets/img/box.png" width="400" alt="Box" /></a>
 </p>
@@ -9,8 +8,11 @@
 ![Static Badge](https://img.shields.io/badge/MongoDB-mongodb.com-green)
 ![Static Badge](https://img.shields.io/badge/Docker-docker.com-blue)
 
-![GitHub repo size](https://img.shields.io/github/repo-size/javiertrombetta/p5-box-back)
-![Docker Image Version](https://img.shields.io/docker/v/javiertrombetta/box-back)
+
+![Static Badge](https://img.shields.io/badge/REQUERIMIENTOS%20NECESARIOS:-grey)
+![Static Badge](https://img.shields.io/badge/Google%20OAuth%202.0-darkred)
+![Static Badge](https://img.shields.io/badge/Google%20Maps%20RoutesAPI-darkred)
+![Static Badge](https://img.shields.io/badge/AWS%20S3-darkred)
 
 
 
@@ -82,32 +84,35 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 ### Entorno de `desarrollo local`
 
-#### ***Requerimientos***: [Docker](https://www.docker.com/), compatible para tu sistema operativo. Una vez instalado, asegurarse que el Engine de Docker se encuentre ejecutándose.
+#### **_Requerimientos_**: [Docker](https://www.docker.com/), compatible para tu sistema operativo. Una vez instalado, asegurarse que el Engine de Docker se encuentre ejecutándose.
 
-* ### Inicializar proyecto en entorno de `desarrollo`
+- ### Inicializar proyecto en entorno de `desarrollo`
 
   1. Clonar el repositorio. Leé primero [Pasos a seguir con Gitflow](#pasos-a-seguir-con-gitflow).
-     
   2. Instalar todas las dependencias del proyecto:
+
      ```bash
      $ npm install
      ```
 
   3. Instalar Nest CLI:
+
      ```bash
      $ npm i -g @nestjs/cli
      ```
 
-  4. Clonar el archivo ```.env.template``` y renombar la copia a ```.env```
+  4. Clonar el archivo `.env.template` y renombar la copia a `.env`
 
-  5. Completar con datos reales las variables de entorno definidas en el ```.env```
+  5. Completar con datos reales las variables de entorno definidas en el `.env`
 
   6. Desplegar y ejecutar MongoDB en segundo plano:
+
      ```bash
      $ docker-compose -f docker-compose.yaml up -d
      ```
 
   7. Ejecutar desde una terminal:
+
      ```bash
      # Recarga automática de cambios en entorno de desarrollo
      $ npm run start:dev
@@ -117,26 +122,27 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
      - Usando un navegador web, ingresar a: [http://localhost:3000/api/v1/seed](http://localhost:3000/api/v1/seed)
      - o desde [Postman](https://www.postman.com/):
-      
-          ```bash
-          [GET] http://localhost:3000/api/v1/seed
-          ```
+
+       ```bash
+       [GET] http://localhost:3000/api/v1/seed
+       ```
 
 <br>
 
-* ### Compliar el proyecto para usar la RestAPI en entorno de `producción`
-  
+- ### Compliar el proyecto para usar la RestAPI en entorno de `producción`
 
-  1. Clonar el archivo ```.env.template``` y renombar la copia a ```.env.prod```
+  1. Clonar el archivo `.env.template` y renombar la copia a `.env.prod`
 
-  2. Completar con datos reales las variables de entorno definidas en el ```.env.prod```
+  2. Completar con datos reales las variables de entorno definidas en el `.env.prod`
 
   3. Tener una base de datos de MongoDB ya configurada; o ejecutar el siguiente comando para desplegar y ejecutar la imagen de Docker Hub:
+
      ```bash
      $ docker-compose -f docker-compose.yaml up -d
      ```
 
   4. Ejecutar desde una terminal:
+
      ```bash
      # Compilar el proyecto en la carpeta ./dist
      $ npm run build
@@ -150,385 +156,62 @@ Este proyecto sigue el modelo de Gitflow, lo que significa que tiene una estruct
 
 <br>
 
-* ###  Crear una imagen Docker para uso en entorno de `producción`
+- ### Crear una imagen Docker para uso en entorno de `producción`
 
-
-  1. Crear el archivo ```.env.prod```
-     
+  1. Crear el archivo `.env.prod`
   2. Llenar las variables de entorno de prod
-     
   3. Crear la nueva imagen:
-      ```
-      docker-compose -f docker-compose.prod.yaml --env-file .env.prod up --build
-      ```
+     ```
+     docker-compose -f docker-compose.prod.yaml --env-file .env.prod up --build
+     ```
 
-* ###  Utilizar la imagen del proyecto disponible en [Docker Hub](https://hub.docker.com/)
+- ### Utilizar la imagen del proyecto disponible en [Docker Hub](https://hub.docker.com/)
 
   1. Ejecutar desde una terminal:
-   
-      ```bash
-      # Descargar la última versión de la imagen del proyecto
-      $ docker pull javiertrombetta/box-back
-      ```     
-     
+
+     ```bash
+     # Descargar la última versión de la imagen del proyecto
+     $ docker pull javiertrombetta/box-back
+     ```
+
   2. Ejecutar desde una terminal:
-   
-      ```bash
-      # Iniciar el contenedor desde la imagen descargada
-      $ docker container run -d -p 80:80 javiertrombetta/box-back
-      ```  
+
+     ```bash
+     # Iniciar el contenedor desde la imagen descargada
+     $ docker container run -d -p 80:80 javiertrombetta/box-back
+     ```
 
 <br>
 
-## Documentación de las rutas
+## Documentación de las rutas con [Swagger](https://swagger.io/)
 
-### Rutas de Seed
 
-#### `Cargar la base de datos usando Faker` [Solo en desarrollo]
+**Box** utiliza Swagger para proporcionar documentación interactiva de las rutas, modelos y controladores. Swagger no solo facilita la comprensión de las capacidades de la API, sino que también permite probar las endpoints directamente desde la interfaz web.
 
-```bach
-[GET] http://localhost:3000/api/v1/seed
+Acceso a la documentación Swagger
+Para acceder a la documentación Swagger de la API, visita la siguiente URL en tu navegador:
+
+```bash
+http://localhost:3000/api
 ```
+
+Accediendo a esta url, podés encontrarte con la interfaz de usuario de Swagger. Tenés todas las rutas disponibles del proyecto, sus descripciones, parámetros, respuestas esperadas y otros detalles importantes.
 
 <br>
 
-### Rutas de Usuario
+### Cómo utilizar la documentación
+Una vez en la página de documentación de Swagger, podés expandir cada ruta para ver detalles específicos. 
 
-#### `Registrar un nuevo usuario` [Usuario no autenticado]
+La documentación incluye:
 
-```bach
-[POST] http://localhost:3000/api/v1/auth/register
-```
-
-- Body (JSON):
-
-  ```json
-  {
-  	"name": "Nombre",
-  	"lastname": "Apellido",
-  	"email": "usuario@dominio.com",
-  	"password": "Clave123"
-  }
-  ```
-
-#### `Iniciar sesión` [Usuario no autenticado]
-
-```bach
-[POST] http://localhost:3000/api/v1/auth/login
-```
-
-- Body (JSON):
-
-  ```json
-  {
-  	"email": "usuario@dominio.com",
-  	"password": "Clave123"
-  }
-  ```
-
-#### `Cerrar sesión` [Usuario autenticado]
-
-```bach
-[POST] http://localhost:3000/api/v1/auth/logout
-```
-
-- No requiere body.
-
-#### `Recuperar contraseña` [Usuario no autenticado]
-
-```bach
-[POST] http://localhost:3000/api/v1/auth/forgot-password
-```
-
-- Body (JSON):
-
-  ```json
-  {
-  	"email": "usuario@dominio.com"
-  }
-  ```
-
-#### `Verificar token de restablecimiento de contraseña` [Usuario no autenticado]
-
-```bach
-[GET] http://localhost:3000/api/v1/auth/verify-token?token=TOKEN_AQUÍ
-```
-
-#### `Restablecer contraseña` [Usuario no autenticado]
-
-```bach
-[POST] http://localhost:3000/api/v1/auth/reset-password
-```
-
-- Body (JSON):
-
-  ```json
-  {
-  	"token": "TOKEN_AQUÍ",
-  	"newPassword": "nueva123"
-  }
-  ```
-
-#### `Obtener información del usuario autenticado` [Usuario autenticado]
-
-```bach
-[GET] http://localhost:3000/api/v1/auth/me
-```
-
-#### `Obtener paquetes del usuario autenticado` [Usuario autenticado con rol repartidor]
-
-```bach
-[GET] http://localhost:3000/api/v1/auth/me/packages
-```
-
-#### `Obtener todos los usuarios` [Usuario autenticado con rol administrador]
-
-```bach
-[GET] http://localhost:3000/api/v1/auth/users
-```
-
-#### `Obtener datos de un usuario específico` [Usuario autenticado con rol administrador]
-
-```bach
-[GET] http://localhost:3000/api/v1/auth/users/:userId
-```
-
-#### `Obtener todos los usuarios filtrando por un estado específico` [Usuario autenticado con rol administrador]
-
-```bach
-[GET] http://localhost:3000/api/v1/auth/users/state/:state
-```
-
-#### `Obtener todos los paquetes de un usuario` [Usuario autenticado con rol administrador]
-
-```bach
-[GET] http://localhost:3000/api/v1/auth/users/:uuidUser/packages
-```
-
-#### `Actualizar rol de un usuario` [Usuario autenticado con rol administrador]
-
-```bach
-[PUT] http://localhost:3000/api/v1/auth/users/:userId/role
-```
-
-- Body (JSON):
-
-  ```json
-  {
-  	"roles": ["administrador"]
-  }
-  ```
-
-#### `Iniciar reaparto de un paquete del listado de paquetes del día` [Usuario autenticado con rol repartidor]
-
-```bach
-[PUT] http://localhost:3000/api/v1/auth/me/packages/:uuidPackage
-```
-
-- No requiere body.
-
-#### `Comenzar jornada de repartos, enviando también la declaración jurada` [Usuario autenticado con rol repartidor]
-
-```bach
-[PUT] http://localhost:3000/api/v1/auth/me/packages
-```
-
-- Body (JSON):
-
-  ```json
-  {
-      "packages": ["ID_PAQUETE_1", "ID_PAQUETE_2", ...],
-      "hasConsumedAlcohol": false,
-      "isUsingPsychoactiveDrugs": false,
-      "hasEmotionalDistress": false
-  }
-  ```
-
-#### `Cancelar un paquete` [Usuario autenticado con rol repartidor]
-
-```bach
-[PUT] http://localhost:3000/api/v1/auth/me/packages/:uuidPackage/cancel
-```
-
-- No requiere body.
-
-#### `Finalizar entrega de paquete` [Usuario autenticado con rol repartidor]
-
-```bach
-[PUT] http://localhost:3000/api/v1/auth/me/packages/:uuidPackage/finish
-```
-
-- No requiere body.
-
-#### `Cambiar estado de un usuario` [Usuario autenticado con rol administrador]
-
-```bach
-[PUT] http://localhost:3000/api/v1/auth/users/:uuidUser/state'
-```
-
-- Body (JSON):
-
-  ```json
-  {
-  	"state": "activo"
-  }
-  ```
-
-#### `Eliminar el propio usuario` [Usuario autenticado]
-
-```bach
-[DELETE] http://localhost:3000/api/v1/auth/me/delete
-```
-
-- No requiere body.
-
-#### `Eliminar un usuario específico` [Usuario autenticado con rol administrador]
-
-```bach
-[DELETE] http://localhost:3000/api/v1/auth/users/:userId
-```
-
-- No requiere body.
+- **Resumen y Descripción**: Breve explicación de lo que hace la ruta.
+- **Parámetros**: Lista de parámetros que acepta la ruta, incluyendo si son obligatorios u opcionales, y ejemplos de valores.
+- **Respuestas**: Códigos de respuesta HTTP posibles y sus descripciones, junto con modelos de respuesta para comprender mejor la estructura de los datos retornados.
+- **Pruebas en vivo**: Swagger permite realizar llamadas de prueba a la API directamente desde la interfaz. Solo necesitás completar los parámetros requeridos y hacer click en `Try it out`.
+- **Autenticación**: Para las rutas que requieren autenticación, asegurate de obtener un token válido (usualmente a través de una ruta de login o registro) y utilizar el botón `Authorize` disponible en la parte superior de la página de documentación Swagger. Esto te permitirá ingresar el token y realizar solicitudes autenticadas.
+- 
 
 <br>
-
-### Rutas de Paquetes
-
-#### `Obtener paquetes disponibles` [Usuario autenticado con rol repartidor]
-
-```bach
-[GET] http://localhost:3000/api/v1/packages/available
-```
-
-#### `Obtener paquetes entregados` [Usuario autenticado con rol repartidor]
-
-```bach
-[GET] http://localhost:3000/api/v1/packages/me/delivered
-```
-
-#### `Obtener detalles de un paquete específico` [Usuario autenticado con rol repartidor]
-
-```bach
-[GET] http://localhost:3000/api/v1/packages/at/:uuidPackage/details
-```
-
-#### `Crear un nuevo paquete` [Usuario autenticado con rol administrador]
-
-```bach
-[POST] http://localhost:3000/api/v1/packages/new
-```
-
-- Body (JSON):
-
-  ```json
-  {
-  	"deliveryFullname": "Carlos López",
-  	"deliveryAddress": "Calle Flasa 123",
-  	"deliveryWeight": 3,
-    "deliveryDate": "20240325"
-  }
-  ```
-
-#### `Actualizar el estado de un paquete` [Usuario autenticado con rol administrador]
-
-```bach
-[PUT] http://localhost:3000/api/v1/packages/at/:packageId/state
-```
-
-- Body (JSON):
-
-  ```json
-  {
-  	"state": "en curso"
-  }
-  ```
-
-#### `Asignar un paquete a un repartidor` [Usuario autenticado con rol repartidor]
-
-```bach
-[PUT] http://localhost:3000/api/v1/packages/at/:packageId/assign
-```
-
-- Body (JSON):
-
-  ```json
-  {
-  	"deliveryMan": "ID_REPARTIDOR"
-  }
-  ```
-
-#### `Eliminar un paquete` [Usuario autenticado con rol administrador]
-
-```bach
-[DELETE] http://localhost:3000/api/v1/packages/at/:uuidPackage/remove
-```
-
-- No requiere body.
-
-<br>
-
-### Rutas de Ubicación (Google Maps)
-
-#### `Obtener ubicación de un Paquete` [Usuario autenticado con rol repartidor]
-
-```bach
-[GET] http://localhost:3000/api/v1/locations/package/:packageId
-
-```
-
-#### `Registrar ubicación de repartidor` [Usuario autenticado con rol repartidor]
-
-```bach
-[PUT] http://localhost:3000/api/v1/locations/deliveryman/update
-```
-
-- Body (JSON):
-
-  ```json
-  {
-    "latitude": -34.549148146059096,
-    "longitude": -58.468021206013034
-  }
-  ```
-
-<br>
-
-### Rutas de Reportes
-
-#### `Reporte de cantidad total de repartidores agrupados por estado y fecha` [Usuario autenticado con rol administrador]
-
-```bach
-[GET] http://localhost:3000/api/v1/reports/deliveryman/all/state/totals/:year/:month/:day
-
-```
-
-#### `Reporte detallado de repartidores por fecha` [Usuario autenticado con rol administrador]
-
-```bach
-[GET] http://localhost:3000/api/v1/reports/deliveryman/all/state/details/:year/:month/:day
-
-```
-
-#### `Reporte detallado de paquetes entregados por fecha` [Usuario autenticado con rol administrador]
-
-```bach
-[GET] http://localhost:3000/api/v1/reports/packages/delivered/:year/:month/:day
-
-```
-
-#### `Reporte detallado de paquetes entregados por un repartidor y en una determinada fecha` [Usuario autenticado con rol administrador]
-
-```bach
-[GET] http://localhost:3000/api/v1/reports/packages/delivered/:year/:month/:day?userId=[ESCRIBIR_EL_UUUID_DEL_REPARTIDOR]
-
-```
-
-#### `Reporte detallado de todos los paquetes por fecha` [Usuario autenticado con rol administrador]
-
-```bach
-[GET] http://localhost:3000/api/v1/reports/packages/all/:year/:month/:day
-
-```
 
 ## Contribuir con el proyecto Box
 
@@ -542,9 +225,8 @@ Para contribuir al proyecto:
 
 <br>
 
-## Envianos tus comentarios
-
-Por cualquier consulta, colaboración, inquitud o sugerencia, podés escribirnos por mail a *acep5box@gmail.com*
+### Soporte y Feedback
+Si tenés preguntas, encontrás errores, querés colaborar o proporcionar feedback sobre la documentación y/o la API, no dudes en contactar al equipo de desarrollo por mail a **acep5box@gmail.com**.
 
 <br>
 

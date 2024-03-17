@@ -14,7 +14,11 @@ export class User extends mongoose.Document {
 	@Prop({ required: true })
 	name: string;
 
-	@Prop({ required: true })
+	@Prop({
+		required: function () {
+			return !this.provider;
+		},
+	})
 	lastname: string;
 
 	@Prop({ required: true, unique: true, lowercase: true })
@@ -39,8 +43,8 @@ export class User extends mongoose.Document {
 	@ApiProperty()
 	packages: string[];
 
-	@Prop({ type: Buffer, required: false })
-	photoUrl: Buffer;
+	@Prop({ required: false })
+	photoUrl: string;
 
 	@Prop({ default: validationMessages.auth.user.state.isActiveState, enum: [validationMessages.auth.user.state.isActiveState, validationMessages.auth.user.state.isInactiveSate] })
 	state: string;
@@ -54,6 +58,12 @@ export class User extends mongoose.Document {
 	@Prop({ default: 0 })
 	@ApiProperty()
 	consecutiveDeliveries: number;
+
+	@Prop({ required: false })
+	provider: string;
+
+	@Prop({ required: false })
+	providerId: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

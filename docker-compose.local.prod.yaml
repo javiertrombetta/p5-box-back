@@ -5,10 +5,10 @@ services:
     depends_on:
       - boxdb
     build:
-      target: ${NODE_ENV}      
+      target: ${NODE_ENV}
       context: .
       dockerfile: Dockerfile
-    image: javiertrombetta/box-back:latest    
+    image: javiertrombetta/box-back:latest
     container_name: boxapi
     restart: always
     ports:
@@ -19,7 +19,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN}
       CORS_METHODS: ${CORS_METHODS}
       GLOBAL_PREFIX: ${GLOBAL_PREFIX}
-      PORT: ${PORT}      
+      PORT: ${PORT}
       MONGODB_URI: ${MONGODB_URI}
       JWT_SECRET: ${JWT_SECRET}
       SMTP_SERVICES: ${SMTP_SERVICES}
@@ -42,7 +42,7 @@ services:
       TZ: ${TIME_ZONE}
       MONGO_USERNAME: ${MONGO_USERNAME}
       MONGO_PASSWORD: ${MONGO_PASSWORD}
-      MONGO_DB_NAME: ${MONGO_DB_NAME}        
+      MONGO_DB_NAME: ${MONGO_DB_NAME}
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     command: ['--auth']
