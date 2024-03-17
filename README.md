@@ -9,7 +9,7 @@
 ![Static Badge](https://img.shields.io/badge/Docker-docker.com-blue)
 
 
-![Static Badge](https://img.shields.io/badge/REQUERIMIENTOS%20NECESARIOS:-grey)
+![Static Badge](https://img.shields.io/badge/SERVICIOS%20PREVIAMENTE%20DISPONIBILIZADOS:-grey)
 ![Static Badge](https://img.shields.io/badge/Google%20OAuth%202.0-darkred)
 ![Static Badge](https://img.shields.io/badge/Google%20Maps%20RoutesAPI-darkred)
 ![Static Badge](https://img.shields.io/badge/AWS%20S3-darkred)

@@ -4,7 +4,7 @@ export const JoiValidationDevSchema = Joi.object({
 	TZ: Joi.string().required(),
 	NODE_ENV: Joi.string().valid('development').required(),
 
-	// CORS_ORIGIN: Joi.string().uri().required(),
+	CORS_ORIGIN: Joi.string().uri().required(),
 	CORS_METHODS: Joi.string()
 		.pattern(/^(GET|POST|PUT|DELETE)(,(GET|POST|PUT|DELETE))*$/)
 		.required(),
@@ -28,4 +28,13 @@ export const JoiValidationDevSchema = Joi.object({
 	GOOGLE_TRAVEL_MODE: Joi.string().valid('DRIVING', 'WALKING', 'BICYCLING', 'TRANSIT', 'TWO_WHEELER').required(),
 	GOOGLE_ROUTING_PREFERENCE: Joi.string().valid('TRAFFIC_AWARE', 'TRAFFIC_AWARE_OPTIMAL').required(),
 	GOOGLE_RESPONSE_FILEDS: Joi.string().required(),
+
+	GOOGLE_OAUTH_WEB_CLIENT_ID: Joi.string().required(),
+	GOOGLE_OAUTH_WEB_SECRET: Joi.string().required(),
+	GOOGLE_OAUTH_WEB_CALLBACK_URL: Joi.string().uri().required(),
+
+	AWS_S3_BUCKET_NAME: Joi.string().required(),
+	AWS_ACCESS_KEY_ID: Joi.string().required(),
+	AWS_SECRET_ACCESS_KEY: Joi.string().required(),
+	AWS_REGION: Joi.string().required(),
 });

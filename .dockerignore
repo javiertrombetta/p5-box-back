@@ -1,15 +1,14 @@
 dist/
 mongo/
 node_modules/
-static/
 test/
-uploads/
 
 .gitignore
 .eslintignore
 .prettierignore
 .git/
 .github/workflows
+.husky/
 
 .env*
 .eslintrc*
