@@ -11,10 +11,10 @@ import { LogModule } from '../log/log.module';
 import { Log, LogSchema } from '../log/entities';
 
 import { LocationsModule } from '../locations/locations.module';
-import { Location, LocationSchema } from 'src/locations/entities';
+import { Location, LocationSchema } from '../locations/entities';
 
-import { LegalDeclarationsModule } from 'src/legals/legals.module';
-import { LegalDeclaration, LegalDeclarationSchema } from 'src/legals/entities';
+import { LegalDeclarationsModule } from '../legals/legals.module';
+import { LegalDeclaration, LegalDeclarationSchema } from '../legals/entities';
 
 import { SeedService } from './seed.service';
 import { SeedController } from './seed.controller';

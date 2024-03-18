@@ -13,7 +13,7 @@ import { Location } from '../locations/entities';
 import { LegalDeclaration } from '../legals/entities';
 
 import { validationMessages } from '../common/constants';
-import { ValidRoles } from 'src/auth/interfaces';
+import { ValidRoles } from '../auth/interfaces';
 
 @Injectable()
 export class SeedService {

@@ -1,12 +1,17 @@
 import { Controller, Post, Body, Get, Param, Res, HttpStatus } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { LegalDeclarationsService } from './legals.service';
-import { CreateLegalDeclarationDto } from './dto/create-legal-declaration.dto';
+
+import { User } from '../auth/entities/user.entity';
+
+import { ValidRoles } from '../auth/interfaces';
+
 import { Auth } from '../auth/decorators/auth.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { User } from '../auth/entities/user.entity';
-import { ValidRoles } from 'src/auth/interfaces';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+
+import { LegalDeclarationsService } from './legals.service';
+import { CreateLegalDeclarationDto } from './dto/create-legal-declaration.dto';
+
 import { ExceptionHandlerService } from '../common/helpers/exception-handler.service';
 import { validationMessages } from '../common/constants';
 
