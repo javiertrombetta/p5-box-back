@@ -4,6 +4,7 @@
 /mongo
 
 /.env
+/.env.test
 /.env.prod.local
 /.env.prod.remote
 /.eslintignore

@@ -17,6 +17,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { LegalDeclarationsModule } from './legals/legals.module';
 import { JoiValidationDevSchema, JoiValidationProdSchema } from './config';
 import { PhotosModule } from './photos/photos.module';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 @Module({
 	imports: [
@@ -30,9 +31,23 @@ import { PhotosModule } from './photos/photos.module';
 		}),
 		MongooseModule.forRootAsync({
 			imports: [ConfigModule],
-			useFactory: async (configService: ConfigService) => ({
-				uri: configService.get('MONGODB_URI'),
-			}),
+			useFactory: async (configService: ConfigService) => {
+				if (process.env.NODE_ENV === 'test') {
+					const mongod = await MongoMemoryServer.create();
+					const uri = mongod.getUri();
+					return { uri };
+				} else {
+					const uri = configService.get<string>('MONGODB_URI');
+					return {
+						uri,
+						auth: {
+							username: configService.get<string>('MONGODB_USER'),
+							password: configService.get<string>('MONGODB_PASSWORD'),
+						},
+						dbName: configService.get<string>('MONGODB_DATABASE'),
+					};
+				}
+			},
 			inject: [ConfigService],
 		}),
 		AuthModule,
