@@ -41,7 +41,7 @@ export class PhotoController {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Archivo no válido.' })
 	@Auth(ValidRoles.repartidor, ValidRoles.administrador)
 	async uploadUserPhoto(@UploadedFile() file: Express.Multer.File, @GetUser() user, @Res() res: Response) {
-		if (user.provider && user.photoUrl) {
+		if (user.provider) {
 			return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Los usuarios de OAuth no pueden actualizar su foto de perfil por este medio.' });
 		}
 
@@ -71,19 +71,18 @@ export class PhotoController {
 			throw new HttpException(validationMessages.auth.user.photoUrl.fileNotFound, HttpStatus.NOT_FOUND);
 		}
 
-		let photoUrl = existingUser.photoUrl;
-
-		if (!existingUser.provider && existingUser.photoUrl.includes('s3.amazonaws.com')) {
+		if (!existingUser.provider) {
 			try {
 				const urlParts = new URL(existingUser.photoUrl);
 				const key = urlParts.pathname.substring(1);
-				photoUrl = await this.photosService.generatePresignedUrl(key);
+				const photoUrl = await this.photosService.generatePresignedUrl(key);
+				return res.status(HttpStatus.OK).json({ photoUrl });
 			} catch (error) {
 				ExceptionHandlerService.handleException(error, res);
 				return;
 			}
 		}
 
-		return res.status(HttpStatus.OK).json({ photoUrl });
+		return res.status(HttpStatus.OK).json({ photoUrl: existingUser.photoUrl });
 	}
 }
