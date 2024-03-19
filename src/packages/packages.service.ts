@@ -90,10 +90,13 @@ export class PackagesService {
 	}
 
 	async findPackagesByDateAndOptionalState(deliveryDate: Date, state?: string): Promise<Package[]> {
+		const startDate = new Date(Date.UTC(deliveryDate.getUTCFullYear(), deliveryDate.getUTCMonth(), deliveryDate.getUTCDate()));
+		const endDate = new Date(Date.UTC(deliveryDate.getUTCFullYear(), deliveryDate.getUTCMonth(), deliveryDate.getUTCDate(), 23, 59, 59, 999));
+
 		const query: any = {
 			deliveryDate: {
-				$gte: new Date(deliveryDate.setHours(0, 0, 0, 0)),
-				$lt: new Date(deliveryDate.setHours(23, 59, 59, 999)),
+				$gte: startDate,
+				$lt: endDate,
 			},
 		};
 
