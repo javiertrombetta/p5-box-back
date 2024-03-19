@@ -69,22 +69,22 @@ export class PackagesService {
 			.exec();
 	}
 
-	async findPackagesByCriteria(year: string, month: string, day: string, uuidUser?: string, includeAllStates: boolean = false): Promise<Package[]> {
-		const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
-		const nextDay = new Date(date);
-		nextDay.setDate(date.getDate() + 1);
+	async findPackagesByCriteria(year?: string, month?: string, day?: string, uuidUser?: string, includeAllDelivered: boolean = false): Promise<Package[]> {
+		const query: any = {};
 
-		const query: any = {
-			deliveryDate: { $gte: date, $lt: nextDay },
-		};
+		if (!includeAllDelivered) {
+			const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+			const nextDay = new Date(date);
+			nextDay.setDate(date.getDate() + 1);
+
+			query.deliveryDate = { $gte: date, $lt: nextDay };
+		}
 
 		if (uuidUser) {
 			query.deliveryMan = uuidUser;
 		}
 
-		if (!includeAllStates) {
-			query.state = validationMessages.packages.state.delivered;
-		}
+		query.state = validationMessages.packages.state.delivered;
 
 		return this.packageModel.find(query).exec();
 	}

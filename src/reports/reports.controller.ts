@@ -52,7 +52,28 @@ export class ReportsController {
 		}
 	}
 
-	@Get('packages/delivered/:year/:month/:day')
+	@Get('packages/delivered')
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: 'Obtener direcciones de entrega de paquetes entregados',
+		description: 'Obtiene las direcciones de entrega de todos los paquetes entregados, opcionalmente filtrados por repartidor.',
+	})
+	@ApiQuery({ name: 'userId', description: 'OPCIONAL: UUID de repartidor', type: String, required: false })
+	@ApiResponse({ status: 200, description: 'Direcciones obtenidas correctamente.' })
+	@ApiResponse({ status: 404, description: 'Direcciones no encontradas.' })
+	@ApiResponse({ status: 500, description: 'Error del servidor.' })
+	@Auth(ValidRoles.administrador)
+	async getDeliveredPackagesAddresses(@Res() res: Response, @Query('userId') userId?: string) {
+		try {
+			const deliveredPackages = await this.reportsService.findDeliveredPackagesAddresses(userId);
+			const addresses = deliveredPackages.map(pkg => pkg.deliveryAddress);
+			res.json({ addresses });
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
+	}
+
+	@Get('packages/delivered/by/:year/:month/:day')
 	@ApiBearerAuth()
 	@ApiOperation({ summary: 'Obtener paquetes entregados', description: 'Obtiene los paquetes entregados en una fecha específica. Requiere rol de administrador.' })
 	@ApiParam({ name: 'year', description: 'Año', type: String, example: '2023' })

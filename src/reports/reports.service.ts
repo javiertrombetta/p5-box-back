@@ -36,6 +36,10 @@ export class ReportsService {
 		return this.logService.getStateDetailsOfUsersUntilDate(date, ValidRoles.repartidor);
 	}
 
+	async findDeliveredPackagesAddresses(userId?: string): Promise<any> {
+		return this.packagesService.findPackagesByCriteria(undefined, undefined, undefined, userId, true);
+	}
+
 	async findDeliveredPackagesByDate(year: string, month: string, day: string, userId?: string): Promise<any> {
 		if (userId) {
 			const user = await this.authService.findById(userId);
