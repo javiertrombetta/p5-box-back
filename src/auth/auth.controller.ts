@@ -30,6 +30,7 @@ export class AuthController {
 	// POST
 
 	@Post('register')
+	@UseInterceptors(FileInterceptor('photoUrl'))
 	@ApiOperation({ summary: 'Registrar usuario local' })
 	@ApiConsumes('multipart/form-data')
 	@ApiBody({
@@ -49,7 +50,6 @@ export class AuthController {
 			},
 		},
 	})
-	@UseInterceptors(FileInterceptor('photo'))
 	async register(@Body() createUserDto: CreateUserDto, @UploadedFile() photo: Express.Multer.File, @Res() res: Response) {
 		try {
 			await this.authService.register(createUserDto, photo);

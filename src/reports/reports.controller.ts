@@ -58,7 +58,7 @@ export class ReportsController {
 	@ApiParam({ name: 'year', description: 'Año', type: String, example: '2023' })
 	@ApiParam({ name: 'month', description: 'Mes', type: String, example: '04' })
 	@ApiParam({ name: 'day', description: 'Día', type: String, example: '15' })
-	@ApiQuery({ name: 'userId', description: 'Identificador único del repartidor', type: String, required: false, example: '550e8400-e29b-41d4-a716-446655440000' })
+	@ApiQuery({ name: 'userId', description: 'OPCIONAL: Dejarlo vacío o UUID de repartidor', type: String, required: false, example: '550e8400-e29b-41d4-a716-446655440000' })
 	@ApiResponse({ status: 200, description: 'Paquetes entregados obtenidos correctamente.' })
 	@ApiResponse({ status: 400, description: 'Solicitud incorrecta.' })
 	@ApiResponse({ status: 404, description: 'Paquetes no encontrados.' })
