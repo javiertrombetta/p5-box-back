@@ -24,13 +24,26 @@ export class LogService {
 		return this.logModel.find().exec();
 	}
 
-	async getLastStateOfUsersUntilDate(date: Date): Promise<{ activeUsers: number; inactiveUsers: number }> {
+	async getLastStateOfUsersUntilDate(date: Date, role: string): Promise<{ activeUsers: number; inactiveUsers: number }> {
 		const aggregationPipeline: any = [
 			{
 				$match: {
 					timestamp: { $lte: date },
 					action: { $in: [validationMessages.log.action.user.state.activate, validationMessages.log.action.user.state.deactivate] },
 					entity: validationMessages.log.entity.user,
+				},
+			},
+			{
+				$lookup: {
+					from: 'users',
+					localField: 'entityId',
+					foreignField: '_id',
+					as: 'user',
+				},
+			},
+			{
+				$match: {
+					'user.roles': role,
 				},
 			},
 			{
@@ -94,8 +107,8 @@ export class LogService {
 		}
 	}
 
-	async getStateDetailsOfUsersUntilDate(date: Date): Promise<any> {
-		const users = await this.authService.findUsersBeforeDate(date);
+	async getStateDetailsOfUsersUntilDate(date: Date, role: string): Promise<any> {
+		const users = await this.authService.findUsersBeforeDate(date, role);
 		const userIds = users.map(user => user._id);
 
 		const logs = await this.logModel

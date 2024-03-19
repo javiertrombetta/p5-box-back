@@ -15,7 +15,7 @@ export class ReportsController {
 	@ApiBearerAuth()
 	@ApiOperation({
 		summary: 'Informe total de estados de repartidores',
-		description: 'Obtiene el total de repartidores disponibles por estado en una fecha específica. Requiere autenticación y rol de administrador.',
+		description: 'Obtener el total de repartidores disponibles por estado en una fecha específica. Requiere autenticación y rol de administrador.',
 	})
 	@ApiParam({ name: 'year', type: 'string', description: 'Año para el informe', example: '2024' })
 	@ApiParam({ name: 'month', type: 'string', description: 'Mes para el informe', example: '03' })
