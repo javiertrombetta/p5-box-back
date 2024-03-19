@@ -242,8 +242,13 @@ export class AuthService {
 		});
 	}
 
-	async countUsersRegisteredBeforeDate(date: Date): Promise<number> {
-		return this.userModel.countDocuments({ createdAt: { $lte: date } }).exec();
+	async countDeilverymanRegisteredBeforeDate(date: Date): Promise<number> {
+		return this.userModel
+			.countDocuments({
+				createdAt: { $lte: date },
+				roles: ValidRoles.repartidor,
+			})
+			.exec();
 	}
 
 	async findAll(): Promise<User[]> {
@@ -264,8 +269,13 @@ export class AuthService {
 		return this.userModel.find({ 'packages.0': { $exists: true } }).exec();
 	}
 
-	async findUsersBeforeDate(date: Date): Promise<User[]> {
-		return this.userModel.find({ createdAt: { $lte: date } }).exec();
+	async findUsersBeforeDate(date: Date, role: string): Promise<User[]> {
+		return this.userModel
+			.find({
+				createdAt: { $lte: date },
+				roles: role,
+			})
+			.exec();
 	}
 
 	async updateUserPhotoUrl(userId: string, photoUrl: string): Promise<void> {
