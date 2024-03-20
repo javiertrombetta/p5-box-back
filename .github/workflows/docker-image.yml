@@ -2,39 +2,77 @@ name: Docker Image CI
 
 on:
   push:
-    branches: ['main']
-  pull_request:
-    branches: ['main']
+    branches:
+      - main
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  CI_COMMIT_MESSAGE: CI Automatic push on develop
+  CI_COMMIT_AUTHOR: javiertrombetta
 
 jobs:
-  build:
+  semantic_version:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Calculate Semantic Version
-        id: version
+      - name: Perform semantic version
+        id: semantic_version
         uses: paulhatch/semantic-version@v5.3.0
         with:
-          major_pattern: "(MAJOR)"          
-          major_regexp_flags: ""          
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"    
           minor_pattern: "(MINOR)"         
-          minor_regexp_flags: ""         
-          version_format: "${major}.${minor}.${patch}-prerelease${increment}"                  
-          namespace: boxapi          
+          version_format: "${major}.${minor}.${patch}-prerelease${increment}"
+          user_format_type: "csv"        
           bump_each_commit: false          
-          bump_each_commit_patch_pattern: ""          
-          search_commit_body: false        
-          user_format_type: "json"         
-          enable_prerelease_mode: true         
-          debug: false         
-          version_from_branch: false
+          search_commit_body: true                     
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          custom_tag: ${{ steps.semantic_version.outputs.version_tag }}
+          tag_prefix: ""
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Build Changelog"
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v4.1.0
+        with:
+          fromTag: v${{ steps.semantic_version.outputs.previous_version }}
+          toTag: ${{ steps.tag_version.outputs.new_tag }}
+
+      - name: Create production release
+        uses: ncipollo/release-action@v1
+        id: release
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ steps.semantic_version.outputs.version_tag }}
+          body: ${{ steps.build_changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+          commit: ${{ steps.semantic_version.outputs.current_commit }}
+
+      - name: Update CHANGELOG & update develop branch
+        run: |
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "${{ env.CI_COMMIT_AUTHOR }}"
+          changelog='${{ steps.build_changelog.outputs.changelog }}'
+          escaped_changelog=$(printf '%s\n' "$changelog" | sed 's/\\/&&/g;s/^[[:blank:]]/\\&/;s/$/\\/')
+          sed -i "2i ${escaped_changelog%?}" CHANGELOG.md
+          sed -i "2i ## ${{ steps.semantic_version.outputs.version_tag }} - $(date +'%d-%m-%Y')" CHANGELOG.md
+          git add -A && git commit -m "chore(docs): update CHANGELOG.MD"
+          git push origin main
+          git push --force origin main:develop
 
       - name: Docker Login
+        id: docker_login
         env:
           DOCKER_USER: ${{ secrets.DOCKER_USER }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -42,23 +80,13 @@ jobs:
           docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
 
       - name: Set up Docker Buildx
+        id: docker_buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker Image
+        id: docker_release
         env:
-          NEW_VERSION: ${{ steps.version.outputs.version }}
+          NEW_VERSION: ${{ steps.semantic_version.outputs.version_tag }}
         run: |
           docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,windows/amd64 -t javiertrombetta/box-back:$NEW_VERSION --push .
           docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,windows/amd64 -t javiertrombetta/box-back:latest --push .
-
-#       docker build -t javiertrombetta/box-back:$NEW_VERSION .
-#       docker build -t javiertrombetta/box-back:latest .
-#   - name: Push Docker Image
-#     env:
-#       NEW_VERSION: ${{ steps.version.outputs.version }}
-#     run: |
-#       docker push javiertrombetta/box-back:$NEW_VERSION
-#       docker push javiertrombetta/box-back:latest
-
-#    - name: Build the Docker image
-#      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
