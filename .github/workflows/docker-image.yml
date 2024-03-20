@@ -19,11 +19,22 @@ jobs:
       - name: Calculate Semantic Version
         id: version
         uses: paulhatch/semantic-version@v5.3.0
-        with:
-          major_pattern: 'major'
-          minor_pattern: 'feat'
-          version_format: '${major}.${minor}.${patch}-prerelease${increment}'
-        
+        with:          
+          tag_prefix: "v"         
+          major_pattern: "(MAJOR)"          
+          major_regexp_flags: ""          
+          minor_pattern: "(MINOR)"         
+          minor_regexp_flags: ""         
+          version_format: "${major}.${minor}.${patch}-prerelease${increment}"                  
+          namespace: boxapi          
+          bump_each_commit: false          
+          bump_each_commit_patch_pattern: ""          
+          search_commit_body: false        
+          user_format_type: "json"         
+          enable_prerelease_mode: true         
+          debug: false         
+          version_from_branch: false
+
       - name: Docker Login
         env:
           DOCKER_USER: ${{ secrets.DOCKER_USER }}
