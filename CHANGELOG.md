@@ -1,4 +1,27 @@
 # Changelog
+## v0.2.0 - 20-03-2024
+## 📦 Uncategorized
+
+- Sprint4 js packages
+   - PR: #2
+- feat(packageEntityAndDto):add new config
+   - PR: #3
+- fix(packages): fix entity
+   - PR: #4
+- feat(packages.controller):new routes
+   - PR: #5
+- feat(package.controller):add new routes
+   - PR: #6
+- feat(Swagger): add documentation
+   - PR: #7
+- feat(packages.e2e):packages tests
+   - PR: #8
+- feat(swagger): changes pre demo
+   - PR: #9
+- feat(reports): add reports swagger
+   - PR: #10
+
+
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
