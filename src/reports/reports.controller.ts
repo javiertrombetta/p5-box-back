@@ -73,7 +73,7 @@ export class ReportsController {
 		}
 	}
 
-	@Get('packages/delivered/by/:year/:month/:day')
+	@Get('packages/delivered/:year/:month/:day')
 	@ApiBearerAuth()
 	@ApiOperation({ summary: 'Obtener paquetes entregados', description: 'Obtiene los paquetes entregados en una fecha específica. Requiere rol de administrador.' })
 	@ApiParam({ name: 'year', description: 'Año', type: String, example: '2023' })
