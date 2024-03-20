@@ -142,6 +142,33 @@ export class PackagesService {
 		return newPackage;
 	}
 
+	async countAssignedPackagesByDateAndDeliveryman(year: string, month: string, day: string, deliverymanId: string): Promise<number> {
+		const dateStart = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+		const dateEnd = new Date(dateStart);
+		dateEnd.setDate(dateStart.getDate() + 1);
+
+		const filter = {
+			deliveryMan: deliverymanId,
+			deliveryDate: { $gte: dateStart, $lt: dateEnd },
+		};
+
+		return this.packageModel.countDocuments(filter).exec();
+	}
+
+	async countDeliveredPackagesByDateAndDeliveryman(year: string, month: string, day: string, deliverymanId: string): Promise<number> {
+		const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+		const nextDay = new Date(date);
+		nextDay.setDate(date.getDate() + 1);
+
+		return this.packageModel
+			.countDocuments({
+				deliveryDate: { $gte: date, $lt: nextDay },
+				deliveryMan: deliverymanId,
+				state: 'entregado',
+			})
+			.exec();
+	}
+
 	async updateById(pkgId: string, updatePackageDto: UpdatePackageDto, userId: string): Promise<Package> {
 		const packageToUpdate = await this.packageModel.findById(pkgId);
 		if (!packageToUpdate) throw new NotFoundException(validationMessages.packages.error.packageNotFound);

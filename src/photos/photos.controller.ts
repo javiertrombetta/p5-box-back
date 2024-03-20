@@ -1,4 +1,4 @@
-import { Controller, Post, UseInterceptors, UploadedFile, BadRequestException, Get, Res, HttpStatus, HttpException } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, BadRequestException, Get, Res, HttpStatus, HttpException, Param } from '@nestjs/common';
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -9,7 +9,7 @@ import { GetUser, Auth } from '../auth/decorators';
 import { ValidRoles } from '../auth/interfaces';
 import { fileFilter } from './helpers';
 import { validationMessages } from '../common/constants';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UploadPhotoDto } from './dto/upload-photo.dto';
 import { ExceptionHandlerService } from '../common/helpers';
 
@@ -84,5 +84,37 @@ export class PhotoController {
 		}
 
 		return res.status(HttpStatus.OK).json({ photoUrl: existingUser.photoUrl });
+	}
+
+	@Get('/user/:userId/photo')
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: 'Obtener foto de perfil de un usuario',
+		description: 'Este endpoint permite a un administrador obtener la URL de la foto de perfil de un usuario específico.',
+	})
+	@ApiParam({ name: 'userId', type: 'string', description: 'El ID del usuario', required: true })
+	@ApiResponse({ status: HttpStatus.OK, description: 'URL de la foto obtenida correctamente.', type: String })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Usuario o foto no encontrada.' })
+	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Acceso no autorizado.' })
+	@Auth(ValidRoles.administrador)
+	async getUserPhotoById(@Param('userId') userId: string, @Res() res: Response) {
+		const user = await this.authService.findById(userId);
+		if (!user) {
+			throw new HttpException(validationMessages.auth.account.error.googleAccountNotFound, HttpStatus.UNAUTHORIZED);
+		}
+		if (!user.photoUrl) {
+			throw new HttpException(validationMessages.auth.user.photoUrl.fileNotFound, HttpStatus.NOT_FOUND);
+		}
+		try {
+			let photoUrl = user.photoUrl;
+			if (!user.provider) {
+				const urlParts = new URL(user.photoUrl);
+				const key = urlParts.pathname.substring(1);
+				photoUrl = await this.photosService.generatePresignedUrl(key);
+			}
+			return res.status(HttpStatus.OK).json({ photoUrl });
+		} catch (error) {
+			ExceptionHandlerService.handleException(error, res);
+		}
 	}
 }

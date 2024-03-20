@@ -308,6 +308,9 @@ export const validationMessages = {
 	},
 	reports: {
 		packagesNotFound: 'No se encontraron paquetes entregados para la fecha especificada.',
+		userNotFound: 'Repartidor no encontrado o el ID es incorrecto',
+		userNotSpecified: 'Es necesario especificar un ID de repartidor',
+		noPackagesTaken: ' El repartidor no hizo entregas en la fecha seleccionda.',
 	},
 	swagger: {
 		user: {
