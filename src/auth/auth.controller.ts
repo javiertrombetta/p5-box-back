@@ -272,6 +272,7 @@ export class AuthController {
 				email: targetUser.email,
 				roles: targetUser.roles,
 				photoUrl: targetUser.photoUrl,
+				state: targetUser.state,
 			};
 
 			res.status(HttpStatus.OK).json(response);
