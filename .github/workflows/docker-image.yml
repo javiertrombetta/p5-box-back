@@ -71,6 +71,12 @@ jobs:
           git push origin main
           git push --force origin main:develop
 
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            :rocket: The next version will be **${{ steps.semantic_version.outputs.version_tag }}** ! :rocket:
+
       - name: Docker Login
         id: docker_login
         env:
