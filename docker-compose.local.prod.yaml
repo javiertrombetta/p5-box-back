@@ -44,7 +44,7 @@ services:
       AWS_REGION: ${AWS_REGION}
 
   boxdb:
-    image: mongo:7.0.6
+    image: mongo:7.0.7
     volumes:
       - box-vol:/data/db
     container_name: ${MONGO_DB_NAME}

@@ -2,7 +2,7 @@ version: '3.1'
 
 services:
   boxdb:
-    image: mongo:7.0.6
+    image: mongo:7.0.7
     container_name: ${MONGO_DB_NAME}
     restart: always
     ports:
