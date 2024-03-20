@@ -7,7 +7,7 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  CI_COMMIT_MESSAGE: CI Automatic push on develop
+  CI_COMMIT_MESSAGE: CI Automatic push on develop and Docker Hub
   CI_COMMIT_AUTHOR: javiertrombetta
 
 jobs:
