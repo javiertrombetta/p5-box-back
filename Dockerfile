@@ -1,5 +1,5 @@
 # Etapa de producción - Primera etapa: Instalación de dependencias
-FROM node:21.7.1-alpine3.19 AS build-deps
+FROM --platform=$BUILDPLATFORM node:21.7.1-alpine3.19 AS build-deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --frozen-lockfile && npm cache clean --force
@@ -12,7 +12,7 @@ COPY tsconfig.build.json tsconfig.json ./
 RUN npm run build
 
 # Etapa de producción - Tercera etapa: Preparación del entorno de ejecución
-FROM node:21.7.1-alpine3.19 AS production
+FROM --platform=$BUILDPLATFORM node:21.7.1-alpine3.19 AS production
 WORKDIR /app
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
