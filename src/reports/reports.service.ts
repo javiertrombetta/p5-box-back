@@ -68,4 +68,23 @@ export class ReportsService {
 
 		return packages;
 	}
+
+	async getDeliverymanDeliveryPercentage(year: string, month: string, day: string, deliverymanId: string): Promise<any> {
+		const dateStart = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+		const dateEnd = new Date(dateStart);
+		dateEnd.setDate(dateStart.getDate() + 1);
+
+		const assignedPackagesCount = await this.packagesService.countAssignedPackagesByDateAndDeliveryman(year, month, day, deliverymanId);
+
+		if (assignedPackagesCount === 0) {
+			throw new HttpException(validationMessages.reports.noPackagesTaken, HttpStatus.NOT_FOUND);
+		}
+
+		const deliveredPackagesCount = await this.packagesService.countDeliveredPackagesByDateAndDeliveryman(year, month, day, deliverymanId);
+
+		const totalPackages = 10;
+		const percentage = (deliveredPackagesCount / totalPackages) * 100;
+
+		return { percentage };
+	}
 }
