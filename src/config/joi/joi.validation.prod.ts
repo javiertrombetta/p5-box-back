@@ -1,7 +1,7 @@
 import * as Joi from 'joi';
 
 export const JoiValidationProdSchema = Joi.object({
-	TIME_ZONE: Joi.string().required(),
+	TZ: Joi.string().required(),
 	NODE_ENV: Joi.string().valid('production').required(),
 
 	CORS_ORIGIN: Joi.string().uri().required(),

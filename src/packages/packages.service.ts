@@ -206,7 +206,7 @@ export class PackagesService {
 
 		packageToUpdate.state = validationMessages.packages.state.available;
 		packageToUpdate.deliveryDate = new Date();
-		packageToUpdate.deliveryMan = null;
+		// packageToUpdate.deliveryMan = null;
 		await packageToUpdate.save();
 
 		await this.authService.removePackageFromUser(userId, packageId);

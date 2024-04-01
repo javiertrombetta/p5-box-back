@@ -123,6 +123,37 @@ async function seedDB() {
 
 			await UserModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
 		}
+		console.log('Agregando usuarios administrador y repartidor...');
+
+		const adminPassword = 'Administrador123';
+		const deliveryPassword = 'Repartidor123';
+
+		const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
+		const hashedDeliveryPassword = await bcrypt.hash(deliveryPassword, 10);
+
+		const adminUser = {
+			name: 'NombreAdmin',
+			lastname: 'ApellidoAdmin',
+			email: 'administrador@dominio.com',
+			password: hashedAdminPassword,
+			roles: [ValidRoles.administrador],
+			photoUrl: faker.image.avatar(),
+		};
+
+		const deliveryUser = {
+			name: 'NombreRepartidor',
+			lastname: 'ApellidoRepartidor',
+			email: 'repartidor@dominio.com',
+			password: hashedDeliveryPassword,
+			roles: [ValidRoles.repartidor],
+			photoUrl: faker.image.avatar(),
+		};
+
+		await UserModel.create(adminUser);
+		await UserModel.create(deliveryUser);
+
+		console.log('Usuarios administrador y repartidor agregados correctamente.');
+
 		console.log('La base de datos fue poblada correctamente con datos de ejemplo.');
 	} catch (error) {
 		console.error('Error al poblar la base de datos:', error);
