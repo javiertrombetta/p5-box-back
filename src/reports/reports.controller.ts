@@ -82,7 +82,7 @@ export class ReportsController {
 			return res.status(HttpStatus.BAD_REQUEST).json({ message: validationMessages.reports.userNotSpecified });
 		}
 		const deliverymanExists = await this.authService.findById(deliverymanId);
-		if (!deliverymanExists || !deliverymanExists.roles.includes(ValidRoles.repartidor)) {
+		if (!deliverymanExists) {
 			return res.status(HttpStatus.NOT_FOUND).json({ message: validationMessages.reports.userNotFound });
 		}
 		try {

@@ -136,25 +136,19 @@ export class LogService {
 		return details;
 	}
 
-	async hadAssignedPackagesThatDay(deliverymanId: string, dateStart: Date, dateEnd: Date): Promise<boolean> {
-		const assignedLogsCount = await this.logModel
-			.countDocuments({
+	async hadAssignedOrCancelledPackages(dateStart: Date, dateEnd: Date, deliverymanId: string): Promise<boolean> {
+		const logs = await this.logModel
+			.find({
+				'changes.deliveryMan': deliverymanId,
 				entity: validationMessages.log.entity.package,
-				entityId: deliverymanId,
-				action: validationMessages.log.action.packages.assignPkgToUser,
 				timestamp: { $gte: dateStart, $lt: dateEnd },
+				action: { $in: [validationMessages.log.action.packages.assignPkgToUser, validationMessages.log.action.packages.updateOnCancel] },
 			})
 			.exec();
 
-		const cancelledLogsCount = await this.logModel
-			.countDocuments({
-				entity: validationMessages.log.entity.package,
-				entityId: deliverymanId,
-				action: validationMessages.log.action.packages.updateOnCancel,
-				timestamp: { $gte: dateStart, $lt: dateEnd },
-			})
-			.exec();
+		const assignLogs = logs.filter(log => log.action === validationMessages.log.action.packages.assignPkgToUser);
+		const cancelLogs = logs.filter(log => log.action === validationMessages.log.action.packages.updateOnCancel);
 
-		return assignedLogsCount > 0 && cancelledLogsCount >= assignedLogsCount;
+		return assignLogs.length > 0 && cancelLogs.length > 0;
 	}
 }

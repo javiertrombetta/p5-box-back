@@ -17,9 +17,9 @@ config();
 
 function generatePassword(): string {
 	const passwordLength = 10;
-	const upperCaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-	const lowerCaseChars = 'abcdefghijklmnopqrstuvwxyz';
-	const digitChars = '0123456789';
+	const upperCaseChars = validationMessages.seed.defaults.upperCaseChars;
+	const lowerCaseChars = validationMessages.seed.defaults.lowerCaseChars;
+	const digitChars = validationMessages.seed.defaults.digitChars;
 	const allChars = upperCaseChars + lowerCaseChars + digitChars;
 
 	let password = '';
@@ -35,14 +35,14 @@ function generatePassword(): string {
 
 async function seedDB() {
 	try {
-		console.log('Conectando a la base de datos en:', process.env.MONGODB_URI);
+		console.log(validationMessages.seed.process.seedDBConnect, process.env.MONGODB_URI);
 		await connect(process.env.MONGODB_URI);
 
-		const UserModel = model('User', UserSchema);
-		const PackageModel = model('Package', PackageSchema);
-		const LogModel = model('Log', LogSchema);
-		const LegalModel = model('LegalDeclaration', LegalDeclarationSchema);
-		const LocationModel = model('Location', LocationSchema);
+		const UserModel = model(validationMessages.seed.models.user, UserSchema);
+		const PackageModel = model(validationMessages.seed.models.packages, PackageSchema);
+		const LogModel = model(validationMessages.seed.models.log, LogSchema);
+		const LegalModel = model(validationMessages.seed.models.legal, LegalDeclarationSchema);
+		const LocationModel = model(validationMessages.seed.models.location, LocationSchema);
 
 		await UserModel.deleteMany({});
 		await PackageModel.deleteMany({});
@@ -123,27 +123,26 @@ async function seedDB() {
 
 			await UserModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
 		}
-		console.log('Agregando usuarios administrador y repartidor...');
 
-		const adminPassword = 'Administrador123';
-		const deliveryPassword = 'Repartidor123';
+		const adminPassword = validationMessages.seed.administrator.password;
+		const deliveryPassword = validationMessages.seed.deliveryMan.password;
 
 		const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
 		const hashedDeliveryPassword = await bcrypt.hash(deliveryPassword, 10);
 
 		const adminUser = {
-			name: 'NombreAdmin',
-			lastname: 'ApellidoAdmin',
-			email: 'administrador@dominio.com',
+			name: validationMessages.seed.administrator.name,
+			lastname: validationMessages.seed.administrator.lastname,
+			email: validationMessages.seed.administrator.email,
 			password: hashedAdminPassword,
 			roles: [ValidRoles.administrador],
 			photoUrl: faker.image.avatar(),
 		};
 
 		const deliveryUser = {
-			name: 'NombreRepartidor',
-			lastname: 'ApellidoRepartidor',
-			email: 'repartidor@dominio.com',
+			name: validationMessages.seed.deliveryMan.name,
+			lastname: validationMessages.seed.deliveryMan.lastname,
+			email: validationMessages.seed.deliveryMan.email,
 			password: hashedDeliveryPassword,
 			roles: [ValidRoles.repartidor],
 			photoUrl: faker.image.avatar(),
@@ -152,11 +151,9 @@ async function seedDB() {
 		await UserModel.create(adminUser);
 		await UserModel.create(deliveryUser);
 
-		console.log('Usuarios administrador y repartidor agregados correctamente.');
-
-		console.log('La base de datos fue poblada correctamente con datos de ejemplo.');
+		console.log(validationMessages.seed.process.seedCompleted);
 	} catch (error) {
-		console.error('Error al poblar la base de datos:', error);
+		console.error(validationMessages.seed.process.seedError, error);
 	} finally {
 		await disconnect();
 	}
