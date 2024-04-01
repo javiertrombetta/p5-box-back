@@ -189,8 +189,34 @@ export const validationMessages = {
 		},
 	},
 	seed: {
-		success: {
+		process: {
 			seedCompleted: 'La base de datos fue poblada correctamente con datos de ejemplo.',
+			seedError: 'Error al poblar la base de datos:',
+			seedDBConnect: 'Conectando a la base de datos en:',
+		},
+		deliveryMan: {
+			name: 'Repartidor',
+			lastname: 'Repartidor',
+			email: 'r@r.com',
+			password: '123',
+		},
+		administrator: {
+			name: 'Administrador',
+			lastname: 'Administrador',
+			email: 'a@a.com',
+			password: '123',
+		},
+		models: {
+			user: 'User',
+			packages: 'Package',
+			log: 'Log',
+			legal: 'LegalDeclaration',
+			location: 'Location',
+		},
+		defaults: {
+			upperCaseChars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+			lowerCaseChars: 'abcdefghijklmnopqrstuvwxyz',
+			digitChars: '0123456789',
 		},
 	},
 	aws: {

@@ -74,16 +74,17 @@ export class ReportsService {
 		const dateEnd = new Date(dateStart);
 		dateEnd.setDate(dateStart.getDate() + 1);
 
-		const assignedPackagesCount = await this.packagesService.countAssignedPackagesByDateAndDeliveryman(year, month, day, deliverymanId);
-
-		if (assignedPackagesCount === 0) {
-			throw new HttpException(validationMessages.reports.noPackagesTaken, HttpStatus.NOT_FOUND);
-		}
-
+		const hadPackagesAssignedOrCancelled = await this.logService.hadAssignedOrCancelledPackages(dateStart, dateEnd, deliverymanId);
 		const deliveredPackagesCount = await this.packagesService.countDeliveredPackagesByDateAndDeliveryman(year, month, day, deliverymanId);
 
 		const totalPackages = 10;
-		const percentage = (deliveredPackagesCount / totalPackages) * 100;
+		let percentage = 0;
+
+		if (deliveredPackagesCount > 0) {
+			percentage = (deliveredPackagesCount / totalPackages) * 100;
+		} else if (!hadPackagesAssignedOrCancelled) {
+			throw new HttpException(validationMessages.reports.noPackagesTaken, HttpStatus.NOT_FOUND);
+		}
 
 		return { percentage };
 	}

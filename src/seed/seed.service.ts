@@ -105,14 +105,41 @@ export class SeedService {
 			await this.userModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
 		}
 
-		return { message: validationMessages.seed.success.seedCompleted };
+		const adminPassword = validationMessages.seed.administrator.password;
+		const deliveryPassword = validationMessages.seed.deliveryMan.password;
+
+		const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
+		const hashedDeliveryPassword = await bcrypt.hash(deliveryPassword, 10);
+
+		const adminUser = {
+			name: validationMessages.seed.administrator.name,
+			lastname: validationMessages.seed.administrator.lastname,
+			email: validationMessages.seed.administrator.email,
+			password: hashedAdminPassword,
+			roles: [ValidRoles.administrador],
+			photoUrl: faker.image.avatar(),
+		};
+
+		const deliveryUser = {
+			name: validationMessages.seed.deliveryMan.name,
+			lastname: validationMessages.seed.deliveryMan.lastname,
+			email: validationMessages.seed.deliveryMan.email,
+			password: hashedDeliveryPassword,
+			roles: [ValidRoles.repartidor],
+			photoUrl: faker.image.avatar(),
+		};
+
+		await this.userModel.create(adminUser);
+		await this.userModel.create(deliveryUser);
+
+		return { message: validationMessages.seed.process.seedCompleted };
 	}
 
 	generatePassword(): string {
 		const passwordLength = 10;
-		const upperCaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		const lowerCaseChars = 'abcdefghijklmnopqrstuvwxyz';
-		const digitChars = '0123456789';
+		const upperCaseChars = validationMessages.seed.defaults.upperCaseChars;
+		const lowerCaseChars = validationMessages.seed.defaults.lowerCaseChars;
+		const digitChars = validationMessages.seed.defaults.digitChars;
 		const allChars = upperCaseChars + lowerCaseChars + digitChars;
 
 		let password = '';
