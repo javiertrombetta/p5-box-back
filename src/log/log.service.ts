@@ -135,4 +135,26 @@ export class LogService {
 
 		return details;
 	}
+
+	async hadAssignedPackagesThatDay(deliverymanId: string, dateStart: Date, dateEnd: Date): Promise<boolean> {
+		const assignedLogsCount = await this.logModel
+			.countDocuments({
+				entity: validationMessages.log.entity.package,
+				entityId: deliverymanId,
+				action: validationMessages.log.action.packages.assignPkgToUser,
+				timestamp: { $gte: dateStart, $lt: dateEnd },
+			})
+			.exec();
+
+		const cancelledLogsCount = await this.logModel
+			.countDocuments({
+				entity: validationMessages.log.entity.package,
+				entityId: deliverymanId,
+				action: validationMessages.log.action.packages.updateOnCancel,
+				timestamp: { $gte: dateStart, $lt: dateEnd },
+			})
+			.exec();
+
+		return assignedLogsCount > 0 && cancelledLogsCount >= assignedLogsCount;
+	}
 }
