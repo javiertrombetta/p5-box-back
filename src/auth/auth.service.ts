@@ -259,6 +259,10 @@ export class AuthService {
 		return this.userModel.findById(id).exec();
 	}
 
+	async findByEmail(email: string): Promise<User | undefined> {
+		return this.userModel.findOne({ email: email.toLowerCase() }).exec();
+	}
+
 	async findUsersByState(state: string): Promise<User[]> {
 		const queryState =
 			state === validationMessages.auth.user.state.isActiveState ? validationMessages.auth.user.state.isActiveState : validationMessages.auth.user.state.isInactiveSate;

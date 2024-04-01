@@ -123,34 +123,6 @@ async function seedDB() {
 
 			await UserModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
 		}
-
-		const adminPassword = validationMessages.seed.administrator.password;
-		const deliveryPassword = validationMessages.seed.deliveryMan.password;
-
-		const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
-		const hashedDeliveryPassword = await bcrypt.hash(deliveryPassword, 10);
-
-		const adminUser = {
-			name: validationMessages.seed.administrator.name,
-			lastname: validationMessages.seed.administrator.lastname,
-			email: validationMessages.seed.administrator.email,
-			password: hashedAdminPassword,
-			roles: [ValidRoles.administrador],
-			photoUrl: faker.image.avatar(),
-		};
-
-		const deliveryUser = {
-			name: validationMessages.seed.deliveryMan.name,
-			lastname: validationMessages.seed.deliveryMan.lastname,
-			email: validationMessages.seed.deliveryMan.email,
-			password: hashedDeliveryPassword,
-			roles: [ValidRoles.repartidor],
-			photoUrl: faker.image.avatar(),
-		};
-
-		await UserModel.create(adminUser);
-		await UserModel.create(deliveryUser);
-
 		console.log(validationMessages.seed.process.seedCompleted);
 	} catch (error) {
 		console.error(validationMessages.seed.process.seedError, error);

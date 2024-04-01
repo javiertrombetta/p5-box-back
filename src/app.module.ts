@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -17,6 +17,8 @@ import { TasksModule } from './tasks/tasks.module';
 import { LegalDeclarationsModule } from './legals/legals.module';
 import { JoiValidationDevSchema, JoiValidationProdSchema } from './config';
 import { PhotosModule } from './photos/photos.module';
+import { createAdminUser } from './config/production/admin';
+import { AuthService } from './auth/auth.service';
 
 @Module({
 	imports: [
@@ -49,4 +51,15 @@ import { PhotosModule } from './photos/photos.module';
 		PhotosModule,
 	],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+	constructor(
+		private usersService: AuthService,
+		private configService: ConfigService,
+	) {}
+
+	async onModuleInit() {
+		if (this.configService.get('NODE_ENV') === 'production') {
+			await createAdminUser(this.usersService);
+		}
+	}
+}

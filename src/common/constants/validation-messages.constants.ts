@@ -197,14 +197,14 @@ export const validationMessages = {
 		deliveryMan: {
 			name: 'Repartidor',
 			lastname: 'Repartidor',
-			email: 'r@r.com',
-			password: '123',
+			email: 'repartidor@box',
+			password: 'repartidor',
 		},
 		administrator: {
 			name: 'Administrador',
 			lastname: 'Administrador',
-			email: 'a@a.com',
-			password: '123',
+			email: 'admin@box',
+			password: 'admin',
 		},
 		models: {
 			user: 'User',
