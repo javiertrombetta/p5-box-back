@@ -1,6 +1,8 @@
 import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import * as moment from 'moment-timezone';
+import { ConfigService } from '@nestjs/config';
 import { Package } from './entities/package.entity';
 import { validationMessages } from '../common/constants';
 import { CreatePackageDto, UpdatePackageDto } from './dto';
@@ -15,6 +17,7 @@ export class PackagesService {
 		@Inject(forwardRef(() => AuthService)) private authService: AuthService,
 		@Inject(forwardRef(() => RewardsService)) private rewardsService: RewardsService,
 		private logService: LogService,
+		private configService: ConfigService,
 	) {}
 
 	async findPackagesById(id: string): Promise<Package> {
@@ -56,14 +59,22 @@ export class PackagesService {
 	}
 
 	async findAvailablePackagesForToday(): Promise<Package[]> {
-		const now = new Date();
-		const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
-		const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+		const tz = this.configService.get('TZ');
+		const offset = moment().tz(tz).utcOffset() / 60;
+		const nowUTC = new Date();
+		const startOfDayLocal = new Date(nowUTC);
+		startOfDayLocal.setHours(0 + offset, 0, 0, 0);
+
+		const endOfDayLocal = new Date(nowUTC);
+		endOfDayLocal.setHours(23 + offset, 59, 59, 999);
 
 		return this.packageModel
 			.find({
 				state: validationMessages.packages.state.available,
-				deliveryDate: { $gte: startOfDay, $lte: endOfDay },
+				deliveryDate: {
+					$gte: startOfDayLocal,
+					$lte: endOfDayLocal,
+				},
 			})
 			.sort({ deliveryDate: -1 })
 			.exec();
