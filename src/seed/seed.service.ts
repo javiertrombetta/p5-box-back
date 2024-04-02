@@ -12,6 +12,8 @@ import { Log } from '../log/entities';
 import { Location } from '../locations/entities';
 import { LegalDeclaration } from '../legals/entities';
 
+import { LocationsService } from '../locations/locations.service';
+
 import { validationMessages } from '../common/constants';
 import { ValidRoles } from '../auth/interfaces';
 
@@ -23,6 +25,7 @@ export class SeedService {
 		@InjectModel(Log.name) private readonly logModel: Model<Log>,
 		@InjectModel(Location.name) private readonly locationModel: Model<Location>,
 		@InjectModel(LegalDeclaration.name) private readonly legalDeclarationModel: Model<LegalDeclaration>,
+		private readonly locationsService: LocationsService,
 	) {}
 
 	async populateDB() {
@@ -131,6 +134,17 @@ export class SeedService {
 
 		await this.userModel.create(adminUser);
 		await this.userModel.create(deliveryUser);
+
+		const deliveryData = await this.userModel.findOne({ email: deliveryUser.email });
+		if (!deliveryData) {
+			throw new Error(validationMessages.auth.account.error.userNotFound);
+		}
+		const specificLocationData = {
+			latitude: validationMessages.seed.location.latitude,
+			longitude: validationMessages.seed.location.longitude,
+		};
+
+		await this.locationsService.updateUserLocation(deliveryData._id.toString(), specificLocationData);
 
 		return { message: validationMessages.seed.process.seedCompleted };
 	}

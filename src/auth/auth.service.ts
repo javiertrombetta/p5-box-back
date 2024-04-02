@@ -28,7 +28,7 @@ export class AuthService {
 		@Inject(forwardRef(() => PhotosService)) private photosService: PhotosService,
 	) {}
 
-	async oAuthLogin(user: any): Promise<{ token: string }> {
+	async oAuthLogin(user: any): Promise<{ token: string; redirectWithError?: string }> {
 		if (!user) {
 			throw new HttpException(validationMessages.auth.account.error.googleAccountNotFound, HttpStatus.UNAUTHORIZED);
 		}
@@ -36,7 +36,7 @@ export class AuthService {
 		let existingUser = await this.userModel.findOne({ email: user.email });
 
 		if (existingUser && !existingUser.provider) {
-			throw new HttpException(validationMessages.auth.user.email.inUse, HttpStatus.CONFLICT);
+			return { token: null, redirectWithError: 'email_in_use' };
 		}
 
 		if (!existingUser) {
@@ -257,10 +257,6 @@ export class AuthService {
 
 	async findById(id: string): Promise<User | null> {
 		return this.userModel.findById(id).exec();
-	}
-
-	async findByEmail(email: string): Promise<User | undefined> {
-		return this.userModel.findOne({ email: email.toLowerCase() }).exec();
 	}
 
 	async findUsersByState(state: string): Promise<User[]> {

@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { connect, disconnect, model } from 'mongoose';
+import { connect, disconnect, model, Document } from 'mongoose';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
 import { startOfDay } from 'date-fns';
@@ -14,6 +14,16 @@ import { validationMessages } from '../../common/constants';
 import { ValidRoles } from '../../auth/interfaces';
 
 config();
+
+interface IUser extends Document {
+	name: string;
+	lastname: string;
+	email: string;
+	password: string;
+	roles: string[];
+	photoUrl: string;
+	points: number;
+}
 
 function generatePassword(): string {
 	const passwordLength = 10;
@@ -38,7 +48,7 @@ async function seedDB() {
 		console.log(validationMessages.seed.process.seedDBConnect, process.env.MONGODB_URI);
 		await connect(process.env.MONGODB_URI);
 
-		const UserModel = model(validationMessages.seed.models.user, UserSchema);
+		const UserModel = model<IUser>(validationMessages.seed.models.user, UserSchema);
 		const PackageModel = model(validationMessages.seed.models.packages, PackageSchema);
 		const LogModel = model(validationMessages.seed.models.log, LogSchema);
 		const LegalModel = model(validationMessages.seed.models.legal, LegalDeclarationSchema);
@@ -123,6 +133,33 @@ async function seedDB() {
 
 			await UserModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
 		}
+
+		const plainPassword = 'Repartidor123.';
+		const hashedPassword = await bcrypt.hash(plainPassword, 10);
+		const deliveryExampleUser = {
+			name: 'Repartidor',
+			lastname: 'Repartidor',
+			email: 'repartidor@box.com',
+			password: hashedPassword,
+			roles: [ValidRoles.repartidor],
+			photoUrl: faker.image.avatar(),
+			points: 0,
+		};
+		await UserModel.create(deliveryExampleUser);
+
+		const deliveryData = await UserModel.findOne({ email: deliveryExampleUser.email });
+
+		if (!deliveryData) {
+			throw new Error(validationMessages.auth.account.error.userNotFound);
+		} else {
+			const locationData = {
+				userId: deliveryData._id,
+				latitude: validationMessages.seed.location.latitude,
+				longitude: validationMessages.seed.location.longitude,
+			};
+			await LocationModel.create(locationData);
+		}
+
 		console.log(validationMessages.seed.process.seedCompleted);
 	} catch (error) {
 		console.error(validationMessages.seed.process.seedError, error);

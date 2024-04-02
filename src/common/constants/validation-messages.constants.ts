@@ -218,6 +218,10 @@ export const validationMessages = {
 			lowerCaseChars: 'abcdefghijklmnopqrstuvwxyz',
 			digitChars: '0123456789',
 		},
+		location: {
+			latitude: -34.549148146059096,
+			longitude: -58.468021206013034,
+		},
 	},
 	aws: {
 		bucketName: 'photo',

@@ -160,8 +160,12 @@ export class AuthController {
 		try {
 			if (req.cookies['Authentication']) return res.status(HttpStatus.BAD_REQUEST).json({ message: validationMessages.auth.account.error.alreadyLoggedIn });
 
-			const { token } = await this.authService.oAuthLogin(req.user);
+			const { token, redirectWithError } = await this.authService.oAuthLogin(req.user);
 
+			if (redirectWithError) {
+				const frontendUrl = this.configService.get<string>('CORS_ORIGIN');
+				return res.redirect(`${frontendUrl}/login?error=${redirectWithError}`);
+			}
 			const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
 
 			res.cookie('Authentication', token, {

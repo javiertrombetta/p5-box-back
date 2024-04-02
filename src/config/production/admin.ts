@@ -11,11 +11,11 @@ export async function createAdminUser(authService: AuthService): Promise<void> {
 		password: validationMessages.seed.administrator.password,
 	};
 
-	const existingAdmin = await authService.findByEmail(adminData.email);
+	const existingAdmin = await this.authService.findOne({ email: adminData.email });
 
 	if (!existingAdmin) {
 		await authService.register(adminData);
-		const newAdmin = await authService.findByEmail(adminData.email);
+		const newAdmin = await this.authService.findOne({ email: adminData.email });
 		await authService.updateUserRole(newAdmin._id, [ValidRoles.administrador], newAdmin._id.toString());
 	}
 }
