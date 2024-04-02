@@ -18,6 +18,7 @@ import { LegalDeclaration, LegalDeclarationSchema } from '../legals/entities';
 
 import { SeedService } from './seed.service';
 import { SeedController } from './seed.controller';
+import { LocationsService } from 'src/locations/locations.service';
 
 @Module({
 	imports: [
@@ -35,6 +36,6 @@ import { SeedController } from './seed.controller';
 		LegalDeclarationsModule,
 	],
 	controllers: [SeedController],
-	providers: [SeedService],
+	providers: [SeedService, LocationsService],
 })
 export class SeedModule {}
