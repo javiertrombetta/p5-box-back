@@ -172,9 +172,9 @@ export class AuthController {
 				secure: isProduction,
 			});
 
-			// const redirectUrl = this.configService.get<string>('CORS_ORIGIN');
-			// res.end(res.redirect(`${redirectUrl}/oauth?token=${token.jwt}`));
-			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.loggedIn, token: token });
+			const redirectUrl = this.configService.get<string>('CORS_ORIGIN');
+			res.end(res.redirect(`${redirectUrl}/oauth?token=${token}`));
+			// res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.loggedIn, token: token });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}

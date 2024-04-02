@@ -12,7 +12,7 @@ services:
     ports:
       - '${PORT}:${PORT}'
     environment:
-      TZ: ${TIME_ZONE}
+      TZ: ${TZ}
       NODE_ENV: ${NODE_ENV}
       CORS_ORIGIN: ${CORS_ORIGIN}
       CORS_METHODS: ${CORS_METHODS}
