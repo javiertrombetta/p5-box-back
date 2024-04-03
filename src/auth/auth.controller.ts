@@ -80,6 +80,8 @@ export class AuthController {
 			const { token } = await this.authService.login(loginUserDto);
 			res.cookie('Authentication', token, {
 				httpOnly: true,
+				sameSite: 'none',
+				secure: true,
 				path: '/',
 				maxAge: 1000 * 60 * 60 * 2,
 			});
