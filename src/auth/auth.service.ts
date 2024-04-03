@@ -36,7 +36,7 @@ export class AuthService {
 		let existingUser = await this.userModel.findOne({ email: user.email });
 
 		if (existingUser && !existingUser.provider) {
-			return { token: null, redirectWithError: 'email_in_use' };
+			return { token: null, redirectWithError: 'Ya existe una cuenta local registrada con este email.' };
 		}
 
 		if (!existingUser) {

@@ -188,6 +188,10 @@ export const validationMessages = {
 			dateNotValid: 'La fecha proporcionada no es válida.',
 		},
 	},
+	tasks: {
+		completed: 'Las tareas de CRON fueron realizadas correctamente.',
+		failed: 'No se pudieron completar las tareas de CRON.',
+	},
 	seed: {
 		process: {
 			seedCompleted: 'La base de datos fue poblada correctamente con datos de ejemplo.',

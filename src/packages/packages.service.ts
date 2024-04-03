@@ -49,6 +49,16 @@ export class PackagesService {
 			.exec();
 	}
 
+	async findAvailablePackagesWithoutDeliveryManBeforeDate(date: Date): Promise<Package[]> {
+		return this.packageModel
+			.find({
+				deliveryMan: { $eq: null },
+				state: validationMessages.packages.state.available,
+				deliveryDate: { $lt: date },
+			})
+			.exec();
+	}
+
 	async findPackagesByDeliveryManIdAndState(deliveryManId: string, state: string): Promise<Package[]> {
 		return this.packageModel
 			.find({
