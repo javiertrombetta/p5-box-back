@@ -134,12 +134,12 @@ async function seedDB() {
 			await UserModel.findByIdAndUpdate(repartidor._id, { $set: { packages: packagesForRepartidor } });
 		}
 
-		const plainPassword = 'Repartidor123.';
+		const plainPassword = validationMessages.seed.deliveryMan.password;
 		const hashedPassword = await bcrypt.hash(plainPassword, 10);
 		const deliveryExampleUser = {
-			name: 'Repartidor',
-			lastname: 'Repartidor',
-			email: 'repartidor@box.com',
+			name: validationMessages.seed.deliveryMan.name,
+			lastname: validationMessages.seed.deliveryMan.lastname,
+			email: validationMessages.seed.deliveryMan.email,
 			password: hashedPassword,
 			roles: [ValidRoles.repartidor],
 			photoUrl: faker.image.avatar(),

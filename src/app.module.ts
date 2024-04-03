@@ -18,7 +18,6 @@ import { LegalDeclarationsModule } from './legals/legals.module';
 import { JoiValidationDevSchema, JoiValidationProdSchema } from './config';
 import { PhotosModule } from './photos/photos.module';
 import { createAdminUser } from './config/production/admin';
-import { AuthService } from './auth/auth.service';
 
 @Module({
 	imports: [
@@ -51,14 +50,15 @@ import { AuthService } from './auth/auth.service';
 	],
 })
 export class AppModule implements OnModuleInit {
-	constructor(
-		private usersService: AuthService,
-		private configService: ConfigService,
-	) {}
+	constructor(private configService: ConfigService) {}
 
 	async onModuleInit() {
+		console.log('Entorno actual:', this.configService.get('NODE_ENV'));
 		if (this.configService.get('NODE_ENV') === 'production') {
-			await createAdminUser(this.usersService);
+			console.log('Creando usuario administrador...');
+			await createAdminUser();
+		} else {
+			console.log('No se crea el usuario administrador debido al entorno de desarrollo.');
 		}
 	}
 }
