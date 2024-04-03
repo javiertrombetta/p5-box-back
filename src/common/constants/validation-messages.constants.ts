@@ -209,6 +209,7 @@ export const validationMessages = {
 			lastname: 'Administrador',
 			email: 'admin@box.com',
 			password: 'admin',
+			alreadyExists: 'El usuario de administrador ya existe en la base de datos. Se omite su registro.',
 		},
 		models: {
 			user: 'User',
