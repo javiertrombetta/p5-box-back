@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -17,7 +17,6 @@ import { TasksModule } from './tasks/tasks.module';
 import { LegalDeclarationsModule } from './legals/legals.module';
 import { JoiValidationDevSchema, JoiValidationProdSchema } from './config';
 import { PhotosModule } from './photos/photos.module';
-import { createAdminUser } from './config/production/admin';
 
 @Module({
 	imports: [
@@ -49,16 +48,4 @@ import { createAdminUser } from './config/production/admin';
 		PhotosModule,
 	],
 })
-export class AppModule implements OnModuleInit {
-	constructor(private configService: ConfigService) {}
-
-	async onModuleInit() {
-		console.log('Entorno actual:', this.configService.get('NODE_ENV'));
-		if (this.configService.get('NODE_ENV') === 'production') {
-			console.log('Creando usuario administrador...');
-			await createAdminUser();
-		} else {
-			console.log('No se crea el usuario administrador debido al entorno de desarrollo.');
-		}
-	}
-}
+export class AppModule {}
