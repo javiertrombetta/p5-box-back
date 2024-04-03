@@ -158,7 +158,12 @@ export class AuthController {
 	@UseGuards(GoogleOauthGuard)
 	async googleAuthCallback(@Req() req, @Res() res: Response) {
 		try {
-			if (req.cookies['Authentication']) return res.status(HttpStatus.BAD_REQUEST).json({ message: validationMessages.auth.account.error.alreadyLoggedIn });
+			if (req.cookies['Authentication']) {
+				const alreadyLoggedInError = validationMessages.auth.account.error.alreadyLoggedIn;
+				const frontendUrl = this.configService.get<string>('CORS_ORIGIN');
+				// Esto redirigirá al usuario al frontend con un parámetro de error específico en la URL.
+				return res.redirect(`${frontendUrl}/login?error=${encodeURIComponent(alreadyLoggedInError)}`);
+			}
 
 			const { token, redirectWithError } = await this.authService.oAuthLogin(req.user);
 
@@ -166,8 +171,8 @@ export class AuthController {
 				const frontendUrl = this.configService.get<string>('CORS_ORIGIN');
 				return res.redirect(`${frontendUrl}/login?error=${redirectWithError}`);
 			}
-			const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
 
+			const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
 			res.cookie('Authentication', token, {
 				httpOnly: true,
 				path: '/',
@@ -177,8 +182,7 @@ export class AuthController {
 			});
 
 			const redirectUrl = this.configService.get<string>('CORS_ORIGIN');
-			res.end(res.redirect(`${redirectUrl}/oauth?token=${token}`));
-			// res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.loggedIn, token: token });
+			res.redirect(`${redirectUrl}/oauth?token=${token}`);
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
 		}

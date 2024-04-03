@@ -5,6 +5,7 @@ import { AuthService } from '../auth/auth.service';
 import { LogService } from '../log/log.service';
 import { RewardsService } from '../rewards/rewards.service';
 import { validationMessages } from '../common/constants';
+import * as moment from 'moment-timezone';
 
 @Injectable()
 export class TasksService {
@@ -17,7 +18,9 @@ export class TasksService {
 
 	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
 	async handleCron() {
+		const newDeliveryDate = moment().startOf('day').toDate();
 		const packages = await this.packagesService.findAllPackagesWithDeliveryMan();
+		const availablePackagesWithoutDeliveryMan = await this.packagesService.findAvailablePackagesWithoutDeliveryManBeforeDate(newDeliveryDate);
 		for (const pkg of packages) {
 			await this.packagesService.updatePackageState(pkg._id, validationMessages.packages.state.available);
 			await this.logService.create({
@@ -29,7 +32,18 @@ export class TasksService {
 			});
 
 			await this.packagesService.clearPackageDeliveryMan(pkg._id);
-			await this.packagesService.updatePackageDeliveryDate(pkg._id, new Date());
+			await this.packagesService.updatePackageDeliveryDate(pkg._id, newDeliveryDate);
+			await this.logService.create({
+				action: validationMessages.log.action.packages.deliveryDate.nextDate,
+				entity: validationMessages.log.entity.package,
+				entityId: pkg._id,
+				changes: { deliveryDate: new Date() },
+				performedBy: 'CRON',
+			});
+		}
+
+		for (const pkg of availablePackagesWithoutDeliveryMan) {
+			await this.packagesService.updatePackageDeliveryDate(pkg._id, newDeliveryDate);
 			await this.logService.create({
 				action: validationMessages.log.action.packages.deliveryDate.nextDate,
 				entity: validationMessages.log.entity.package,
@@ -73,5 +87,7 @@ export class TasksService {
 			changes: {},
 			performedBy: 'CRON',
 		});
+
+		return { message: validationMessages.tasks.completed };
 	}
 }
