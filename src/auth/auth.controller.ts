@@ -85,7 +85,7 @@ export class AuthController {
 				path: '/',
 				maxAge: 1000 * 60 * 60 * 2,
 			});
-			//Hola
+
 			res.status(HttpStatus.OK).json({ message: validationMessages.auth.account.success.loggedIn });
 		} catch (error) {
 			ExceptionHandlerService.handleException(error, res);
